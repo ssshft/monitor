@@ -1075,7 +1075,7 @@ void BinanceAccountItem::UpdateByOkxAdapter() {
             }
         }
 
-        vector<okx::Position>& vPosition = item->GetPosition();
+        vector<okx::OkxPosition>& vPosition = item->GetPosition();
         for (size_t i = 0; i < vPosition.size(); ++i) {
             string symbol = vPosition[i].instId;
             double longFrozenPosition = 0.0;
@@ -1104,7 +1104,7 @@ void BinanceAccountItem::UpdateByOkxAdapter() {
             }
         }
 
-        vector<okx::Order>& vOpenOrder = item->GetOpenOrder();
+        vector<okx::OkxOrder>& vOpenOrder = item->GetOpenOrder();
         for (size_t i = 0; i < vOpenOrder.size(); ++i) {
             string symbol = vOpenOrder[i].instId;
             string instKey = exchangeStr + "|" + symbol + "|FUTURES";
