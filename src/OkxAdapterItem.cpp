@@ -27,7 +27,7 @@ void OkxAdapterItem::UpdateAccountInfo() {
     query = true;
     vQueryErrMsg.clear();
 
-    if (gateioDelivery) {
+    if (okxClient) {
         vAsset.clear();
         vPosition.clear();
         vOpenOrder.clear();
@@ -84,7 +84,7 @@ vector<okx::OkxPosition>& OkxAdapterItem::GetPosition() {
 }
 
 vector<okx::OkxOrder>& OkxAdapterItem::GetOpenOrder() {
-    return vPosition;
+    return vOpenOrder;
 }
 
 double OkxAdapterItem::GetPositionValue(string asset) {
