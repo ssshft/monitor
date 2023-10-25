@@ -30,6 +30,8 @@ public:
                const char * input, unsigned int input_length,
                unsigned char * &output, unsigned int &output_length);
     string getSignature(const string &query,const string &apiSecret);
+	string get_signature_rest(const string &timestamp, const string &method,
+            const string &requestPath,const string &body);
 
 private:
 	web::uri baseUrl;

@@ -110,7 +110,7 @@ bool OkxClient::QueryAccount(vector<okx::OkxAsset>& vAsset, vector<string>& vErr
                             }
                         }
                         LOG_INFO("QueryAccount AccountId: %d    uFutureAsset: %s", accountInfo.accountId, asset.toString().c_str());
-                        vAsset.emplace_back(uFutureAsset);
+                        vAsset.emplace_back(asset);
                     }
                 }
 
@@ -152,7 +152,7 @@ bool OkxClient::QueryPosition(vector<okx::OkxPosition>& vPosition, vector<string
     bool query = true;
     while (count < 3) {
         query = true;
-        vAsset.clear();
+        vPosition.clear();
         vErrorMsg.clear();
         try {
             http_client_config config;
@@ -292,7 +292,7 @@ bool OkxClient::QueryOpenOrder(vector<okx::OkxOrder>& vOpenOrder, vector<string>
     bool query = true;
     while (count < 3) {
         query = true;
-        vAsset.clear();
+        vOpenOrder.clear();
         vErrorMsg.clear();
         try {
             http_client_config config;
@@ -343,28 +343,28 @@ bool OkxClient::QueryOpenOrder(vector<okx::OkxOrder>& vOpenOrder, vector<string>
                         if (it.has_field("sz")) {
                             string sz = it.at("sz").as_string();
                             if (sz != "") {
-                                position.sz = stod(sz);
+                                order.sz = stod(sz);
                             }
                         }
 
                         if (it.has_field("accFillSz")) {
                             string accFillSz = it.at("accFillSz").as_string();
                             if (accFillSz != "") {
-                                position.accFillSz = stod(accFillSz);
+                                order.accFillSz = stod(accFillSz);
                             }
                         }
 
                         if (it.has_field("px")) {
                             string px = it.at("px").as_string();
                             if (px != "") {
-                                position.px = stod(px);
+                                order.px = stod(px);
                             }
                         }
 
                         if (it.has_field("avgPx")) {
                             string avgPx = it.at("avgPx").as_string();
                             if (avgPx != "") {
-                                position.avgPx = stod(avgPx);
+                                order.avgPx = stod(avgPx);
                             }
                         }
 
