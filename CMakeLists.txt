@@ -35,7 +35,7 @@ set(CPP_PYTHON_INCLUDE_DIR /opt/anaconda3/pkgs/python-3.8.8-hdb3f193_5/include/p
 set(ZMQ_INCLUDE_DIR ${3RD_PATH}/zeromq/include)
 set(NANOLOGLIT_INCLUDE_DIR ${3RD_PATH}/NanoLogLite)
 set(MYSQL_INCLUDE_DIR ${3RD_PATH}/mysql/mysql5.7.37/include)
-set(SQLITE_INCLUDE_DIR ${3RD_PATH}/sqlite/include)
+set(SQLITE_INCLUDE_DIR ${3RD_PATH}/sqlite)
 
 
 #add link path
@@ -78,6 +78,7 @@ include_directories(${PROJECT_SOURCE_DIR}/api/binance)
 include_directories(${PROJECT_SOURCE_DIR}/api/coinbase)
 include_directories(${PROJECT_SOURCE_DIR}/api/gateio)
 include_directories(${PROJECT_SOURCE_DIR}/api/bybit)
+include_directories(${PROJECT_SOURCE_DIR}/api/okx)
 include_directories(${DB_VERSION_DIR}/include)
 include_directories(${DB_VERSION_DIR})
 
@@ -116,6 +117,7 @@ aux_source_directory(${PROJECT_SOURCE_DIR}/api/binance BINANCE_SRCS)
 aux_source_directory(${PROJECT_SOURCE_DIR}/api/coinbase COINBASE_SRCS)
 aux_source_directory(${PROJECT_SOURCE_DIR}/api/gateio GATEIO_SRCS)
 aux_source_directory(${PROJECT_SOURCE_DIR}/api/bybit BYBIT_SRCS)
+aux_source_directory(${PROJECT_SOURCE_DIR}/api/okx OKX_SRCS)
 
 
 #add_subdirectory(restart)
@@ -127,4 +129,5 @@ add_executable(risk_monitor
         ${COINBASE_SRCS}
         ${GATEIO_SRCS}
         ${BYBIT_SRCS}
+        ${OKX_SRCS}
         )
