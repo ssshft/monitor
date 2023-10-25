@@ -13,6 +13,7 @@
 #include "CoinbaseMdMgr.h"
 #include "GateioAdapterMgr.h"
 #include "BybitAdapterMgr.h"
+#include "OkxAdapterMgr.h"
 #include "BinanceMdMgr.h"
 #include "Sqlite.h"
 #include "ProductMgr.h"
@@ -437,6 +438,7 @@ void UpdateAccountInfo() {
             CoinbaseAdapterMgr::GetInstance().UpdateAccountInfo();
             GateioAdapterMgr::GetInstance().UpdateAccountInfo();
             BybitAdapterMgr::GetInstance().UpdateAccountInfo();
+            OkxAdapterMgr::GetInstance().UpdateAccountInfo();
             MdMonitor::GetInstance().Subscribe();                  // subscribe new md
             sleep(10);
 	    } catch (exception e) {

@@ -51,7 +51,7 @@ private:
     vector<gateio::SpotAsset> vSpotAsset;
     vector<gateio::FutureAsset> vDeliveryAsset;
     vector<gateio::FuturePosition> vDeliveryPosition;
-     vector<gateio::FutureOrder> vDeliveryOpenOrder;
+    vector<gateio::FutureOrder> vDeliveryOpenOrder;
     vector<gateio::FutureAsset> vPerpetualAsset;
     vector<gateio::FuturePosition> vPerpetualPosition;
     vector<gateio::FutureOrder> vPerpetualOpenOrder;

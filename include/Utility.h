@@ -20,7 +20,7 @@ extern std::mutex mutRiskParameter;
 
 enum ExchangeType {
 	ET_MIN = 0,
-    ET_OKEX = 1,
+    ET_OKX = 1,
 	ET_BINANCE,
 	ET_FTX,
 	ET_XT,
@@ -115,7 +115,7 @@ enum AssetReportType {
 };
 
 static unordered_map<ExchangeType, string> ExchangeTypeEnum2StrMap {
-    { ET_OKEX, "OKEX"},
+    { ET_OKX, "OKX"},
     { ET_BINANCE, "BINANCE"},
     { ET_FTX, "FTX"},
     { ET_XT, "XT"},
@@ -689,6 +689,15 @@ inline string CovertToUtcDateStr(int64_t tUs) {
 	char s[64];
 	strftime(s, sizeof(s), "%Y-%m-%d", &tmT);	
 	return string(s);
+}
+
+inline string GetTimestamp() {
+	char timestamp[32]{0};
+	time_t t;
+	time(&t);
+	struct tm* ptm = gmtime(&t);
+	strftime(timestamp, 32, "%FT%T.123Z", ptm);
+	return timestamp;
 }
 
 inline void InitLog(int logLevel) {

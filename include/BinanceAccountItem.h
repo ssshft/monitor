@@ -19,6 +19,7 @@ public:
     void UpdateByCoinbaseAdapter();
     void UpdateByGateioAdapter();
     void UpdateByBybitAdapter();
+    void UpdateByOkxAdapter();
     void ClearZero();
     void Clear();
     void CalculateTotalAsset();

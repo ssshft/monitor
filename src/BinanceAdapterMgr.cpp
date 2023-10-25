@@ -29,7 +29,7 @@ void BinanceAdapterMgr::UpdateAccountInfo() {
 	if (!flag) {
             iter->second->UpdateAccountInfo();
             sleep(4);
-	}
+	    }
     }
 }
 

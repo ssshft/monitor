@@ -7,6 +7,7 @@
 #include "CoinbaseMdMgr.h"
 #include "GateioAdapterMgr.h"
 #include "BybitAdapterMgr.h"
+#include "OkxAdapterMgr.h"
 
 
 BinanceAccountItem::BinanceAccountItem(int id, string n, string ty, string ex, int he) {
@@ -240,6 +241,8 @@ void BinanceAccountItem::UpdateByAdapter() {
         UpdateByGateioAdapter();
     } else if (exchangeStr == "BYBIT") {
         UpdateByBybitAdapter();
+    } else if (exchangeStr == "OKX") {
+        UpdateByOkxAdapter();
     }
 }
 
@@ -1021,6 +1024,106 @@ void BinanceAccountItem::UpdateByBybitAdapter() {
     }
 }
 
+void BinanceAccountItem::UpdateByOkxAdapter() {
+    OkxAdapterItem* item = OkxAdapterMgr::GetInstance().GetAdapterItem(customerId);
+    if (item) {
+        riskInfo.dUpdateTime = item->GetUpdateTime();
+        adapterQuery = item->GetQueryStatus();
+        adapterQueryErrMsg = item->GetQueryErrMsg();
+        unified = item->isUnified();
+   
+        // asset
+        vector<okx::OkxAsset>& vAsset = item->GetAsset();
+        for (size_t i = 0; i < vAsset.size(); ++i) {
+            string ass = vAsset[i].ccy;
+            double positionValue = item->GetPositionValue(ass);
+            double floatAmount = item->GetFloatAmount(ass);
+            auto iter = mUFutureAsset.find(ass);
+            if (iter == mUFutureAsset.end()) { // 暂不使用计算的浮动盈亏，直接用交易所的浮动盈亏
+                igmonitor::Asset asset;
+                asset.asset = vAsset[i].ccy;
+                asset.positionValueD = positionValue;
+                asset.totalAmountD = vAsset[i].cashBal;
+                //asset.floatAmountD = floatAmount;
+                asset.floatAmountD = vAsset[i].upl;
+                asset.marginAmountD = vAsset[i].availableEq;
+                asset.frozenMarginAmountD = vAsset[i].frozenBal;
+                asset.netAmountD = asset.totalAmountD + asset.floatAmountD;
+                if (fabs(asset.netAmountD) > MINDOUBLE) {
+                    asset.realLeverageRatioD = fabs(asset.positionValueD / asset.netAmountD);
+                    stringstream ss;
+                    ss << "accountId:" << customerId << " asset:" << ass << " positionValueD:" << asset.positionValueD << " totalAmountD:" << asset.totalAmountD << " floatAmountD:" << asset.floatAmountD << " netAmountD:" << asset.netAmountD;
+                    LOG_INFO("realLeverageRatioD: %s", ss.str().c_str()); 
+                }
+                mUFutureAsset.insert(make_pair(asset.asset, asset));
+            } else {
+                iter->second.positionValueD = positionValue;
+                iter->second.totalAmountD = vAsset[i].cashBal;
+                //iter->second.floatAmountD = floatAmount;
+                iter->second.floatAmountD = vAsset[i].upl;
+                iter->second.marginAmountD = vAsset[i].availableEq;
+                iter->second.frozenMarginAmountD = vAsset[i].frozenBal;
+                iter->second.netAmountD = iter->second.totalAmountD + iter->second.floatAmountD;              
+                // iter->second.availableAmountD = vAsset[i].available;
+                //iter->second.underwayOrderValueD = GetUnderwayOrderValue(iter->second.asset, iter->second.frozenMarginAmountD);
+                if (fabs(iter->second.netAmountD) > MINDOUBLE) {
+                    iter->second.realLeverageRatioD = fabs(iter->second.positionValueD / iter->second.netAmountD);
+                    stringstream ss;
+                    ss << "accountId:" << customerId << " asset:" << ass << " positionValueD:" << iter->second.positionValueD << " totalAmountD:" << iter->second.totalAmountD << " floatAmountD:" << iter->second.floatAmountD << " netAmountD:" << iter->second.netAmountD;
+                    LOG_INFO("realLeverageRatioD: %s", ss.str().c_str()); 
+                }
+            }
+        }
+
+        vector<okx::Position>& vPosition = item->GetPosition();
+        for (size_t i = 0; i < vPosition.size(); ++i) {
+            string symbol = vPosition[i].instId;
+            double longFrozenPosition = 0.0;
+            double shortFrozenPosition = 0.0;
+            item->GetLongShortFrozenPosition(symbol, longFrozenPosition, shortFrozenPosition);
+            auto iter = mUFuturePosition.find(symbol);
+            if (iter == mUFuturePosition.end()) {
+                igmonitor::Position position;
+                position.symbol = vPosition[i].instId;
+                position.netPositionD = vPosition[i].pos;
+                position.netAvgPriceD = vPosition[i].avgPx;
+                position.floatAmountD = vPosition[i].upl;
+                position.liquidationPrice = vPosition[i].liqPx;
+                string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
+                position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+                position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
+                position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
+                mUFuturePosition.insert(make_pair(position.symbol, position));
+            } else {
+                iter->second.netPositionD = vPosition[i].pos;
+                iter->second.netAvgPriceD = vPosition[i].avgPx;
+                iter->second.floatAmountD = vPosition[i].upl;
+                iter->second.liquidationPrice = vPosition[i].liqPx;
+                iter->second.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
+                iter->second.underwayAbsPositioD = fabs(iter->second.underwayNetPositionD);
+            }
+        }
+
+        vector<okx::Order>& vOpenOrder = item->GetOpenOrder();
+        for (size_t i = 0; i < vOpenOrder.size(); ++i) {
+            string symbol = vOpenOrder[i].instId;
+            string instKey = exchangeStr + "|" + symbol + "|FUTURES";
+            string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+            double openQty = vOpenOrder[i].sz - vOpenOrder[i].accFillSz;
+            auto iter = mUFutureOpenOrder.find(key);
+            if (iter != mUFutureOpenOrder.end()) {
+                iter->second.openQty += fabs(openQty);
+            } else {
+                igmonitor::OpenOrder openOrder;
+                openOrder.symbol = symbol;
+                openOrder.openQty = openQty;
+                mUFutureOpenOrder.insert(make_pair(key, openOrder));
+            }
+        }
+
+    }
+}
+
 void BinanceAccountItem::ClearZero() {
     // clear asset
     for (auto iter = mSpotAsset.begin(); iter != mSpotAsset.end();) {
@@ -1274,7 +1377,7 @@ void BinanceAccountItem::CalculateExposure() {
         } else {
             if (asset == "USDT" || asset == "USD") {
                 double price = 0.0;
-                if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT") {
+                if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
                     price = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
                 } else if (exchangeStr == "COINBASE") {
                     price = CoinbaseMdMgr::GetInstance().GetAssetPrice(baseAsset);
@@ -1295,7 +1398,7 @@ void BinanceAccountItem::CalculateExposure() {
             } else {
                 string key = exchangeStr + "|" + asset + "-" + baseAsset + "|SPOT";
                 double price = 0.0;
-                if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT") {
+                if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
                     price = BinanceMdMgr::GetInstance().GetMidPrice(key);  // 首先获取币对现货价格
                 } else if (exchangeStr == "COINBASE") {
                     price = CoinbaseMdMgr::GetInstance().GetMidPrice(key);  // 首先获取币对现货价格
@@ -1315,7 +1418,7 @@ void BinanceAccountItem::CalculateExposure() {
                 } else { // 获取对应usdt的价格，再换算成币
                     if (baseAsset == "USDT" || baseAsset == "USD") {
                         double price = 0.0;
-                        if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT") {
+                        if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
                             price = BinanceMdMgr::GetInstance().GetAssetPrice(asset, exchangeStr);
                         } else if (exchangeStr == "COINBASE") {
                             price = CoinbaseMdMgr::GetInstance().GetAssetPrice(asset);
@@ -1337,7 +1440,7 @@ void BinanceAccountItem::CalculateExposure() {
                         double priceU = 0.0;
                         double priceBaseAsset = 0.0;
 
-                        if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT") {
+                        if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
                             priceU = BinanceMdMgr::GetInstance().GetAssetPrice(asset, exchangeStr);
                             priceBaseAsset = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
                         } else if (exchangeStr == "COINBASE") {
@@ -1484,7 +1587,7 @@ double BinanceAccountItem::GetUnderwayOrderValue(string asset, double frozenAmou
     } else {
         if (asset == "USDT" || asset == "USD") {
             double priceBaseAsset = 0.0;
-            if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT") {
+            if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
                 priceBaseAsset = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
             } else if (exchangeStr == "COINBASE") {
                 priceBaseAsset = CoinbaseMdMgr::GetInstance().GetAssetPrice(baseAsset);
@@ -1496,7 +1599,7 @@ double BinanceAccountItem::GetUnderwayOrderValue(string asset, double frozenAmou
         } else {
             string key = exchangeStr + "|" + asset + "-" + baseAsset + "|SPOT";
             double price = 0.0;
-            if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT") {
+            if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
                 price = BinanceMdMgr::GetInstance().GetMidPrice(key);
             } else if (exchangeStr == "COINBASE") {
                 price = CoinbaseMdMgr::GetInstance().GetMidPrice(key);
@@ -1507,7 +1610,7 @@ double BinanceAccountItem::GetUnderwayOrderValue(string asset, double frozenAmou
             } else {
                 if (baseAsset == "USDT" || baseAsset == "USD") {
                     double price = 0.0;
-                    if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT") {
+                    if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
                         price = BinanceMdMgr::GetInstance().GetAssetPrice(asset, exchangeStr);
                     } else if (exchangeStr == "COINBASE") {
                         price = CoinbaseMdMgr::GetInstance().GetAssetPrice(asset);
@@ -1517,7 +1620,7 @@ double BinanceAccountItem::GetUnderwayOrderValue(string asset, double frozenAmou
                 } else {
                     double priceU = 0.0;
                     double priceBaseAsset = 0.0;
-                    if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT") {
+                    if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
                         priceU = BinanceMdMgr::GetInstance().GetAssetPrice(asset, exchangeStr);
                         priceBaseAsset = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
                     } else if (exchangeStr == "COINBASE") {
@@ -1556,7 +1659,7 @@ void BinanceAccountItem::CalculateRiskInfo() {
         } else {
             if (asset == "USDT" || asset == "USD") {
                 double price = 0.0;
-                if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT") {
+                if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
                     price = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
                 } else if (exchangeStr == "COINBASE") {
                     price = CoinbaseMdMgr::GetInstance().GetAssetPrice(baseAsset);
@@ -1574,7 +1677,7 @@ void BinanceAccountItem::CalculateRiskInfo() {
             } else {
                 string key = exchangeStr + "|" + asset + "-" + baseAsset + "|SPOT";  // 首先获取币对现货价格
                 double price = 0.0;
-                if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT") {
+                if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
                     price = BinanceMdMgr::GetInstance().GetMidPrice(key);
                 } else if (exchangeStr == "COINBASE") {
                     price = CoinbaseMdMgr::GetInstance().GetMidPrice(key);
@@ -1591,7 +1694,7 @@ void BinanceAccountItem::CalculateRiskInfo() {
                 } else {
                     if (baseAsset == "USDT" || baseAsset == "USD") {
                         double price = 0.0;
-                        if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT") {
+                        if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
                             price = BinanceMdMgr::GetInstance().GetAssetPrice(asset, exchangeStr);
                         } else if (exchangeStr == "COINBASE") {
                             price = CoinbaseMdMgr::GetInstance().GetAssetPrice(asset);
@@ -1607,7 +1710,7 @@ void BinanceAccountItem::CalculateRiskInfo() {
                     } else {
                         double priceU = 0.0;
                         double priceBaseAsset = 0.0;
-                        if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT") {
+                        if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
                             priceU = BinanceMdMgr::GetInstance().GetAssetPrice(asset, exchangeStr);
                             priceBaseAsset = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
                         } else if (exchangeStr == "COINBASE") {
