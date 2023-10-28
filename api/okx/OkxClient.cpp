@@ -22,7 +22,7 @@ bool OkxClient::QueryAccount(vector<okx::OkxAsset>& vAsset, vector<string>& vErr
         try {
             http_client_config config;
             config.set_timeout(utility::seconds(5));
-            http_client client(baseUrl, config);
+            http_client client(accountInfo.restUrl, config);
             http_request request(methods::GET);
             string time = GetTimestamp();
             string sign = get_signature_rest(time, "GET", accountUrl.to_string(), "");
@@ -157,7 +157,7 @@ bool OkxClient::QueryPosition(vector<okx::OkxPosition>& vPosition, vector<string
         try {
             http_client_config config;
             config.set_timeout(utility::seconds(5));
-            http_client client(baseUrl, config);
+            http_client client(accountInfo.restUrl, config);
             http_request request(methods::GET);
             string time = GetTimestamp();
             string sign = get_signature_rest(time, "GET", positionUrl.to_string(), "");
@@ -188,8 +188,8 @@ bool OkxClient::QueryPosition(vector<okx::OkxPosition>& vPosition, vector<string
             .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
                 json::value const &v = previousTask.get();
                 LOG_INFO("get position: %s", v.serialize().c_str());
-                if(v.has_field("data") && v.at("code").as_string()[0] == '0') {
-                    auto array = v.at("data").at(0).at("details").as_array();
+                if(v.has_field("data") && v.at("code").as_string()[0] == '0'){
+                    auto array = v.at("data").as_array();
                     for(auto &it : array) {
                         okx::OkxPosition position;
                         if (it.has_field("instId")) {
@@ -297,7 +297,7 @@ bool OkxClient::QueryOpenOrder(vector<okx::OkxOrder>& vOpenOrder, vector<string>
         try {
             http_client_config config;
             config.set_timeout(utility::seconds(5));
-            http_client client(baseUrl, config);
+            http_client client(accountInfo.restUrl, config);
             http_request request(methods::GET);
             string time = GetTimestamp();
             string sign = get_signature_rest(time, "GET", openOrderUrl.to_string(), "");
@@ -328,8 +328,8 @@ bool OkxClient::QueryOpenOrder(vector<okx::OkxOrder>& vOpenOrder, vector<string>
             .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
                 json::value const &v = previousTask.get();
                 LOG_INFO("get open order: %s", v.serialize().c_str());
-                if(v.has_field("data") && v.at("code").as_string()[0] == '0') {
-                    auto array = v.at("data").at(0).at("details").as_array();
+                if(v.has_field("data") && v.at("code").as_string()[0] == '0'){
+                    auto array = v.at("data").as_array();
                     for(auto &it : array) {
                         okx::OkxOrder order;
                         if (it.has_field("instId")) {
