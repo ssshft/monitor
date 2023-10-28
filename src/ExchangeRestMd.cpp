@@ -539,14 +539,14 @@ Depth ExchangeRestMd::GetOkxDepth(string originInstId, string instType) {
                         if (arr.has_field("bidPx")) {
                             bidPrice = stod(arr.at("bidPx").as_string());
                         }
-                        if (arr.has_field("bidPx")) {
-                            bidVolume = stod(arr.at("bidPx").as_string());
+                        if (arr.has_field("bidSz")) {
+                            bidVolume = stod(arr.at("bidSz").as_string());
                         }
-                        if (arr.has_field("bidPx")) {
-                            askPrice = stod(arr.at("bidPx").as_string());
+                        if (arr.has_field("askPx")) {
+                            askPrice = stod(arr.at("askPx").as_string());
                         }
-                        if (arr.has_field("bidPx")) {
-                            askVolume = stod(arr.at("bidPx").as_string());
+                        if (arr.has_field("askSz")) {
+                            askVolume = stod(arr.at("askSz").as_string());
                         }
                     }
                 }  
