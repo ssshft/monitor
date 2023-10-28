@@ -7,6 +7,7 @@
 #include "BinanceSystemMgr.h"
 #include "GateioAdapterMgr.h"
 #include "BybitAdapterMgr.h"
+#include "OkxAdapterMgr.h"
 
 MdMonitor::MdMonitor() {
     vCurrentChannel.clear();
