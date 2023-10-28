@@ -85,7 +85,6 @@ void MdMonitor::Subscribe() {
     for (auto iter = sInstrumentAdapter.begin(); iter != sInstrumentAdapter.end(); ++iter) {
         string instKey = *iter;
         string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
-        std::cout << "key: " << key << " instKey: " << instKey << std::endl;
         if (key.length() > 0) {
             vInstrumentKeys.push_back(key);
         }

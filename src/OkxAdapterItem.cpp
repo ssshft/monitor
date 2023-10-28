@@ -54,16 +54,16 @@ void OkxAdapterItem::UpdateAccountInfo() {
 set<string> OkxAdapterItem::GetInstrumentList() {
     set<string> s;
     if (baseAsset != "USDT") {
-        string instrumentKey = "OKX|" + baseAsset + "_USDT" + "|SPOT";
+        string instrumentKey = "OKX|" + baseAsset + "-USDT" + "|SPOT";
         s.insert(instrumentKey);
     }
 
     for (size_t i = 0; i < vAsset.size(); ++i) {
         string asset = vAsset[i].ccy;
         if (asset != baseAsset && asset != "USDT") {
-            string instrumentKey = "OKX|" + asset + "_" + baseAsset + "|SPOT";
+            string instrumentKey = "OKX|" + asset + "-" + baseAsset + "|SPOT";
             s.insert(instrumentKey);
-            instrumentKey = "OKX|" + asset + "_USDT" + "|SPOT";
+            instrumentKey = "OKX|" + asset + "-USDT" + "|SPOT";
             s.insert(instrumentKey);
         }
     }
