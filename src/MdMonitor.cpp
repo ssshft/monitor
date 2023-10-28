@@ -73,10 +73,12 @@ void MdMonitor::Subscribe() {
     //set<string> sInstrumentSystem = BinanceSystemMgr::GetInstance().GetInstrumentList();
     set<string> sInstrumentGateioAdapter = GateioAdapterMgr::GetInstance().GetInstrumentList();
     set<string> sInstrumentBybitAdapter = BybitAdapterMgr::GetInstance().GetInstrumentList();
+    set<string> sInstrumentOkxAdapter = OkxAdapterMgr::GetInstance().GetInstrumentList();
 
     //sInstrumentAdapter.insert(sInstrumentSystem.begin(), sInstrumentSystem.end());
     sInstrumentAdapter.insert(sInstrumentGateioAdapter.begin(), sInstrumentGateioAdapter.end());
     sInstrumentAdapter.insert(sInstrumentBybitAdapter.begin(), sInstrumentBybitAdapter.end());
+    sInstrumentAdapter.insert(sInstrumentOkxAdapter.begin(), sInstrumentOkxAdapter.end());
 
     vector<string> vInstrumentKeys;
     for (auto iter = sInstrumentAdapter.begin(); iter != sInstrumentAdapter.end(); ++iter) {
