@@ -50,7 +50,7 @@ bool GateioCrossMargin::QueryAccount(vector<gateio::CrossMarginAsset>& vCrossMar
             })
             .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
                 json::value const& content = previousTask.get();
-                LOG_INFO("GateioCrossMargin QueryAccount AccountId: %d  content: %s", accountInfo.accountId, content.to_string().c_str());
+                //LOG_INFO("GateioCrossMargin QueryAccount AccountId: %d  content: %s", accountInfo.accountId, content.to_string().c_str());
                 if (content.has_field("balances")) {
                     auto& balances = content.at("balances").as_object();
                     for (auto iter = balances.begin(); iter != balances.end(); ++iter) {

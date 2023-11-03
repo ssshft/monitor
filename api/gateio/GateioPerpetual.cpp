@@ -113,7 +113,7 @@ bool GateioPerpetual::QuerySettleAccount(string settle, vector<gateio::FutureAss
             })
             .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
                 json::value const& content = previousTask.get();
-                LOG_INFO("GateioPerpetual QueryAccount AccountId: %d  content: %s", accountInfo.accountId, content.to_string().c_str());
+                //LOG_INFO("GateioPerpetual QueryAccount AccountId: %d  content: %s", accountInfo.accountId, content.to_string().c_str());
                 gateio::FutureAsset futureAsset;
 
                 if (content.has_field("currency")) {
@@ -233,7 +233,7 @@ bool GateioPerpetual::QuerySettlePosition(string settle, vector<gateio::FuturePo
             })
             .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
                 json::value const& content = previousTask.get();
-                LOG_INFO("GateioPerpetual QuerySettlePosition AccountId: %d  content: %s", accountInfo.accountId, content.to_string().c_str());
+                //LOG_INFO("GateioPerpetual QuerySettlePosition AccountId: %d  content: %s", accountInfo.accountId, content.to_string().c_str());
                 if (content.is_array()) {
                     auto positionArray = content.as_array();
                     for (auto& position: positionArray) {
