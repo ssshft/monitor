@@ -52,7 +52,7 @@ bool OkxClient::QueryAccount(vector<okx::OkxAsset>& vAsset, vector<string>& vErr
             })
             .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
                 json::value const &v = previousTask.get();
-                LOG_INFO("get_balance: %s", v.serialize().c_str());
+                //LOG_INFO("get_balance: %s", v.serialize().c_str());
                 if(v.has_field("data") && v.at("code").as_string()[0] == '0') {
                     auto array = v.at("data").at(0).at("details").as_array();
                     for(auto &it : array) {
@@ -187,7 +187,7 @@ bool OkxClient::QueryPosition(vector<okx::OkxPosition>& vPosition, vector<string
             })
             .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
                 json::value const &v = previousTask.get();
-                LOG_INFO("get position: %s", v.serialize().c_str());
+                //LOG_INFO("get position: %s", v.serialize().c_str());
                 if(v.has_field("data") && v.at("code").as_string()[0] == '0'){
                     auto array = v.at("data").as_array();
                     for(auto &it : array) {
@@ -327,7 +327,7 @@ bool OkxClient::QueryOpenOrder(vector<okx::OkxOrder>& vOpenOrder, vector<string>
             })
             .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
                 json::value const &v = previousTask.get();
-                LOG_INFO("get open order: %s", v.serialize().c_str());
+                //LOG_INFO("get open order: %s", v.serialize().c_str());
                 if(v.has_field("data") && v.at("code").as_string()[0] == '0'){
                     auto array = v.at("data").as_array();
                     for(auto &it : array) {
