@@ -1044,8 +1044,8 @@ void BinanceAccountItem::UpdateByOkxAdapter() {
                 asset.asset = vAsset[i].ccy;
                 asset.positionValueD = positionValue;
                 asset.totalAmountD = vAsset[i].cashBal;
-                //asset.floatAmountD = floatAmount;
-                asset.floatAmountD = vAsset[i].upl;
+                asset.floatAmountD = floatAmount;
+                // asset.floatAmountD = vAsset[i].upl;
                 asset.marginAmountD = vAsset[i].availableEq;
                 asset.frozenMarginAmountD = vAsset[i].frozenBal;
                 asset.netAmountD = asset.totalAmountD + asset.floatAmountD;
@@ -4020,7 +4020,7 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
             double exposureU = riskInfo.riskExposureD;
             double price = 0.0;
             if (baseAsset != "USDT" && baseAsset != "USD") {
-                if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT") {
+                if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
                     price = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
                 } else if (exchangeStr == "COINBASE") {
                     price = CoinbaseMdMgr::GetInstance().GetAssetPrice(baseAsset);
@@ -4161,7 +4161,7 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
             double netValueU = riskInfo.netValueD;
             if (baseAsset != "USDT" && baseAsset != "USD") {
                 double price = 0.0;
-                if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT") {
+                if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
                     price = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
                 } else if (exchangeStr == "COINBASE") {
                     price = CoinbaseMdMgr::GetInstance().GetAssetPrice(baseAsset);
