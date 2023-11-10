@@ -3988,7 +3988,7 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
             if (reachAlarm) {
                 stringstream ss;
                 string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
-                ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.alarm << " 当前riskexposure=" << riskInfo.riskExposureD;
+                ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.alarm << " 当前riskexposure=" << riskInfo.riskExposureD << " symbol:" << maxRiskExposureAssetD;
 
                 string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
                 MsgCard msgCard;
@@ -4002,7 +4002,7 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
             } else if (reachWarning) {
                 stringstream ss;
                 string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
-                ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.warning << " 当前riskexposure=" << riskInfo.riskExposureD;
+                ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.warning << " 当前riskexposure=" << riskInfo.riskExposureD << " symbol:" << maxRiskExposureAssetD;
 
                 string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
                 MsgCard msgCard;
@@ -4044,7 +4044,7 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
                 if (reachAlarm) {
                     stringstream ss;
                     string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
-                    ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.ualarm << " 当前riskexposure(换成u)=" << exposureU;
+                    ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.ualarm << " 当前riskexposure(换成u)=" << exposureU << " symbol:" << maxRiskExposureAssetD;
 
                     string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
                     MsgCard msgCard;
@@ -4058,7 +4058,7 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
                 } else if (reachWarning) {
                     stringstream ss;
                     string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
-                    ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.uwarning << " 当前riskexposure(换成u)=" << exposureU;
+                    ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.uwarning << " 当前riskexposure(换成u)=" << exposureU << " symbol:" << maxRiskExposureAssetD;
 
                     string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
                     MsgCard msgCard;
