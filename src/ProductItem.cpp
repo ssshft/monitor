@@ -218,6 +218,7 @@ void ProductItem::CalculateRiskInfo() {
         LOG_INFO("Exposure: %s", ss.str().c_str()); 
 
         if (fabs(value) > fabs(riskExposureD)) { // exposureAmountD 相加 然后 * price
+            maxRiskExposureAssetD = iter->first;
             riskExposureD = value;
         }
 
@@ -318,7 +319,7 @@ vector<MsgCard> ProductItem::GetAlarmMsg() {
             if (reachAlarm) {
                 stringstream ss;
                 string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
-                ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.alarm << " 当前riskexposure=" << riskInfo.riskExposureD;
+                ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.alarm << " 当前riskexposure=" << riskInfo.riskExposureD << " symbol:" << maxRiskExposureAssetD;
 
                 MsgCard msgCard;
                 msgCard.name = name;
@@ -331,7 +332,7 @@ vector<MsgCard> ProductItem::GetAlarmMsg() {
             } else if (reachWarning) {
                 stringstream ss;
                 string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
-                ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.warning << " 当前riskexposure=" << riskInfo.riskExposureD;
+                ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.warning << " 当前riskexposure=" << riskInfo.riskExposureD << " symbol:" << maxRiskExposureAssetD;
 
                 MsgCard msgCard;
                 msgCard.name = name;

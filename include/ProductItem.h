@@ -31,6 +31,7 @@ private:
     bool adapterQuery;
     string exchangeStr;
     set<string> sSymbolPriceZero;
+    string maxRiskExposureAssetD;
 
     unordered_map<string, int64_t> mFundingRateTime;
 };
