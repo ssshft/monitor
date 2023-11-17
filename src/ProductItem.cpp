@@ -198,6 +198,9 @@ void ProductItem::CalculateRiskInfo() {
             price = 1;
         } else {
             price = BinanceMdMgr::GetInstance().GetAssetPrice(iter->first, "GATEIO");
+            if (price <= 0.0000000001) {
+                price = BinanceMdMgr::GetInstance().GetAssetPrice(iter->first, "BINANCE");
+            }
         }
         
         double priceBaseAsset = 1;
@@ -205,6 +208,9 @@ void ProductItem::CalculateRiskInfo() {
             priceBaseAsset = 1;
         } else {
             priceBaseAsset = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, "GATEIO");
+            if (price <= 0.0000000001) {
+                price = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, "BINANCE");
+            }
         }
         
         double amount = iter->second.exposureAmountD;
