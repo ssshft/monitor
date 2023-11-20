@@ -214,6 +214,12 @@ void MonitorConfig::LoadAlarmConfig() {
             riskExposureThreshold.ualarm = itemRiskExposure.get<double>("ualarm", -1);
             riskExposureThreshold.totalExposureWarning = itemRiskExposure.get<double>("totalexposurewarning", -1);
             riskExposureThreshold.totalExposureAlarm = itemRiskExposure.get<double>("totalexposurealarm", -1);
+            string noWarningAsset = itemRiskExposure.get<string>("nowarningasset", "");
+            vector<string> v;
+            SplitString(noWarningAsset, ",", v);
+            for (size_t k = 0; k < v.size(); k++) {
+                riskExposureThreshold.sNoWarningAsset.insert(v[k]);
+            }
             int accountId = vAccountId[i - 1];
             mAlarmInfo[accountId].riskExposureThreshold = riskExposureThreshold;
         }

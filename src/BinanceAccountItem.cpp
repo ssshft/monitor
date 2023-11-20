@@ -1862,6 +1862,11 @@ void BinanceAccountItem::CalculateRiskInfo() {
     }
 
     for (auto iter = mExposureUnion.begin(); iter != mExposureUnion.end(); ++iter) {
+        auto it = alarmInfo.riskExposureThreshold.sNoWarningAsset.find(iter->first);
+        if (it != alarmInfo.riskExposureThreshold.sNoWarningAsset.end()) {
+            continue;
+        }
+
         if (fabs(iter->second.exposureValueD) > fabs(riskExposureD)) {
             riskExposureD = iter->second.exposureValueD;
             maxRiskExposureAssetD = iter->first;

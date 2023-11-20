@@ -561,6 +561,7 @@ struct RiskExposureThreshold {
 	double ualarm{-1};
 	double totalExposureWarning{-1};
 	double totalExposureAlarm{-1};
+	set<string> sNoWarningAsset;
 };
 
 struct UnderwayOrderValueThreshold {
