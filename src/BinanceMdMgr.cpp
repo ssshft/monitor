@@ -63,6 +63,8 @@ void BinanceMdMgr::UpdateFromRest() {
 				mDepth[key] = dataArr;
 			}
 		}
+
+		usleep(100000);
 	}
 }
 
