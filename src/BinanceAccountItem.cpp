@@ -4458,9 +4458,9 @@ vector<MsgCard> BinanceAccountItem::GetOrderAlarmMsg() {
         int64_t updateTime = iter->second.updateTime;
         if (currentTime - updateTime <  5 * 60 * 1000) {
             if (iter->second.category == "twap") {
-                content += "自动换币 " + iter->second.toStr();
+                content += "自动换币 " + iter->second.toString();
             } else if (iter->second.category == "adl") {
-                content += "ADL " + iter->second.toStr();
+                content += "ADL " + iter->second.toString();
             }
         }
     }
