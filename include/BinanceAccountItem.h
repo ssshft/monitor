@@ -53,7 +53,7 @@ public:
     vector<MsgCard> GetFundingRateAlarmMsg();
     MsgCard GetLiquidationPriceAlarmMsg(igmonitor::Position& position);
     vector<MsgCard> GetPositionLiquidationPriceAlarmMsg();
-    vector<MsgCard> BinanceAccountItem::GetOrderAlarmMsg();
+    vector<MsgCard> GetOrderAlarmMsg();
     
 private:
     int customerId;
