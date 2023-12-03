@@ -17,6 +17,7 @@ public:
     vector<okx::OkxAsset>& GetAsset();
     vector<okx::OkxPosition>& GetPosition();
     vector<okx::OkxOrder>& GetOpenOrder();
+    vector<okx::OkxOrder>& GetOrder();
     double GetPositionValue(string asset);
     double GetFloatAmount(string asset);
     void GetLongShortFrozenPosition(string symbol, double longFrozenPos, double shortFrozenPos);
@@ -31,6 +32,7 @@ private:
     vector<okx::OkxAsset> vAsset;
     vector<okx::OkxPosition> vPosition;
     vector<okx::OkxOrder> vOpenOrder;
+    vector<okx::OkxOrder> vOrder;
     string baseAsset;
     int64_t updateTime;
     bool query;

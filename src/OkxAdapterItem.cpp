@@ -31,6 +31,7 @@ void OkxAdapterItem::UpdateAccountInfo() {
         vAsset.clear();
         vPosition.clear();
         vOpenOrder.clear();
+        vOrder.clear();
 
         vector<string> vAssetErrMsg;
         bool queryAccount = okxClient->QueryAccount(vAsset, vAssetErrMsg);
@@ -46,6 +47,9 @@ void OkxAdapterItem::UpdateAccountInfo() {
         bool queryOpenOrder = okxClient->QueryOpenOrder(vOpenOrder, vOpenOrderErrMsg);
         query = query && queryOpenOrder;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vOpenOrderErrMsg.begin(), vOpenOrderErrMsg.end());
+
+        vector<string> vErr;
+        okxClient->QueryOrder(vOrder, vErr);
     }
 
     updateTime = GetCurrentTimeUs();
@@ -85,6 +89,10 @@ vector<okx::OkxPosition>& OkxAdapterItem::GetPosition() {
 
 vector<okx::OkxOrder>& OkxAdapterItem::GetOpenOrder() {
     return vOpenOrder;
+}
+
+vector<okx::OkxOrder>& OkxAdapterItem::GetOrder() {
+    return vOrder;
 }
 
 double OkxAdapterItem::GetPositionValue(string asset) {

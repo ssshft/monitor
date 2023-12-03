@@ -22,6 +22,8 @@ public:
     bool QueryAccount(vector<okx::OkxAsset>& vAsset, vector<string>& vErrorMsg);
 	bool QueryPosition(vector<okx::OkxPosition>& vPosition, vector<string>& vErrorMsg);
 	bool QueryOpenOrder(vector<okx::OkxOrder>& vOpenOrder, vector<string>& vErrorMsg);
+    bool QueryOrder(vector<okx::OkxOrder>& vOrder, vector<string>& vErrorMsg);
+    bool QueryOrder(vector<okx::OkxOrder>& vOrder, vector<string>& vErrorMsg, string instType);
 
     std::string base64_encode(unsigned char const * input, size_t len);
     string base64_encode(std::string const & input);
@@ -38,5 +40,6 @@ private:
 	web::uri accountUrl;
     web::uri positionUrl;
 	web::uri openOrderUrl;
+    web::uri historyOrderUrl;
 	AccountInfo accountInfo;
 };

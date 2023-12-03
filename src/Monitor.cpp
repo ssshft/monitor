@@ -131,28 +131,32 @@ void SendAccountAlarmMsg() {
             for (size_t j = 0; j < vAlarmMsg.size(); ++j) {
                 MsgCard msg = vAlarmMsg[j];
                 if (msg.title != "QueryAccount") {
-                    // need alarm twice will send alarm msg
-                    string key = "";
-                    if (msg.name.length() > 0) {
-                        key = msg.name + "_" + msg.title;
+                    if (msg.title == "TWAP-ADL") {
+                        LarkRebot::GetInstance().SendLarkMsg(msg, accountUrl);
                     } else {
-                        key = to_string(msg.accountId) + "_" + msg.title;
-                    }
+                        // need alarm twice will send alarm msg
+                        string key = "";
+                        if (msg.name.length() > 0) {
+                            key = msg.name + "_" + msg.title;
+                        } else {
+                            key = to_string(msg.accountId) + "_" + msg.title;
+                        }
 
-                    auto it = mAccountAlarmSendTime.find(key);
-                    if (it != mAccountAlarmSendTime.end()) {
-                        if (currentTime - it->second > 6 * oneMinute) {
-                            mAccountAlarmSendTime[key] = currentTime;
-                            continue;
+                        auto it = mAccountAlarmSendTime.find(key);
+                        if (it != mAccountAlarmSendTime.end()) {
+                            if (currentTime - it->second > 6 * oneMinute) {
+                                mAccountAlarmSendTime[key] = currentTime;
+                                continue;
+                            } else {
+                                mAccountAlarmSendTime[key] = currentTime;
+                            } 
                         } else {
                             mAccountAlarmSendTime[key] = currentTime;
-                        } 
-                    } else {
-                        mAccountAlarmSendTime[key] = currentTime;
-                        continue;
+                            continue;
+                        }
+            
+                        LarkRebot::GetInstance().SendLarkMsg(msg, accountUrl);
                     }
-        
-                    LarkRebot::GetInstance().SendLarkMsg(msg, accountUrl);
                 } else {
                     LarkRebot::GetInstance().SendLarkMsg(msg, exchangeUrl);
                 }

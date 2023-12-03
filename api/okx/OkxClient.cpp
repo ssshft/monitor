@@ -6,6 +6,7 @@ OkxClient::OkxClient(AccountInfo& info) {
     accountUrl = "/api/v5/account/balance";
     positionUrl = "/api/v5/account/positions";
     openOrderUrl = "/api/v5/trade/orders-pending";
+    historyOrderUrl = "/api/v5/trade/orders-history";
     accountInfo = info;
 }
 
@@ -376,6 +377,10 @@ bool OkxClient::QueryOpenOrder(vector<okx::OkxOrder>& vOpenOrder, vector<string>
                             order.side = it.at("side").as_string();
                         }
 
+                        if (it.has_field("category")) {
+                            order.category = it.at("category").as_string();
+                        }
+
                         LOG_INFO("QueryOpenOrder AccountId: %d    order: %s", accountInfo.accountId, order.toString().c_str());
                         vOpenOrder.emplace_back(order);
                     }
@@ -402,6 +407,181 @@ bool OkxClient::QueryOpenOrder(vector<okx::OkxOrder>& vOpenOrder, vector<string>
             query = false;
             string errMsg = string("Okx QueryOpenOrder ") + string(e.what());
             LOG_INFO("QueryOpenOrder AccountId: %d   Okx Error: '%s' ", accountInfo.accountId, errMsg.c_str());
+            vErrorMsg.emplace_back(errMsg);
+        }
+
+        if (query) {
+            break;
+        }
+        usleep(1);
+        count++;
+    }
+    return query;
+}
+
+bool OkxClient::QueryOrder(vector<okx::OkxOrder>& vOrder, vector<string>& vErrorMsg) {
+    bool query = true;
+    vector<okx::OkxOrder> vSpotOrder;
+    vector<string> vSpotErr;
+    bool spotQuery = QueryOrder(vSpotOrder, vSpotErr, "SPOT");
+    vOrder.insert(vOrder.end(), vSpotOrder.begin(), vSpotOrder.end());
+    vErrorMsg.insert(vErrorMsg.end(), vSpotErr.begin(), vSpotErr.end());
+    query = query && spotQuery;
+
+    usleep(10);
+    vector<okx::OkxOrder> vSwapOrder;
+    vector<string> vSwapErr;
+    bool swapQuery = QueryOrder(vSwapOrder, vSwapErr, "SWAP");
+    vOrder.insert(vOrder.end(), vSwapOrder.begin(), vSwapOrder.end());
+    vErrorMsg.insert(vErrorMsg.end(), vSwapErr.begin(), vSwapErr.end());
+    query = query&& swapQuery;
+
+    return query;
+}
+
+bool OkxClient::QueryOrder(vector<okx::OkxOrder>& vOrder, vector<string>& vErrorMsg, string instType) {
+    int count = 0;
+    bool query = true;
+    while (count < 3) {
+        query = true;
+        vOrder.clear();
+        vErrorMsg.clear();
+        try {
+            http_client_config config;
+            config.set_timeout(utility::seconds(5));
+            http_client client(accountInfo.restUrl, config);
+            http_request request(methods::GET);
+            string time = GetTimestamp();
+
+            int64_t oneMinute = 60 * 1000;
+            int64_t currentTimeMs = gettickcount();
+            int64_t beginTime = currentTimeMs - 60 * oneMinute;
+            string beginTimeStr = to_string(beginTime);
+
+            string queryStr{"?instType="};
+            queryStr.append(instType);
+            // queryStr.append(instType).append("&");
+            // queryStr.append("begin=").append(beginTimeStr);
+
+            string path = historyOrderUrl.to_string() + queryStr;
+            uri_builder builder(path.c_str());
+            string sign = get_signature_rest(time, "GET", builder.to_string(), "");
+
+            request.headers().add("OK-ACCESS-KEY", accountInfo.apiKey);
+            request.headers().add("OK-ACCESS-TIMESTAMP", time);
+            request.headers().add("OK-ACCESS-SIGN", sign);
+            request.headers().add("OK-ACCESS-PASSPHRASE", accountInfo.passphrase);
+
+            request.set_request_uri(builder.to_string());
+            client.request(request)
+            .then([&](http_response response) -> pplx::task<json::value> {  // if the status is OK extract the body of the response into a JSON value
+                auto code = response.status_code();
+                if (code == status_codes::OK) {
+                    return response.extract_json();
+                } else if (code >= status_codes::BadRequest && code < status_codes::InternalError) {
+                    auto content_type = response.headers().content_type();
+                    if (content_type.find("application/json") >= 0) {
+                        return response.extract_json();
+                    }
+                }
+
+                LOG_INFO("QueryOrder AccountId: %d  OkxClient response: '%s' ", accountInfo.accountId, response.to_string().c_str());
+                // throw IGException(response.to_string().c_str(), code);
+                throw exception();
+                return pplx::task_from_result(json::value());  // return an empty JSON value
+            })
+            .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
+                json::value const &v = previousTask.get();
+                //LOG_INFO("get open order: %s", v.serialize().c_str());
+                if(v.has_field("data") && v.at("code").as_string()[0] == '0'){
+                    auto array = v.at("data").as_array();
+                    for(auto &it : array) {
+                        okx::OkxOrder order;
+                        if (it.has_field("instId")) {
+                            order.instId = it.at("instId").as_string();
+                        }
+
+                        if (it.has_field("instType")) {
+                            order.instType = it.at("instType").as_string();
+                        }
+
+                        if (it.has_field("sz")) {
+                            string sz = it.at("sz").as_string();
+                            if (sz != "") {
+                                order.sz = stod(sz);
+                            }
+                        }
+
+                        if (it.has_field("accFillSz")) {
+                            string accFillSz = it.at("accFillSz").as_string();
+                            if (accFillSz != "") {
+                                order.accFillSz = stod(accFillSz);
+                            }
+                        }
+
+                        if (it.has_field("px")) {
+                            string px = it.at("px").as_string();
+                            if (px != "") {
+                                order.px = stod(px);
+                            }
+                        }
+
+                        if (it.has_field("avgPx")) {
+                            string avgPx = it.at("avgPx").as_string();
+                            if (avgPx != "") {
+                                order.avgPx = stod(avgPx);
+                            }
+                        }
+
+                        if (it.has_field("state")) {
+                            order.state = it.at("state").as_string();
+                        }
+
+                        if (it.has_field("side")) {
+                            order.side = it.at("side").as_string();
+                        }
+
+                        if (it.has_field("category")) {
+                            order.category = it.at("category").as_string();
+                        }
+
+                        if (it.has_field("uTime")) {
+                            order.updateTime = stoll(it.at("uTime").as_string());
+                        }
+
+                        if (it.has_field("cTime")) {
+                            order.createTime = stoll(it.at("cTime").as_string());
+                        }
+
+                        LOG_INFO("QueryOrder AccountId: %d    order: %s", accountInfo.accountId, order.toString().c_str());
+
+                        if (order.category == "twap" || order.category == "adl") {
+                            vOrder.emplace_back(order);
+                        } 
+                    }
+                }
+
+                if(v.has_field("data") && v.at("code").as_string()[0] != '0') {
+                    query = false;
+                    stringstream ss;
+                    int code = stod(v.at("code").as_string());
+                    string msg = "";
+                    if (v.has_field("msg")) {
+                        msg = v.at("msg").as_string();
+                    }
+                    ss << "Okx QueryOrder code:" << code << " msg:" << msg;
+                    string errMsg = ss.str();
+                    LOG_INFO("QueryOrder AccountId: %d   Okx Error: '%s' ", accountInfo.accountId, errMsg.c_str());
+                    vErrorMsg.emplace_back(errMsg);
+                }
+                
+            })
+            .wait();
+        }
+        catch(exception& e) {
+            query = false;
+            string errMsg = string("Okx QueryOrder ") + string(e.what());
+            LOG_INFO("QueryOrder AccountId: %d   Okx Error: '%s' ", accountInfo.accountId, errMsg.c_str());
             vErrorMsg.emplace_back(errMsg);
         }
 

@@ -33,6 +33,7 @@ public:
     vector<MsgCard> GetPositionLiquidationPriceAlarmMsg();
     vector<igmonitor::RiskInfo> GetRiskInfo();
     vector<MsgCard> GetMarketStatusAlarmMsg();
+    vector<MsgCard> GetOrderAlarmMsg();
 
 private:
 	BinanceAccountMgr();

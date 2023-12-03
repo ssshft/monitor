@@ -53,6 +53,7 @@ public:
     vector<MsgCard> GetFundingRateAlarmMsg();
     MsgCard GetLiquidationPriceAlarmMsg(igmonitor::Position& position);
     vector<MsgCard> GetPositionLiquidationPriceAlarmMsg();
+    vector<MsgCard> BinanceAccountItem::GetOrderAlarmMsg();
     
 private:
     int customerId;
@@ -82,6 +83,7 @@ private:
     unordered_map<string, igmonitor::OpenOrder> mPerpetualOpenOrder;
     unordered_map<string, igmonitor::MarAsset> mMarAsset;
     unordered_map<string, igmonitor::Asset> mCrossMarAsset;
+    unordered_map<string, igmonitor::Order> mOrder;
     double totalMarginBalance;
     unordered_map<string, igmonitor::PositionFundingRate> mPositionFundingRate;
     igmonitor::RiskInfo riskInfo;

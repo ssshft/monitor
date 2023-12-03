@@ -1121,6 +1121,24 @@ void BinanceAccountItem::UpdateByOkxAdapter() {
             }
         }
 
+        vector<okx::OkxOrder>& vOrder = item->GetOrder();
+        for (size_t i = 0; i < vOrder.size(); ++i) {
+            igmonitor::Order order;
+            order.symbol = vOpenOrder[i].instId;
+            order.instType = vOpenOrder[i].instType;
+            order.volume = vOpenOrder[i].sz;
+            order.price = vOpenOrder[i].px;
+            order.filledVolume = vOpenOrder[i].accFillSz;
+            order.avgPrice = vOpenOrder[i].avgPx;
+            order.side = vOpenOrder[i].side;
+            order.status = vOpenOrder[i].state;
+            order.category = vOpenOrder[i].category;
+            order.updateTime = vOpenOrder[i].updateTime;
+            order.createTime = vOpenOrder[i].createTime;
+
+            string instKey = exchangeStr + "|" + order.symbol + "|" + order.instType;
+            mOrder[instKey] = order;
+        }
     }
 }
 
@@ -1192,6 +1210,7 @@ void BinanceAccountItem::Clear() {
     mExposure.clear();
     mPositionFundingRate.clear();
     vLoBo.clear();
+    mOrder.clear();
 }
 
 void BinanceAccountItem::CalculateTotalAsset() {
@@ -4425,5 +4444,36 @@ vector<MsgCard> BinanceAccountItem::GetPositionLiquidationPriceAlarmMsg() {
         }
     }
 
+    return v;
+}
+
+vector<MsgCard> BinanceAccountItem::GetOrderAlarmMsg() {
+    int64_t currentTime = gettickcount();
+    string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+    string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
+
+    vector<MsgCard> v;
+    string content = "";
+    for (auto iter = mOrder.begin(); iter != mOrder.end(); ++iter) {
+        int64_t updateTime = iter->second.updateTime;
+        if (currentTime - updateTime <  5 * 60 * 1000) {
+            if (iter->second.category == "twap") {
+                content += "自动换币 " + iter->second.toStr();
+            } else if (iter->second.category == "adl") {
+                content += "ADL " + iter->second.toStr();
+            }
+        }
+    }
+
+    if (content.length() > 0) {
+        MsgCard msgCard;
+        msgCard.accountId = customerId;
+        msgCard.templateId = 2;
+        msgCard.title = "TWAP-ADL";
+        msgCard.object = "账户：" + accountName;
+        msgCard.datetime = currentTimeStr;
+        msgCard.content = content;
+        v.emplace_back(msgCard);
+    }
     return v;
 }

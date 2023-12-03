@@ -51,10 +51,13 @@ namespace okx {
         double avgPx;
         string state;
         string side;
+        string category;
+        int64_t updateTime;
+        int64_t createTime;
 
         string toString() {
             stringstream ss;
-            ss << "instId:" << instId << " instType:" << instType << " sz:" << sz << " accFillSz:" << accFillSz << " px:" << px << " avgPx:" << avgPx << " state:" << state << " side:" << side;
+            ss << "instId:" << instId << " instType:" << instType << " sz:" << sz << " accFillSz:" << accFillSz << " px:" << px << " avgPx:" << avgPx << " state:" << state << " side:" << side << " category:" << category << " updateTime:" << updateTime << " createTime:" << createTime;
             return ss.str();
         }
     };

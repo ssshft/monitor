@@ -358,3 +358,12 @@ vector<MsgCard> BinanceAccountMgr::GetMarketStatusAlarmMsg() {
 
     return v;
 }
+
+vector<MsgCard> BinanceAccountMgr::GetOrderAlarmMsg() {
+    vector<MsgCard> v;
+    for (auto iter = mAccount.begin(); iter != mAccount.end(); ++iter) {
+        vector<MsgCard> vAlarmMsg = iter->second->GetOrderAlarmMsg();
+        v.insert(v.end(), vAlarmMsg.begin(), vAlarmMsg.end());
+    }
+    return v;
+}

@@ -444,6 +444,26 @@ namespace igmonitor {
 		double openQty{0.0};
 	};
 
+	struct Order {
+		string symbol{""};
+		string instType{""};
+		double volume{0.0};
+		double price{-1};
+		double filledVolume{0.0};
+		double avgPrice{-1};
+		string side{""};
+		string status{""};
+		string category{""};
+		int64_t updateTime{0};  // 毫秒
+		int64_t createTime{0};
+
+        string toString() {
+            stringstream ss;
+            ss << "symbol:" << symbol << " instType:" << instType << " volume:" << volume << " price:" << price << " filledVolume:" << filledVolume << " avgPrice:" << avgPrice << " side:" << side << " status:" << status << " category:" << category << " updateTime:" << updateTime << " createTime:" << createTime;
+            return ss.str();
+        }
+	};
+
 	struct TotalMarAsset {
     	double marginLevel;
     	double totalAssetOfBtc;
