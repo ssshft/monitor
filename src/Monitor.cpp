@@ -163,12 +163,12 @@ void SendAccountAlarmMsg() {
             }
 
 
-	        int64_t currentTime = GetCurrentTimeUs();
-            int64_t oneMinute = 60 * 1000 * 1000;
+	        // int64_t currentTime = GetCurrentTimeUs();
+            // int64_t oneMinute = 60 * 1000 * 1000;
             unordered_map<int, AccountVoiceCall>& mAccountVoiceCall = MonitorConfig::GetInstance().GetAccountVoiceCall();
             unordered_map<string, AccountVoiceCall>& mProductVoiceCall = MonitorConfig::GetInstance().GetProductVoiceCall();
             unordered_map<string, ReceiveGroupInfo>& mReceiveGroupInfo = MonitorConfig::GetInstance().GetReceiveGroupInfo();
-            vector<MsgCard> vAlarmMsg = AccountMonitor::GetInstance().GetAlarmMsg();
+            // vector<MsgCard> vAlarmMsg = AccountMonitor::GetInstance().GetAlarmMsg();
             auto iter = mReceiveGroupInfo.find("ACCOUNT");
             if (iter != mReceiveGroupInfo.end()) {
                 ReceiveGroupInfo receiveGroupInfo = iter->second;
