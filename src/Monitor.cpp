@@ -163,7 +163,6 @@ void SendAccountAlarmMsg() {
             }
 
 
-            /*
 	        int64_t currentTime = GetCurrentTimeUs();
             int64_t oneMinute = 60 * 1000 * 1000;
             unordered_map<int, AccountVoiceCall>& mAccountVoiceCall = MonitorConfig::GetInstance().GetAccountVoiceCall();
@@ -197,7 +196,7 @@ void SendAccountAlarmMsg() {
 			    	        continue;
 			            }
 			
-                        LarkRebot::GetInstance().SendGroupMsgCard(msg, receiveGroupInfo);
+                        //LarkRebot::GetInstance().SendGroupMsgCard(msg, receiveGroupInfo);
 
                         // voice call
                         if (msg.title == "Leverage" && msg.templateId == 3) {
@@ -257,7 +256,7 @@ void SendAccountAlarmMsg() {
                     }
                 }
             }
-
+            /*
             auto it = mReceiveGroupInfo.find("EXCHANGE");
             if (it != mReceiveGroupInfo.end()) {
                 ReceiveGroupInfo receiveGroupInfo = it->second;

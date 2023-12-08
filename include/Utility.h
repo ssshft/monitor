@@ -757,6 +757,17 @@ inline bool SplitString(string& strSource, char* cstrSegmentStopC, vector<string
 	return true;
 }
 
+inline string JoinString(vector<string>& strArray, string delim) {
+	string s = "";
+	for (size_t i = 0; i < strArray.size(); ++i) {
+		s += strArray[i];
+		if (i != strArray.size() - 1) {
+			s += delim;
+		}
+	}
+	return s;
+}
+
 inline string& ReplaceAll(string& src, const string& oldValue, const string& newValue) {
 	for (string::size_type pos(0); pos != string::npos; pos += newValue.length()) {
 		if ((pos = src.find(oldValue, pos)) != string::npos) {

@@ -8,7 +8,8 @@ LarkRebot::LarkRebot() {
 	voiceCallInterval = MonitorConfig::GetInstance().GetVoiceCallInterval();
 	groupUrl = url + "/messages/sendByGroup";
     voiceCallUrl = url + "/voice/call_feishu";
-	groupVoiceCallUrl = url + "/voice/call_feishu_group";
+	// groupVoiceCallUrl = url + "/voice/call_feishu_group";
+	groupVoiceCallUrl = url + "/send_phone_call";
 }
 
 LarkRebot::~LarkRebot() {
@@ -257,6 +258,8 @@ void LarkRebot::SendGroupVoiceCall(string msg, string groupId, vector<string>& v
     	web::http::http_request request(web::http::methods::POST);
 
     	web::json::value body;
+
+		/*
 		body["authorization"] = web::json::value::string(authorization);
 		body["group_id"] = web::json::value::string(groupId);
 		body["content"] = web::json::value::string(msg);
@@ -269,6 +272,11 @@ void LarkRebot::SendGroupVoiceCall(string msg, string groupId, vector<string>& v
 			}
     		body["user_ids"] = web::json::value::array(v);
 		}
+
+		*/
+
+		string userId = JoinString(vUserId, ",");
+		body["user_id"] = web::json::value::string(userId);
 
 
     	request.set_body(body.serialize(), "application/json; charset=UTF-8");
