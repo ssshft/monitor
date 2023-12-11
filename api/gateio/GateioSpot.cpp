@@ -66,7 +66,7 @@ bool GateioSpot::QueryAccount(vector<gateio::SpotAsset>& vSpotAsset, vector<stri
                         }
 
                         if ((spotAsset.available + spotAsset.locked) >= 0.0000000001) {
-                            spot.total = spotAsset.available + spotAsset.locked;
+                            spotAsset.total = spotAsset.available + spotAsset.locked;
                     	    LOG_INFO("QueryAccount AccountId: %d   GateioSpot asset: %s", accountInfo.accountId, spotAsset.toString().c_str());
                             vSpotAsset.emplace_back(spotAsset);
                         }
