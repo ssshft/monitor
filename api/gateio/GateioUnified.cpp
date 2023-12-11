@@ -1,15 +1,15 @@
-#include "GateioSpot.h"
+#include "GateioUnified.h"
 
 
-GateioSpot::GateioSpot(AccountInfo& info) {
-    accountUrl = "/api/v4/spot/accounts";
+GateioUnified::GateioUnified(AccountInfo& info) {
+    accountUrl = "/unified/accounts";
     accountInfo = info;
 }
 
-GateioSpot::~GateioSpot() {
+GateioUnified::~GateioUnified() {
 }
 
-bool GateioSpot::QueryAccount(vector<gateio::SpotAsset>& vSpotAsset, vector<string>& vErrorMsg) {
+bool GateioUnified::QueryAccount(vector<gateio::SpotAsset>& vSpotAsset, vector<string>& vErrorMsg) {
     int count = 0;
     bool query = true;
     while (count < 3) {
@@ -44,32 +44,25 @@ bool GateioSpot::QueryAccount(vector<gateio::SpotAsset>& vSpotAsset, vector<stri
                     return response.extract_json();
                 }
                 
-                LOG_INFO("GateioSpot QueryAccount response: '%s' ", response.to_string().c_str());
+                LOG_INFO("GateioUnified QueryAccount response: '%s' ", response.to_string().c_str());
                 throw exception();
                 return pplx::task_from_result(json::value());  // return an empty JSON value
             })
             .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
                 json::value const& content = previousTask.get();
-                if (content.is_array()) {
-                    auto& assetArray = content.as_array();
-                    for (auto& asset : assetArray) {
-                        gateio::SpotAsset spotAsset;
-                        if (asset.has_field("currency")) {
-                            string currency = asset.at("currency").as_string();
-                            spotAsset.currency = boost::to_upper_copy(currency);
-                        }
-                        if (asset.has_field("available")) {
-                            spotAsset.available = fabs(stod(asset.at("available").as_string()));
-                        }
-                        if (asset.has_field("locked")) {
-                            spotAsset.locked = fabs(stod(asset.at("locked").as_string()));
-                        }
-
-                        if ((spotAsset.available + spotAsset.locked) >= 0.0000000001) {
-                            spot.total = spotAsset.available + spotAsset.locked;
-                    	    LOG_INFO("QueryAccount AccountId: %d   GateioSpot asset: %s", accountInfo.accountId, spotAsset.toString().c_str());
-                            vSpotAsset.emplace_back(spotAsset);
-                        }
+                LOG_INFO("get_unified_account: %s", content.serialize().c_str());
+                
+                auto balances = content.at("balances").as_object();
+                for (auto iter = balances.begin(); iter != balances.end(); ++iter) {
+                    gateio::SpotAsset spotAsset;
+                    spotAsset.currency = iter->first;;
+                    spotAsset.total = stod(iter->second.at("equity").as_string());
+                    spotAsset.available = stod(iter->second.at("available").as_string());
+                    spotAsset.locked = fabs(stod(iter->second.at("freeze").as_string()));
+                   
+                    if (fabs(spotAsset.total) >= 0.0000000001) {
+                        LOG_INFO("QueryAccount AccountId: %d   GateioUnified asset: %s", accountInfo.accountId, spotAsset.toString().c_str());
+                        vSpotAsset.emplace_back(spotAsset);
                     }
                 }
 
@@ -85,9 +78,9 @@ bool GateioSpot::QueryAccount(vector<gateio::SpotAsset>& vSpotAsset, vector<stri
                             msg = content.at("label").as_string();
                         }
                     }
-                    ss << "GateioSpot QueryAccount msg:" << msg;
+                    ss << "GateioUnified QueryAccount msg:" << msg;
                     string errMsg = ss.str();
-                    LOG_INFO("QueryAccount AccountId: %d   GateioSpot Error: '%s' ", accountInfo.accountId, errMsg.c_str());
+                    LOG_INFO("QueryAccount AccountId: %d   GateioUnified Error: '%s' ", accountInfo.accountId, errMsg.c_str());
                     vErrorMsg.emplace_back(errMsg);
                 }      
 
@@ -95,8 +88,8 @@ bool GateioSpot::QueryAccount(vector<gateio::SpotAsset>& vSpotAsset, vector<stri
             .wait();
         } catch(exception& e) {
             query = false;
-            string errMsg = string("GateioSpot QueryAccount") + string(e.what());
-            LOG_INFO("QueryAccount AccountId: %d   GateioSpot Error: '%s' ", accountInfo.accountId, errMsg.c_str());
+            string errMsg = string("GateioUnified QueryAccount") + string(e.what());
+            LOG_INFO("QueryAccount AccountId: %d   GateioUnified Error: '%s' ", accountInfo.accountId, errMsg.c_str());
             vErrorMsg.emplace_back(errMsg);
         }
 

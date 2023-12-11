@@ -8,11 +8,12 @@ using namespace std;
 namespace gateio {
     struct SpotAsset {
         string currency{""};
+        double total{0.0};
         double available{0.0};
         double locked{0.0};
 	    string toString() {
 	        stringstream ss;
-	        ss << "currency:" << currency << " available:" << available << " locked:" << locked;
+	        ss << "currency:" << currency << " total:" << total << " available:" << available << " locked:" << locked;
 	        return ss.str();
 	    }
     };

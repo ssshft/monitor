@@ -694,7 +694,8 @@ void BinanceAccountItem::UpdateByGateioAdapter() {
                 igmonitor::Asset asset;
                 asset.asset = vSpotAsset[i].currency;
                 asset.frozenAmountD = vSpotAsset[i].locked;
-                asset.totalAmountD = vSpotAsset[i].available + vSpotAsset[i].locked;
+                // asset.totalAmountD = vSpotAsset[i].available + vSpotAsset[i].locked;
+                asset.totalAmountD = vSpotAsset[i].total;
                 asset.netAmountD = asset.totalAmountD;
                 asset.availableAmountD = vSpotAsset[i].available;
                 asset.underwayOrderValueD = GetUnderwayOrderValue(asset.asset, asset.frozenAmountD);

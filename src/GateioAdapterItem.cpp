@@ -9,12 +9,14 @@ GateioAdapterItem::GateioAdapterItem(AccountInfo info) {
     gateioDelivery = new GateioDelivery(accountInfo);
     gateioPerpetual = new GateioPerpetual(accountInfo);
     gateioCrossMargin = new GateioCrossMargin(accountInfo);
+    gateioUnified = new GateioUnified(accountInfo);
     baseAsset = accountInfo.baseAsset;
     updateTime = 0;
     spotEnable = false;
     deliveryEnable = false;
     perpetualEnable = false;
     crossMarginEnable = false;
+    unifiedEnable = false;
     string apiPermission = accountInfo.apiPermission;
     vector<string> v;
     SplitString(apiPermission, ",", v);
@@ -32,6 +34,8 @@ GateioAdapterItem::GateioAdapterItem(AccountInfo info) {
             perpetualEnable = true;
         } else if (v[i] == "cross_margin") {
             crossMarginEnable = true;
+        } else if (v[i] == "unified") {
+            unifiedEnable = true;
         }
     }
 }
@@ -53,6 +57,10 @@ GateioAdapterItem::~GateioAdapterItem() {
         delete gateioCrossMargin;
         gateioCrossMargin = nullptr;
     }
+    if (gateioUnified) {
+        delete gateioUnified;
+        gateioUnified = nullptr;
+    }
 
     vSpotAsset.clear();
     vDeliveryAsset.clear();
@@ -68,11 +76,13 @@ void GateioAdapterItem::UpdateAccountInfo() {
     vQueryErrMsg.clear();
 
     if (spotEnable && gateioSpot) {
-        vSpotAsset.clear();
-        vector<string> vSpotErrMsg;
-        bool spotQueryAccount = gateioSpot->QueryAccount(vSpotAsset, vSpotErrMsg);
-        query = query && spotQueryAccount;
-        vQueryErrMsg.insert(vQueryErrMsg.end(), vSpotErrMsg.begin(), vSpotErrMsg.end());
+        if (!unifiedEnable) {  // 若是统一账户，则账户信息查询只使用统一账户的查询接口
+            vSpotAsset.clear();
+            vector<string> vSpotErrMsg;
+            bool spotQueryAccount = gateioSpot->QueryAccount(vSpotAsset, vSpotErrMsg);
+            query = query && spotQueryAccount;
+            vQueryErrMsg.insert(vQueryErrMsg.end(), vSpotErrMsg.begin(), vSpotErrMsg.end());
+        }
     }
 
     if (deliveryEnable && gateioDelivery) {
@@ -80,10 +90,12 @@ void GateioAdapterItem::UpdateAccountInfo() {
         vDeliveryPosition.clear();
         vDeliveryOpenOrder.clear();
 
-        vector<string> vDeliveryAssetErrMsg;
-        bool deliveryQueryAccount = gateioDelivery->QueryAccount(vDeliveryAsset, vDeliveryAssetErrMsg);
-        query = query && deliveryQueryAccount;
-        vQueryErrMsg.insert(vQueryErrMsg.end(), vDeliveryAssetErrMsg.begin(), vDeliveryAssetErrMsg.end());
+        if (!unifiedEnable) {  // 若是统一账户，则账户信息查询只使用统一账户的查询接口
+            vector<string> vDeliveryAssetErrMsg;
+            bool deliveryQueryAccount = gateioDelivery->QueryAccount(vDeliveryAsset, vDeliveryAssetErrMsg);
+            query = query && deliveryQueryAccount;
+            vQueryErrMsg.insert(vQueryErrMsg.end(), vDeliveryAssetErrMsg.begin(), vDeliveryAssetErrMsg.end());
+        }
 
         vector<string> vDeliveryPositionErrMsg;
         bool deliveryQueryPosition = gateioDelivery->QueryPosition(vDeliveryPosition, vDeliveryPositionErrMsg);
@@ -102,10 +114,12 @@ void GateioAdapterItem::UpdateAccountInfo() {
         vPerpetualPosition.clear();
         vPerpetualOpenOrder.clear();
 
-        vector<string> vPerpetualAssetErrMsg;
-        bool perpetualQueryAccount = gateioPerpetual->QueryAccount(vPerpetualAsset, vPerpetualAssetErrMsg);
-        query = query && perpetualQueryAccount;
-        vQueryErrMsg.insert(vQueryErrMsg.end(), vPerpetualAssetErrMsg.begin(), vPerpetualAssetErrMsg.end());
+        if (!unifiedEnable) {  // 若是统一账户，则账户信息查询只使用统一账户的查询接口
+            vector<string> vPerpetualAssetErrMsg;
+            bool perpetualQueryAccount = gateioPerpetual->QueryAccount(vPerpetualAsset, vPerpetualAssetErrMsg);
+            query = query && perpetualQueryAccount;
+            vQueryErrMsg.insert(vQueryErrMsg.end(), vPerpetualAssetErrMsg.begin(), vPerpetualAssetErrMsg.end());
+        }
 
         vector<string> vPerpetualPositionErrMsg;
         bool perpetualQueryPosition = gateioPerpetual->QueryPosition(vPerpetualPosition, vPerpetualPositionErrMsg);
@@ -126,6 +140,14 @@ void GateioAdapterItem::UpdateAccountInfo() {
         query = query && crossMarginQueryAccount;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vCrossMarginAssetErrMsg.begin(), vCrossMarginAssetErrMsg.end());
 
+    }
+
+    if (unifiedEnable && gateioUnified) {
+        vSpotAsset.clear();  // 统一账户暂时使用放到现货里
+        vector<string> vUnifiedErrMsg;
+        bool unifiedQueryAccount = gateioUnified->QueryAccount(vSpotAsset, vUnifiedErrMsg);
+        query = query && unifiedQueryAccount;
+        vQueryErrMsg.insert(vQueryErrMsg.end(), vUnifiedErrMsg.begin(), vUnifiedErrMsg.end()); 
     }
     updateTime = GetCurrentTimeUs();
 }

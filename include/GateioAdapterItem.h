@@ -5,6 +5,7 @@
 #include "GateioDelivery.h"
 #include "GateioPerpetual.h"
 #include "GateioCrossMargin.h"
+#include "GateioUnified.h"
 #include <map>
 #include <set>
 
@@ -44,10 +45,12 @@ private:
     GateioDelivery* gateioDelivery;
     GateioPerpetual* gateioPerpetual;
     GateioCrossMargin* gateioCrossMargin;
+    GateioUnified* gateioUnified;
     bool spotEnable;
     bool deliveryEnable;
     bool perpetualEnable;
     bool crossMarginEnable;
+    bool unifiedEnable;
     vector<gateio::SpotAsset> vSpotAsset;
     vector<gateio::FutureAsset> vDeliveryAsset;
     vector<gateio::FuturePosition> vDeliveryPosition;
