@@ -897,14 +897,14 @@ void BinanceAccountItem::UpdateByGateioAdapter() {
             order.instType = "FUTURES";
             order.volume = fabs(vPerpetualOrder[i].size);
             order.price = vPerpetualOrder[i].price;
-            order.filledVolume = vPerpetualOrder[i].accFillSz;
+            order.filledVolume = fabs(vPerpetualOrder[i].size - vPerpetualOrder[i].left);
             order.avgPrice = vPerpetualOrder[i].fillPrice;
             order.side = vPerpetualOrder[i].size >= 0 ? "BUY" : "SELL";
             order.status = vPerpetualOrder[i].status;
             if (vPerpetualOrder[i].finishAs == "auto_deleveraged") {
                 order.category = "adl";
             }
-            order.updateTime = vPerpetualOrder[i].updateTime * 1000;
+            order.updateTime = vPerpetualOrder[i].finishTime * 1000;
             order.createTime = vPerpetualOrder[i].createTime * 1000;
 
             string instKey = exchangeStr + "|" + order.symbol + "|FUTURES";
