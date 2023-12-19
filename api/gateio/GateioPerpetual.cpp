@@ -71,6 +71,26 @@ bool GateioPerpetual::QueryOpenOrder(vector<gateio::FutureOrder>& vFutureOrder, 
     return query;
 }
 
+bool GateioPerpetual::QueryOrder(vector<gateio::FutureOrder>& vFutureOrder, vector<string>& vErrorMsg) {
+    bool query = true;
+    vector<string> vSettle;
+    if (accountInfo.unified == 1) {
+        vSettle.push_back("usdt");
+    } else {
+        vSettle.push_back("usdt");
+        vSettle.push_back("btc");
+    }
+    for (size_t i = 0; i < vSettle.size(); ++i) {
+        vector<gateio::FutureOrder> vSettleOrder;
+        vector<string> vErr;
+        bool querySettleOpenOrder = QuerySettleOrder(vSettle[i], vSettleOrder, vErr);
+        query = query && querySettleOpenOrder;
+        vFutureOrder.insert(vFutureOrder.end(), vSettleOrder.begin(), vSettleOrder.end());
+        vErrorMsg.insert(vErrorMsg.end(), vErr.begin(), vErr.end());
+    }
+    return query;
+}
+
 bool GateioPerpetual::QuerySettleAccount(string settle, vector<gateio::FutureAsset>& vFutureAsset, vector<string>& vErrorMsg) {
     int count = 0;
     bool query = true;
@@ -395,8 +415,11 @@ bool GateioPerpetual::QuerySettleOpenOrder(string settle, vector<gateio::FutureO
                         if (openOrder.has_field("contract")) {
                             futureOrder.contract = openOrder.at("contract").as_string();
                         }
-                        if (openOrder.has_field("createTime")) {
+                        if (openOrder.has_field("create_time")) {
                             futureOrder.createTime = openOrder.at("create_time").as_number().to_int64();
+                        }
+                        if (openOrder.has_field("finish_time")) {
+                            futureOrder.finishTime = openOrder.at("finish_time").as_number().to_int64();
                         }
                         if (openOrder.has_field("size")) {
                             futureOrder.size = openOrder.at("size").as_integer();
@@ -454,6 +477,142 @@ bool GateioPerpetual::QuerySettleOpenOrder(string settle, vector<gateio::FutureO
             query = false;
             string errMsg = string("GateioPerpetual QueryOpenOrder ") + string(e.what());
             LOG_INFO("QueryOpenOrder AccountId: %d   GateioPerpetual Error: '%s' ", accountInfo.accountId, errMsg.c_str());
+            vErrorMsg.emplace_back(errMsg);
+        }
+
+        if (query) {
+            break;
+        }
+        usleep(1);
+        count++;
+    }
+    return query;
+}
+
+bool GateioPerpetual::QuerySettleOrder(string settle, vector<gateio::FutureOrder>& vFutureOrder, vector<string>& vErrorMsg) {
+    int count = 0;
+    bool query = true;
+    while (count < 3) {
+        query = true;
+        vFutureOrder.clear();
+        vErrorMsg.clear();
+
+        try {
+            http_client_config config;
+            config.set_timeout(utility::seconds(5));
+            http_client client(accountInfo.restUrl, config);
+            http_request request(methods::GET);
+            string orderSettleUrl = orderUrl + settle + "/orders_timerange";
+            uri_builder builder(orderSettleUrl);
+   
+            string hashStr = sha512("");
+            int64_t timestamp = gettickcount() / 1000;
+
+            string queryStr = builder.to_string();
+            string queryBody = "";
+            size_t pos = queryStr.find("?");
+            if (pos != string::npos) {
+                queryBody = queryStr.substr(pos + 1, queryStr.size());
+            }
+
+            stringstream ss;
+            ss << "GET" << "\n" << orderSettleUrl << "\n" << queryBody << "\n" << hashStr << "\n" << timestamp;
+
+            string message = ss.str();
+            string signature = getSignatureGate(message, accountInfo.secretKey);
+            request.headers().add("Accept", "application/json");  
+            request.headers().add("Content-Type", "application/json");  
+            request.headers().add("SIGN", signature);  
+            request.headers().add("Timestamp", timestamp);
+            request.headers().add("KEY", accountInfo.apiKey);
+            
+
+            request.set_request_uri(builder.to_string());
+            client.request(request)
+            .then([](http_response response) -> pplx::task<json::value> {  // if the status is OK extract the body of the response into a JSON value
+                auto code = response.status_code();
+                if (code == status_codes::OK || code == status_codes::BadRequest || code == status_codes::NotFound) {  // || code == status_codes::TooManyRequests || code == status_codes::Unauthorized
+                    return response.extract_json();
+                }
+                
+                LOG_INFO("GateioPerpetual QueryOrder response: '%s' ", response.to_string().c_str());
+                throw exception();
+                return pplx::task_from_result(json::value());  // return an empty JSON value
+            })
+            .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
+                json::value const& content = previousTask.get();
+                if (content.is_array()) {
+                    auto openOrderArray = content.as_array();
+                    for (auto& openOrder: openOrderArray) {
+                        gateio::FutureOrder futureOrder;
+                        if (openOrder.has_field("contract")) {
+                            futureOrder.contract = openOrder.at("contract").as_string();
+                        }
+                        if (openOrder.has_field("create_time")) {
+                            futureOrder.createTime = openOrder.at("create_time").as_number().to_int64();
+                        }
+                        if (openOrder.has_field("finish_time")) {
+                            futureOrder.finishTime = openOrder.at("finish_time").as_number().to_int64();
+                        }
+                        if (openOrder.has_field("size")) {
+                            futureOrder.size = openOrder.at("size").as_integer();
+                        }
+                        if (openOrder.has_field("left")) {
+                            futureOrder.left = openOrder.at("left").as_integer();
+                        }
+                        if (openOrder.has_field("price")) {
+                            futureOrder.price = stod(openOrder.at("price").as_string());
+                        }
+                        if (openOrder.has_field("fill_price")) {
+                            futureOrder.fillPrice = stod(openOrder.at("fill_price").as_string());
+                        }
+                        if (openOrder.has_field("mkfr")) {
+                            futureOrder.mkfr = stod(openOrder.at("mkfr").as_string());
+                        }
+                        if (openOrder.has_field("tkfr")) {
+                            futureOrder.tkfr = stod(openOrder.at("tkfr").as_string());
+                        }
+                        if (openOrder.has_field("status")) {
+                            futureOrder.status = openOrder.at("status").as_string();
+                        }
+                        if (openOrder.has_field("finishAs")) {
+                            futureOrder.finishAs = openOrder.at("finishAs").as_string();
+                        }
+
+            		    LOG_INFO("QueryOrder AccountId: %d   GateioPerpetual order: %s", accountInfo.accountId, futureOrder.toString().c_str());
+                        if (futureOrder.finishAs == "liquidated" || futureOrder.finishAs == "auto_deleveraged") {
+                            vFutureOrder.emplace_back(futureOrder);
+                        }
+                        
+                    }
+                }
+
+	        if (content.has_field("label")) {
+                    string label = content.at("label").as_string();
+		    if (label != "USER_NOT_FOUND") {
+                    	query = false;
+                    	stringstream ss;
+                    	string msg = "";
+                    	if (label.size() > 0) {
+                            if (content.has_field("message")) {
+                                msg = content.at("message").as_string();
+                            } else {
+                                msg = content.at("label").as_string();
+                            }
+                        }
+                        ss << "GateioPerpetual QueryOrder msg:" << msg;
+                        string errMsg = ss.str();
+                        LOG_INFO("QueryOrder AccountId: %d   GateioPerpetual Error: '%s' ", accountInfo.accountId, errMsg.c_str());
+                        vErrorMsg.emplace_back(errMsg);
+		    }
+                }
+
+            })
+            .wait();
+        } catch(exception& e) {
+            query = false;
+            string errMsg = string("GateioPerpetual QueryOrder ") + string(e.what());
+            LOG_INFO("QueryOrder AccountId: %d   GateioPerpetual Error: '%s' ", accountInfo.accountId, errMsg.c_str());
             vErrorMsg.emplace_back(errMsg);
         }
 

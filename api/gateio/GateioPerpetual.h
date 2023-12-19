@@ -20,9 +20,11 @@ public:
     bool QueryAccount(vector<gateio::FutureAsset>& vFutureAsset, vector<string>& vErrorMsg);
     bool QueryPosition(vector<gateio::FuturePosition>& vFuturePosition, vector<string>& vErrorMsg);
     bool QueryOpenOrder(vector<gateio::FutureOrder>& vFutureOrder, vector<string>& vErrorMsg);
+    bool QueryOrder(vector<gateio::FutureOrder>& vFutureOrder, vector<string>& vErrorMsg);
     bool QuerySettleAccount(string settle, vector<gateio::FutureAsset>& vFutureAsset, vector<string>& vErrorMsg);
     bool QuerySettlePosition(string settle, vector<gateio::FuturePosition>& vFuturePosition, vector<string>& vErrorMsg);
     bool QuerySettleOpenOrder(string settle, vector<gateio::FutureOrder>& vFutureOrder, vector<string>& vErrorMsg);
+    bool QuerySettleOrder(string settle, vector<gateio::FutureOrder>& vFutureOrder, vector<string>& vErrorMsg);
 
 private:
 	string accountUrl;

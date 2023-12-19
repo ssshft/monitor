@@ -890,6 +890,27 @@ void BinanceAccountItem::UpdateByGateioAdapter() {
             }
         }
 
+        vector<gateio::FutureOrder>& vPerpetualOrder = item->GetPerpetualOrder();
+        for (size_t i = 0; i < vPerpetualOrder.size(); ++i) {
+            igmonitor::Order order;
+            order.symbol = vPerpetualOrder[i].contract;
+            order.instType = "FUTURES";
+            order.volume = fabs(vPerpetualOrder[i].size);
+            order.price = vPerpetualOrder[i].price;
+            order.filledVolume = vPerpetualOrder[i].accFillSz;
+            order.avgPrice = vPerpetualOrder[i].fillPrice;
+            order.side = vPerpetualOrder[i].size >= 0 ? "BUY" : "SELL";
+            order.status = vPerpetualOrder[i].status;
+            if (vPerpetualOrder[i].finishAs == "auto_deleveraged") {
+                order.category = "adl";
+            }
+            order.updateTime = vPerpetualOrder[i].updateTime * 1000;
+            order.createTime = vPerpetualOrder[i].createTime * 1000;
+
+            string instKey = exchangeStr + "|" + order.symbol + "|FUTURES";
+            string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+            mOrder[key] = order;
+        }
 
         vector<gateio::CrossMarginAsset>& vCrossMarginAsset = item->GetCrossMarginAsset();
         for (size_t i = 0; i < vCrossMarginAsset.size(); ++i) {
@@ -4462,6 +4483,8 @@ vector<MsgCard> BinanceAccountItem::GetOrderAlarmMsg() {
                 content += "自动换币 " + iter->second.toString();
             } else if (iter->second.category == "adl") {
                 content += "ADL " + iter->second.toString();
+            } else if (iter->second.category == "liquidated") {
+                content += "强制减仓 " + iter->second.toString();
             }
         }
     }

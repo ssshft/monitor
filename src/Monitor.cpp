@@ -469,7 +469,7 @@ int main(int argc, char* argv[]) {
 int main(int argc, char* argv[]) {
     string currentTimeStr = CovertToUtcStr(GetCurrentTimeUs(), false);
     cout << currentTimeStr << " risk_monitor server executed..." << endl;
-    for(auto i = 0; i < argc; ++ i){
+    for(auto i = 0; i < argc; ++i){
         cout << currentTimeStr << " argv[" << i << "]:" << argv[i] << endl;
     }
     if (argc < 2) {

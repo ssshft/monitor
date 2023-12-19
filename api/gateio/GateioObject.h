@@ -102,6 +102,7 @@ namespace gateio {
     struct FutureOrder {
         string contract{""};
         int64_t createTime{0};
+        int64_t finishTime{0};
         int size;
         int left;
         double price;
@@ -113,7 +114,7 @@ namespace gateio {
 
 	string toString() {
 	    stringstream ss;
-	    ss << "contract:" << contract << " createTime:" << createTime << " size:" << size << " left:" << left << " price:" << price << " fillPrice:" << fillPrice << " mkfr:" << mkfr << " tkfr:" << tkfr << " status:" << status << " finishAs:" << finishAs;
+	    ss << "contract:" << contract << " createTime:" << createTime << " finishTime:" << finishTime << " size:" << size << " left:" << left << " price:" << price << " fillPrice:" << fillPrice << " mkfr:" << mkfr << " tkfr:" << tkfr << " status:" << status << " finishAs:" << finishAs;
 	    return ss.str();
 	}
     };

@@ -25,6 +25,7 @@ public:
     vector<gateio::FutureAsset>& GetPerpetualAsset();
     vector<gateio::FuturePosition>& GetPerpetualPosition();
     vector<gateio::FutureOrder>& GetPerpetualOpenOrder();
+    vector<gateio::FutureOrder>& GetPerpetualOrder();
     vector<gateio::CrossMarginAsset>& GetCrossMarginAsset();
     gateio::CrossMarginAccountTotal& GetCrossMarginAccountTotal();
     double GetDeliveryPositionValue(string asset);
@@ -58,6 +59,7 @@ private:
     vector<gateio::FutureAsset> vPerpetualAsset;
     vector<gateio::FuturePosition> vPerpetualPosition;
     vector<gateio::FutureOrder> vPerpetualOpenOrder;
+    vector<gateio::FutureOrder> vPerpetualOrder;
     vector<gateio::CrossMarginAsset> vCrossMarginAsset;
     gateio::CrossMarginAccountTotal crossMarginAccountTotal;
     string baseAsset;

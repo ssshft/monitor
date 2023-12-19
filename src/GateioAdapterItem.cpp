@@ -20,7 +20,7 @@ GateioAdapterItem::GateioAdapterItem(AccountInfo info) {
     string apiPermission = accountInfo.apiPermission;
     vector<string> v;
     SplitString(apiPermission, ",", v);
-    for (size_t i = 0; i < v.size(); ++i) {
+    for (size_t i = 0; i < v.size(); ++i) {  // 若是统一账户则无需设置现货的权限，合约的权限需要设置
         if (v[i] == "all") {
             spotEnable = true;
             deliveryEnable = true;
@@ -130,6 +130,11 @@ void GateioAdapterItem::UpdateAccountInfo() {
         bool perpetualQueryOpenOrder = gateioPerpetual->QueryOpenOrder(vPerpetualOpenOrder, vPerpetualOpenOrderErrMsg);
         query = query && perpetualQueryOpenOrder;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vPerpetualOpenOrderErrMsg.begin(), vPerpetualOpenOrderErrMsg.end());
+
+        vector<string> vPerpetualOrderErrMsg;
+        bool perpetualQueryOrder = gateioPerpetual->QueryOrder(vPerpetualOrder, vPerpetualOrderErrMsg);
+        //query = query && perpetualQueryOrder;
+        //vQueryErrMsg.insert(vQueryErrMsg.end(), vPerpetualOrderErrMsg.begin(), vPerpetualOrderErrMsg.end());
     }
 
     if (crossMarginEnable && gateioCrossMargin) {
@@ -238,6 +243,10 @@ vector<gateio::FuturePosition>& GateioAdapterItem::GetPerpetualPosition() {
 
 vector<gateio::FutureOrder>& GateioAdapterItem::GetPerpetualOpenOrder() {
     return vPerpetualOpenOrder;
+}
+
+vector<gateio::FutureOrder>& GateioAdapterItem::GetPerpetualOrder() {
+    return vPerpetualOrder;
 }
 
 vector<gateio::CrossMarginAsset>& GateioAdapterItem::GetCrossMarginAsset() {
