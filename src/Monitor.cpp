@@ -96,11 +96,12 @@ void PubMsg() {
 	    LOG_INFO("AccountMonitor  GetCurrentStatus before");
     	unordered_map<string, string>& m = AccountMonitor::GetInstance().GetCurrentStatus();
 	    LOG_INFO("AccountMonitor  GetCurrentStatus end");
-        /*
+        
     	auto iter = m.find("physical");
     	if (iter != m.end() && iter->second.length() > 0) {    
         	MsgPub::GetInstance().Publish(physicalPubChannel, iter->second);
     	}
+        /*
     	iter = m.find("strategy");
     	if (iter != m.end() && iter->second.length() > 0) {
         	MsgPub::GetInstance().Publish(strategyPubChannel, iter->second);

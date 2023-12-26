@@ -60,8 +60,8 @@ unordered_map<string, string>& AccountMonitor::GetCurrentStatus() {
     LOG_INFO("CalculateAccount after");
     
     mAccountStatus["overview"] = BinanceAccountMgr::GetInstance().GetPhysicalOverView();
-   /*
     mAccountStatus["physical"] = BinanceAccountMgr::GetInstance().GetPhysicalAccountStatus();
+     /*
     mAccountStatus["strategy"] = BinanceAccountMgr::GetInstance().GetStrategyAccountStatus();
     mAccountStatus["mdstatus"] = BinanceAccountMgr::GetInstance().GetMarketRiskStatus();
     */
