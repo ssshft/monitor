@@ -107,7 +107,7 @@ void PubMsg() {
         	MsgPub::GetInstance().Publish(strategyPubChannel, iter->second);
     	}
         */
-    	auto iter = m.find("overview");
+    	iter = m.find("overview");
     	if (iter != m.end() && iter->second.length() > 0) {
         	MsgPub::GetInstance().Publish(overviewPubChannel, iter->second);            
     	}
