@@ -553,7 +553,7 @@ bool GateioPerpetual::QuerySettleOrder(string settle, vector<gateio::FutureOrder
             })
             .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
                 json::value const& content = previousTask.get();
-                LOG_INFO("QueryOrder content: %s", content.serialize().c_str())
+                LOG_INFO("QueryOrder content: %s", content.serialize().c_str());
                 if (content.is_array()) {
                     auto openOrderArray = content.as_array();
                     for (auto& openOrder: openOrderArray) {
