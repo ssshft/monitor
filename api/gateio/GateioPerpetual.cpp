@@ -602,8 +602,8 @@ bool GateioPerpetual::QuerySettleOrder(string settle, vector<gateio::FutureOrder
                         if (openOrder.has_field("status")) {
                             futureOrder.status = openOrder.at("status").as_string();
                         }
-                        if (openOrder.has_field("finishAs")) {
-                            futureOrder.finishAs = openOrder.at("finishAs").as_string();
+                        if (openOrder.has_field("finish_as")) {
+                            futureOrder.finishAs = openOrder.at("finish_as").as_string();
                         }
 
             		    LOG_INFO("QueryOrder AccountId: %d   GateioPerpetual order: %s", accountInfo.accountId, futureOrder.toString().c_str());
