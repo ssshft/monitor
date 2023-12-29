@@ -553,6 +553,7 @@ bool GateioPerpetual::QuerySettleOrder(string settle, vector<gateio::FutureOrder
             })
             .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
                 json::value const& content = previousTask.get();
+                LOG_INFO("QueryOrder content: %s", content.serialize().c_str())
                 if (content.is_array()) {
                     auto openOrderArray = content.as_array();
                     for (auto& openOrder: openOrderArray) {
@@ -611,9 +612,9 @@ bool GateioPerpetual::QuerySettleOrder(string settle, vector<gateio::FutureOrder
                     }
                 }
 
-	        if (content.has_field("label")) {
+	            if (content.has_field("label")) {
                     string label = content.at("label").as_string();
-		    if (label != "USER_NOT_FOUND") {
+		            if (label != "USER_NOT_FOUND") {
                     	query = false;
                     	stringstream ss;
                     	string msg = "";
@@ -628,7 +629,7 @@ bool GateioPerpetual::QuerySettleOrder(string settle, vector<gateio::FutureOrder
                         string errMsg = ss.str();
                         LOG_INFO("QueryOrder AccountId: %d   GateioPerpetual Error: '%s' ", accountInfo.accountId, errMsg.c_str());
                         vErrorMsg.emplace_back(errMsg);
-		    }
+		            }
                 }
 
             })
