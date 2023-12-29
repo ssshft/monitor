@@ -2,7 +2,7 @@
 
 
 GateioUnified::GateioUnified(AccountInfo& info) {
-    accountUrl = "/unified/accounts";
+    accountUrl = "/api/v4/unified/accounts";
     accountInfo = info;
 }
 

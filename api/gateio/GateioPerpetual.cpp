@@ -428,16 +428,28 @@ bool GateioPerpetual::QuerySettleOpenOrder(string settle, vector<gateio::FutureO
                             futureOrder.left = openOrder.at("left").as_integer();
                         }
                         if (openOrder.has_field("price")) {
-                            futureOrder.price = stod(openOrder.at("price").as_string());
+                            string s = openOrder.at("price").as_string();
+                            if (s != "") {
+                                futureOrder.price = stod(s);
+                            }   
                         }
                         if (openOrder.has_field("fill_price")) {
-                            futureOrder.fillPrice = stod(openOrder.at("fill_price").as_string());
+                            string s = openOrder.at("fill_price").as_string();
+                            if (s != "") {
+                                futureOrder.fillPrice = stod(s);
+                            }
                         }
                         if (openOrder.has_field("mkfr")) {
-                            futureOrder.mkfr = stod(openOrder.at("mkfr").as_string());
+                            string s = openOrder.at("mkfr").as_string();
+                            if (s != "") {
+                                futureOrder.mkfr = stod(s);
+                            }
                         }
                         if (openOrder.has_field("tkfr")) {
-                            futureOrder.tkfr = stod(openOrder.at("tkfr").as_string());
+                            string s = openOrder.at("tkfr").as_string();
+                            if (s != "") {
+                                futureOrder.tkfr = stod(s);
+                            }
                         }
                         if (openOrder.has_field("status")) {
                             futureOrder.status = openOrder.at("status").as_string();
@@ -561,16 +573,28 @@ bool GateioPerpetual::QuerySettleOrder(string settle, vector<gateio::FutureOrder
                             futureOrder.left = openOrder.at("left").as_integer();
                         }
                         if (openOrder.has_field("price")) {
-                            futureOrder.price = stod(openOrder.at("price").as_string());
+                            string s = openOrder.at("price").as_string();
+                            if (s != "") {
+                                futureOrder.price = stod(s);
+                            }    
                         }
                         if (openOrder.has_field("fill_price")) {
-                            futureOrder.fillPrice = stod(openOrder.at("fill_price").as_string());
+                            string s = openOrder.at("fill_price").as_string();
+                            if (s != "") {
+                                futureOrder.fillPrice = stod(s);
+                            }
                         }
                         if (openOrder.has_field("mkfr")) {
-                            futureOrder.mkfr = stod(openOrder.at("mkfr").as_string());
+                            string s = openOrder.at("mkfr").as_string();
+                            if (s != "") {
+                                futureOrder.mkfr = stod(s);
+                            }
                         }
                         if (openOrder.has_field("tkfr")) {
-                            futureOrder.tkfr = stod(openOrder.at("tkfr").as_string());
+                            string s = openOrder.at("tkfr").as_string();
+                            if (s != "") {
+                                futureOrder.tkfr = stod(s);
+                            }
                         }
                         if (openOrder.has_field("status")) {
                             futureOrder.status = openOrder.at("status").as_string();
