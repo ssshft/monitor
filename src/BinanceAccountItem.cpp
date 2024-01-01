@@ -2175,8 +2175,6 @@ void BinanceAccountItem::CalculateRiskInfo() {
 
     // order alarm
     int64_t currentTime = gettickcount();
-    string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
-    string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
     orderAlarmMsg = "";
     for (auto iter = mOrder.begin(); iter != mOrder.end(); ++iter) {
         int64_t updateTime = iter->second.updateTime;
@@ -4491,8 +4489,11 @@ vector<MsgCard> BinanceAccountItem::GetPositionLiquidationPriceAlarmMsg() {
 }
 
 vector<MsgCard> BinanceAccountItem::GetOrderAlarmMsg() {
-    vector<MsgCard> v;
+    int64_t currentTime = gettickcount();
+    string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+    string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
 
+    vector<MsgCard> v;
     if (orderAlarmMsg.length() > 0) {
         LOG_INFO("orderAlarmMsg: ", orderAlarmMsg.c_str());
         MsgCard msgCard;
