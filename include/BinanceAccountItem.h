@@ -116,4 +116,6 @@ private:
     string maxRiskExposureAssetS;
     
     double totalExposure;
+
+    string orderAlarmMsg;
 };

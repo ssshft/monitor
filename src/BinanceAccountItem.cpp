@@ -41,6 +41,8 @@ BinanceAccountItem::BinanceAccountItem(int id, string n, string ty, string ex, i
     unifyMaintenanceMarginRate = 0.0;
 
     totalExposure = 0.0;
+
+    orderAlarmMsg = "";
 }
 
 BinanceAccountItem::~BinanceAccountItem() {
@@ -2169,6 +2171,25 @@ void BinanceAccountItem::CalculateRiskInfo() {
     }
 
     riskInfo.underwayOrderValueD = underwayOrderValueD;
+
+
+    // order alarm
+    int64_t currentTime = gettickcount();
+    string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+    string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
+    orderAlarmMsg = "";
+    for (auto iter = mOrder.begin(); iter != mOrder.end(); ++iter) {
+        int64_t updateTime = iter->second.updateTime;
+        if (currentTime - updateTime <  10 * 60 * 1000) {
+            if (iter->second.category == "twap") {
+                orderAlarmMsg += "自动换币 " + iter->second.toString();
+            } else if (iter->second.category == "adl") {
+                orderAlarmMsg += "ADL " + iter->second.toString();
+            } else if (iter->second.category == "liquidated") {
+                orderAlarmMsg += "强制减仓 " + iter->second.toString();
+            }
+        }
+    }
 
     LOG_INFO("riskInfo: %s", riskInfo.toString().c_str());  
 }
@@ -4478,7 +4499,7 @@ vector<MsgCard> BinanceAccountItem::GetOrderAlarmMsg() {
     string content = "";
     for (auto iter = mOrder.begin(); iter != mOrder.end(); ++iter) {
         int64_t updateTime = iter->second.updateTime;
-        if (currentTime - updateTime <  5 * 60 * 1000) {
+        if (currentTime - updateTime <  10 * 60 * 1000) {
             if (iter->second.category == "twap") {
                 content += "自动换币 " + iter->second.toString();
             } else if (iter->second.category == "adl") {
@@ -4489,14 +4510,14 @@ vector<MsgCard> BinanceAccountItem::GetOrderAlarmMsg() {
         }
     }
 
-    if (content.length() > 0) {
+    if (orderAlarmMsg.length() > 0) {
         MsgCard msgCard;
         msgCard.accountId = customerId;
         msgCard.templateId = 2;
         msgCard.title = "TWAP-ADL";
         msgCard.object = "账户：" + accountName;
         msgCard.datetime = currentTimeStr;
-        msgCard.content = content;
+        msgCard.content = orderAlarmMsg;
         v.emplace_back(msgCard);
     }
     return v;
