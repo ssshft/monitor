@@ -4491,26 +4491,10 @@ vector<MsgCard> BinanceAccountItem::GetPositionLiquidationPriceAlarmMsg() {
 }
 
 vector<MsgCard> BinanceAccountItem::GetOrderAlarmMsg() {
-    int64_t currentTime = gettickcount();
-    string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
-    string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
-
     vector<MsgCard> v;
-    string content = "";
-    for (auto iter = mOrder.begin(); iter != mOrder.end(); ++iter) {
-        int64_t updateTime = iter->second.updateTime;
-        if (currentTime - updateTime <  10 * 60 * 1000) {
-            if (iter->second.category == "twap") {
-                content += "自动换币 " + iter->second.toString();
-            } else if (iter->second.category == "adl") {
-                content += "ADL " + iter->second.toString();
-            } else if (iter->second.category == "liquidated") {
-                content += "强制减仓 " + iter->second.toString();
-            }
-        }
-    }
 
     if (orderAlarmMsg.length() > 0) {
+        LOG_INFO("orderAlarmMsg: ", orderAlarmMsg.c_str());
         MsgCard msgCard;
         msgCard.accountId = customerId;
         msgCard.templateId = 2;
