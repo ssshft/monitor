@@ -233,10 +233,6 @@ void LarkRebot::SendVoiceCall(string msg, string receiveId) {
 }
 
 void LarkRebot::SendGroupVoiceCall(string msg, string groupId, vector<string>& vUserId) {
-	if (groupId.size() <= 0) {
-		return;
-	}
-
 	int64_t currentTime = gettickcount();
 	int64_t lastSendTime = 0;
 	auto iter = mIdTime.find(groupId);
