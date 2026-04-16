@@ -4,7 +4,7 @@
 #include <cpprest/http_client.h>
 #include <cpprest/http_msg.h>
 #include "Utility.h"
-#include "CoinbaseObject.h"
+#include "coinbase/CoinbaseObject.h"
 #include "IGException.h"
 
 using namespace web;

@@ -21,7 +21,9 @@ public:
     void LoadCoinbaseMdConfig();
     void LoadAssetRateConfig();
     void LoadConfigFromSqlite();
+    string GetLogTag();
     int GetLogLevel();
+    string GetLogPath();
     string GetMdAddr();
     int GetMdPort();
     string GetMdPassword();
@@ -107,7 +109,9 @@ public:
 private:
     MonitorConfig();
 
+    string logTag;
     int logLevel;
+    string logPath;
 
     string mdAddr;
     int mdPort;

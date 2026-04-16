@@ -1,4 +1,4 @@
-#include "GateioPerpetual.h"
+#include "gateio/GateioPerpetual.h"
 
 
 GateioPerpetual::GateioPerpetual(AccountInfo& info) {

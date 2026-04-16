@@ -1,4 +1,4 @@
-#include "CoinbaseSpot.h"
+#include "coinbase/CoinbaseSpot.h"
 
 
 CoinbaseSpot::CoinbaseSpot(AccountInfo& info) {

@@ -4,7 +4,7 @@
 BybitAdapterMgr::BybitAdapterMgr() {
     unordered_map<int, AccountInfo>& mAccountInfo = MonitorConfig::GetInstance().GetAccountInfo();
     for (auto iter = mAccountInfo.begin(); iter != mAccountInfo.end(); ++iter) {
-        if (iter->second.exchangeType == ET_BYBIT) {
+        if (iter->second.exchangeType == BYBIT) {
             mBybitAdapterItem[iter->first] = new BybitAdapterItem(iter->second);
         }
     }

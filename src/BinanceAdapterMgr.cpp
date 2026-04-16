@@ -4,7 +4,7 @@
 BinanceAdapterMgr::BinanceAdapterMgr() {
     unordered_map<int, AccountInfo>& mAccountInfo = MonitorConfig::GetInstance().GetAccountInfo();
     for (auto iter = mAccountInfo.begin(); iter != mAccountInfo.end(); ++iter) {
-        if (iter->second.exchangeType == ET_BINANCE) {
+        if (iter->second.exchangeType == BINANCE) {
             mBinanceAdapterItem[iter->first] = new BinanceAdapterItem(iter->second);
         }
     }

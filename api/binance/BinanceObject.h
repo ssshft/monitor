@@ -45,7 +45,7 @@ namespace binance {
         double crossUnPnl{0.0};
         double availableBalance{0.0};
         double maxWithdrawAmount{0.0};
-        bool marginAvailable{0.0};
+        double marginAvailable{0.0};
         int64_t updateTime{0};
 
         string toString() {
@@ -63,7 +63,7 @@ namespace binance {
         double positionInitialMargin{0.0};
         double openOrderInitialMargin{0.0};
         double leverage{0.0};
-        bool isolated{0.0};
+        bool isolated{false};
         double entryPrice{0.0};
         double maxNotional{0.0};
         double bidNotional{0.0};

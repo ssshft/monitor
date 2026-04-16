@@ -1,7 +1,5 @@
 #pragma once
 
-#include "NanoLogLite/Log.h"
-#include "NanoLogLite/NanoLog.h"
 #include <openssl/hmac.h>
 #include <cpprest/http_client.h>
 #include <cpprest/http_msg.h>
@@ -11,6 +9,7 @@
 #include <vector>
 #include <set>
 #include <boost/algorithm/string/case_conv.hpp>
+#include "log_engine.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -18,36 +17,6 @@ using namespace std::chrono;
 extern std::mutex mut;
 extern std::mutex mutRiskParameter;
 
-enum ExchangeType {
-	ET_MIN = 0,
-    ET_OKX = 1,
-	ET_BINANCE,
-	ET_FTX,
-	ET_XT,
-	ET_BYBIT,
-	ET_COINBASE,
-	ET_HUOBI,
-	ET_GATEIO,
-	ET_ZB,
-	ET_MEXC,
-	ET_DERIBIT,
-	ET_KUCOIN,	
-	ET_MAX
-};
-
-enum OrderStatus {
-	OST_MIN = 0,
-	OST_PENDING,
-	OST_NEW,
-	OST_PARTFILLED,
-	OST_CANCELING,
-	OST_FAILED,
-	OST_FINISHED,
-	OST_FILLED,
-	OST_CANCELED,
-	OST_REJECTED,
-	OST_EXPIRED
-};
 
 enum AccountType {
 	AT_MIN,
@@ -62,86 +31,11 @@ enum AccountType {
 	AT_MAX
 };
 
-enum InstrumentType {
-	MARGIN,
-    SWAP,
-    FUTURES,
-    SPOT
-};
-
-enum MarketType {
-	TRADES,
-    FUNDING_RATE,
-    DEPTH5,
-    DEPTH10,
-    DEPTH20,
-    KLINE_1m,
-    KLINE_3m,
-    KLINE_5m,
-    KLINE_15m,
-    KLINE_30m,
-    KLINE_1h,
-    KLINE_2h,
-    KLINE_4h,
-    KLINE_6h,
-    KLINE_12h,
-    KLINE_1d,
-    KLINE_3d,
-    KLINE_1w,
-    KLINE_1M
-};
-
-enum CommandType {
-	INITIALIZATION,
-	NEW_ORDER, 
-	NEW_CANCEL_ORDER,
-	TRANSFER,
-	QUERY_ORDER, 
-	ORDER_REPORT,
-	CANCEL_ORDER_REPORT,
-	ACCOUNT_UPDATE_REPORT,
-	TRANSFER_REPORT,
-	QUERY_ORDER_REPORT,
-	QUERY_FUND_REPORT,
-	QUERY_POSITION_REPORT,
-	BALANCE_UPDATE_REPORT,
-	ASSET_AND_POSITION_UPDATE_REPORT,
-	ERROR_REPORT = 50
-};
 
 enum AssetReportType {
 	ASSET_ONLY_CHANGE,
 	ASSET_ALL
 };
-
-static unordered_map<ExchangeType, string> ExchangeTypeEnum2StrMap {
-    { ET_OKX, "OKX"},
-    { ET_BINANCE, "BINANCE"},
-    { ET_FTX, "FTX"},
-    { ET_XT, "XT"},
-	{ ET_BYBIT, "BYBIT"},
-    { ET_COINBASE, "COINBASE"},
-    { ET_HUOBI,"HUOBI"},
-    { ET_GATEIO, "GATEIO"},
-    { ET_ZB, "ZB"},
-    { ET_MEXC, "MEXC"},
-    { ET_DERIBIT, "DERIBIT"},
-    { ET_KUCOIN, "KUCOIN"}
-};
-
-static unordered_map<OrderStatus, string> OrderStatusEnum2StrMap {
-    {OST_PENDING, "PENDING"},
-	{OST_NEW, "NEW"},
-	{OST_PARTFILLED, "PARTFILLED"},
-	{OST_CANCELING, "CANCELING"},
-	{OST_FAILED, "FAILED"},
-	{OST_FINISHED, "FINISHED"},
-	{OST_FILLED, "FILLED"},
-	{OST_CANCELED, "CANCELED"},
-	{OST_REJECTED, "REJECTED"},
-	{OST_EXPIRED, "EXPIRED"},
-};
-
 
 namespace igsystem {
 	struct SysAsset {
@@ -721,22 +615,6 @@ inline string GetTimestamp() {
 	return timestamp;
 }
 
-inline void InitLog(int logLevel) {
-	time_t now;
-    struct tm *tm_now;
-    time(&now);
-    tm_now = localtime(&now);
-    char logName[128];
-
-    sprintf(logName,"logriskmonitor_%4d%02d%02d.log",
-            tm_now->tm_year + 1900,
-            tm_now->tm_mon + 1,
-            tm_now->tm_mday);
-
-    NanoLog::setLogFile(logName);
-    NanoLog::setLogLevel((NanoLog::LogLevel)logLevel);
-}
-
 inline bool SplitString(string& strSource, char* cstrSegmentStopC, vector<string>& strArray) {
 	if (cstrSegmentStopC == NULL) {
 		strArray.push_back(strSource);
@@ -897,6 +775,7 @@ inline int HmacEncode(const char * algo,
 
     output = (unsigned char*)malloc(EVP_MAX_MD_SIZE);
 
+/*
     //HMAC_CTX *ctx = HMAC_CTX_new();
     HMAC_CTX ctx;
     HMAC_CTX_init(&ctx);
@@ -905,7 +784,7 @@ inline int HmacEncode(const char * algo,
 
     HMAC_Final(&ctx, output, &output_length);
     //HMAC_CTX_free(ctx);
-
+*/
     return 0;
 }
 

@@ -4,7 +4,6 @@
 #include "BinanceMdMgr.h"
 #include "BasicInfoMgr.h"
 #include "BinanceAdapterMgr.h"
-#include "BinanceSystemMgr.h"
 #include "GateioAdapterMgr.h"
 #include "BybitAdapterMgr.h"
 #include "OkxAdapterMgr.h"

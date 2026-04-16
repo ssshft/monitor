@@ -1,4 +1,4 @@
-#include "GateioSpot.h"
+#include "gateio/GateioSpot.h"
 
 
 GateioSpot::GateioSpot(AccountInfo& info) {

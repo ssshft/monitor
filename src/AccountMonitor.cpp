@@ -1,7 +1,6 @@
 #include "AccountMonitor.h"
 #include "MonitorConfig.h"
 #include "BinanceAccountMgr.h"
-#include "BinanceSystemMgr.h"
 #include "ProductMgr.h"
 #include "DataQueue.h"
 
@@ -44,9 +43,6 @@ void AccountMonitor::DealSubData() {
 	    try {
             const web::json::value& content = web::json::value::parse(data.content.c_str());
             int exchangeType = content.at("exchange_id").as_integer();
-            if (exchangeType == ET_BINANCE || exchangeType == ET_COINBASE || exchangeType == ET_GATEIO) {
-                BinanceSystemMgr::GetInstance().OnSubMessage(content);
-            }
         } catch(exception& e) {
     	    LOG_DEBUG("Recv Error Message: '%s'", e.what());
 	    }

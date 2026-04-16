@@ -13,7 +13,6 @@ class BinanceAccountItem {
 public:
 	BinanceAccountItem(int id, string n, string ty, string ex, int he);
 	~BinanceAccountItem();
-    void UpdateBySystem();
     void UpdateByAdapter();
     void UpdateByBinanceAdapter();
     void UpdateByCoinbaseAdapter();

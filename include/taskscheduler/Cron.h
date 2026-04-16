@@ -75,12 +75,12 @@ namespace Bosma {
         Clock::time_point cron_to_next(const Clock::time_point from = Clock::now()) const {
           // get current time as a tm object
           auto now = Clock::to_time_t(from);
-        #ifdef WINDOWS
-		  std::tm next;
-		  localtime_s(&next, &now);
-        #elif LINUX
+        // #ifdef WINDOWS
+        //  std::tm next;
+        //  localtime_s(&next, &now);
+        //#elif LINUX
           std::tm next(*std::localtime(&now));
-        #endif
+        //#endif
           // it will always at least run the next minute
           next.tm_sec = 0;
           add(next, std::chrono::minutes(1));

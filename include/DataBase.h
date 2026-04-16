@@ -5,7 +5,7 @@
 #include <map>
 #include <sstream>
 #include "Utility.h"
-#include "mysql.h"
+#include <mysql/mysql.h>
 
 using namespace std;
 

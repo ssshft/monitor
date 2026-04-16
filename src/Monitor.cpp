@@ -17,6 +17,7 @@
 #include "BinanceMdMgr.h"
 #include "Sqlite.h"
 #include "ProductMgr.h"
+#include "crypto_exception.h"
 
 
 std::mutex mut;
@@ -455,20 +456,6 @@ void UpdateAccountInfo() {
 
 }
 
-/*
-int main(int argc, char* argv[]) {
-    MonitorConfig::GetInstance().LoadConfig();
-    int logLevel = MonitorConfig::GetInstance().GetLogLevel();
-    InitLog(logLevel);
-    BybitAdapterMgr::GetInstance().UpdateAccountInfo();
-    while (1) {
-        NanoLog::poll();
-        sleep(1);
-    }
-    return 0;
-}
-*/
-
 int main(int argc, char* argv[]) {
     string currentTimeStr = CovertToUtcStr(GetCurrentTimeUs(), false);
     cout << currentTimeStr << " risk_monitor server executed..." << endl;
@@ -481,41 +468,33 @@ int main(int argc, char* argv[]) {
     }
     ::chdir(argv[1]);
 
-    string program = "risk_monitor";
-    int currentPid = getpid();
-    auto filePid = crypto::get_program_pid(program);
+    MonitorConfig::GetInstance().LoadConfig();
+
+    string tag = MonitorConfig::GetInstance().GetLogTag();;
+    std::string program = tag;
+    long currentPid = getpid();
+    long filePid = crypto::get_program_pid(program);
     if(!crypto::ensure_one_instance(program) && currentPid != filePid) {
-        string errormsg = program + " with pid=" + std::to_string(filePid) + " already exists";
-        std::cout << errormsg.c_str() << std::endl;
-        return 0;
+        std::string errormsg = tag + " with pid=" + std::to_string(filePid) + " already exists, aborted";
+        cryptothrow(errormsg.c_str(), -1);
     }
     crypto::write_program_pid(program);
 
-    MonitorConfig::GetInstance().LoadConfig();
     int logLevel = MonitorConfig::GetInstance().GetLogLevel();
-    InitLog(logLevel);
-
-    Bosma::Scheduler::GetInstance().cron("1 0 * * *", &InitLog, logLevel);  // 重新初始化log文件
+    string logPath = MonitorConfig::GetInstance().GetLogPath();
+ 
     Bosma::Scheduler::GetInstance().in(std::chrono::minutes(10), &StartSetFlag);
-    //Bosma::Scheduler::GetInstance().every(std::chrono::minutes(1), &PubMsg);
     Bosma::Scheduler::GetInstance().every(std::chrono::minutes(2), &SendAccountAlarmMsg);
     int systemTimeInterval = MonitorConfig::GetInstance().GetSystemAlarmTime();
     Bosma::Scheduler::GetInstance().every(std::chrono::minutes(systemTimeInterval), &SendSystemTime);
-    //Bosma::Scheduler::GetInstance().every(std::chrono::minutes(1), &SendMdAlarmMsg);
     Bosma::Scheduler::GetInstance().every(std::chrono::minutes(5), &StoreRiskInfo);
-    //Bosma::Scheduler::GetInstance().cron("30 1 * * *", &SendMarketInfoAlarmMsg);
-    //Bosma::Scheduler::GetInstance().cron("0 * * * *", &SendFundingRateAlarmMsg);  // 每小时运行一次
-    //thread t(SendOrderAlarmMsg);
-    //thread tCoinbaseMd(GetCoinbaseMd);
-    thread tPubMsg(PubMsg);
     thread tExchangeMd(GetExchangeMd);
     thread tUpdateAccountInfo(UpdateAccountInfo);
     BasicInfoMgr::GetInstance().Init();
 
-    bool running = true;
-    while (running) {
-        NanoLog::poll();
-        sleep(1);
+    while(1) {
+        log_maintain(program, logPath, std::to_string(logLevel));
+        usleep(1000);
     }
 
     return 0;

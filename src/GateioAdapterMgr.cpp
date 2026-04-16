@@ -4,7 +4,7 @@
 GateioAdapterMgr::GateioAdapterMgr() {
     unordered_map<int, AccountInfo>& mAccountInfo = MonitorConfig::GetInstance().GetAccountInfo();
     for (auto iter = mAccountInfo.begin(); iter != mAccountInfo.end(); ++iter) {
-        if (iter->second.exchangeType == ET_GATEIO) {
+        if (iter->second.exchangeType == GATEIO) {
             mGateioAdapterItem[iter->first] = new GateioAdapterItem(iter->second);
         }
     }

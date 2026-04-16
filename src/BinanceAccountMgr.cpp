@@ -72,7 +72,7 @@ void BinanceAccountMgr::OnSubMessage(const web::json::value& content) {
 
 void BinanceAccountMgr::UpdateBySystem() {
     for (auto iter = mAccount.begin(); iter != mAccount.end(); ++iter) {
-        iter->second->UpdateBySystem();
+     
     }
 }
 

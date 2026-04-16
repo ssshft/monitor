@@ -33,7 +33,9 @@ void MonitorConfig::LoadConfig() {
 	boost::property_tree::ini_parser::read_ini("monitor.ini", properties);
     
     auto itemSummary = properties.get_child("SUMMARY");
+    logTag = itemSummary.get<string>("logtag");
     logLevel = itemSummary.get<int>("loglevel");
+    logPath = itemSummary.get<string>("logpath");
     int accountCount = itemSummary.get<int>("accountcount");
     int productCount = itemSummary.get<int>("productcount");
     int tradeCount = itemSummary.get<int>("tradecount");
@@ -502,8 +504,16 @@ void MonitorConfig::LoadAssetRateConfig() {
 void MonitorConfig::LoadConfigFromSqlite() {
 }
 
+string MonitorConfig::GetLogTag() {
+    return logTag;
+}
+
 int MonitorConfig::GetLogLevel() {
     return logLevel;
+}
+
+string MonitorConfig::GetLogPath() {
+    return logPath;
 }
 
 string MonitorConfig::GetMdAddr() {

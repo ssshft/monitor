@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MonitorConfig.h"
-#include "CoinbaseSpot.h"
+#include "coinbase/CoinbaseSpot.h"
 #include <map>
 #include <set>
 

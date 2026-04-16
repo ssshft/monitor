@@ -4,7 +4,7 @@
 CoinbaseAdapterMgr::CoinbaseAdapterMgr() {
     unordered_map<int, AccountInfo>& mAccountInfo = MonitorConfig::GetInstance().GetAccountInfo();
     for (auto iter = mAccountInfo.begin(); iter != mAccountInfo.end(); ++iter) {
-        if (iter->second.exchangeType == ET_COINBASE) {
+        if (iter->second.exchangeType) {
             mCoinbaseAdapterItem[iter->first] = new CoinbaseAdapterItem(iter->second);
         }
     }

@@ -1,133 +1,106 @@
-# CMakeList.txt: Thresh 的 CMake 项目，在此处包括源代码并定义项目特定的逻辑。
-cmake_minimum_required(VERSION 3.8)
-project(monitor VERSION 0.1.0)
+cmake_minimum_required(VERSION 3.1)
+project(TB)
 
-
-# 设置编译器 c++11 required 
-set(CMAKE_CXX_STANDARD 17) 
+# 设置编译器 c++17 required
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-#set(CMAKE_BUILD_TYPE "Debug")
+# set(CMAKE_BUILD_TYPE "Debug")
 set(CMAKE_BUILD_TYPE "Release")
-#set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -fPIC -Wall -g -ggdb")
-set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -fPIC -Wall")
+set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -fPIC -Wall -g -ggdb")
+set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -fPIC -DABI -DNDEBUG -DOPENBLAS  -O3 -Wall -flto -fuse-linker-plugin -minline-all-stringops -malign-double -ffast-math -march=native -ffunction-sections -fdata-sections -fmessage-length=0 -msse -msse2 -msse3 -funroll-loops")
 
-add_definitions("-D_TURN_OFF_PLATFORM_STRING")   # U macro conflicts between cpprestsdk with concurrentqueue
-add_definitions("-DLINUX")
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
-# 设置build输出目录
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
-# 设置库文件的输出目录
-SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
+
+add_definitions("-D_TURN_OFF_PLATFORM_STRING")
+# add_definitions("-DUSE_BINANCE_UNIFIED")
+
+
+
+# 读取整个文件
+file(READ /inc/version.inc FILE_CONTENT)
+
+# 查找 COMPILE_VERSION= 之后的内容
+string(FIND "${FILE_CONTENT}" "COMPILE_VERSION=" COMPILE_POS)
+if(COMPILE_POS GREATER -1)
+    math(EXPR VALUE_START "${COMPILE_POS} + 16")  # "COMPILE_VERSION=" 的长度是 16
+    string(SUBSTRING "${FILE_CONTENT}" ${VALUE_START} -1 COMPILE_VERSION)
+    
+    # 去除换行符
+    string(REGEX REPLACE "\n.*$" "" COMPILE_VERSION "${COMPILE_VERSION}")
+    message("COMPILE_VERSION = ${COMPILE_VERSION}")
+endif()
+set(COMPILE_PATH ${COMPILE_VERSION})
+
+
 
 set(3RD_PATH /opt/version/3rd)
-file(READ /inc/version.inc VERSION LIMIT 8 OFFSET 8)
-string(STRIP ${VERSION} VERSION)
-set(DB_VERSION_DIR /opt/version/${VERSION})
-message(${DB_VERSION_DIR})
 
-# 添加包含目录
-set(BOOST_INCLUDE_DIR ${3RD_PATH}/boost/include)
-set(CPPRESTSDK_INCLUDE_DIR ${3RD_PATH}/cpprest/include)
-set(CPP_REDIS_INCLUDE_DIR ${3RD_PATH}/cpp_redis/includes)
-set(CPP_CRYPTLITE_INCLUDE_DIR ${3RD_PATH}/cpp_cryptlite/includes)
-set(TACOPIE_INCLUDE_DIR ${3RD_PATH}/cpp_redis/tacopie/includes)
-set(CPP_PYTHON_INCLUDE_DIR /opt/anaconda3/pkgs/python-3.8.8-hdb3f193_5/include/python3.8)
-set(ZMQ_INCLUDE_DIR ${3RD_PATH}/zeromq/include)
-set(NANOLOGLIT_INCLUDE_DIR ${3RD_PATH}/NanoLogLite)
-set(MYSQL_INCLUDE_DIR ${3RD_PATH}/mysql/mysql5.7.37/include)
-set(SQLITE_INCLUDE_DIR ${3RD_PATH}/sqlite)
+#include
+set(INC_DIR              ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(API_INC_DIR              ${CMAKE_CURRENT_SOURCE_DIR}/api)
+set(SYSTEM_INC_DIR          ${COMPILE_PATH}/include)
+set(FMT_INCLUDE_DIR          ${3RD_PATH}/fmt/include)
+set(SHMQUEUE_INCLUDE_DIR        ${SYSTEM_INC_DIR}/shmqueue)
 
 
-#add link path
-set(CPPRESTSDK_LIBRARY ${3RD_PATH}/cpprest/lib64)
-set(BOOST_LIBRARY ${3RD_PATH}/boost/lib)
-set(CPP_REDIS_LIBRARY ${3RD_PATH}/cpp_redis/lib)
-set(NANOLOGLIT_LIBRARY ${3RD_PATH}/NanoLogLite/lib)
-set(CPP_ZMQ_LIBRARY ${3RD_PATH}/zeromq/lib)
-set(MYSQL_LIBRARY ${3RD_PATH}/mysql/mysql5.7.37/lib)
-set(SQLITE_LIBRARY ${3RD_PATH}/sqlite/lib)
+#link
+set(FMT_LIBRARY        ${3RD_PATH}/fmt/lib)
 
-#set(NANOLOGLIT_LIBRARY ${3RD_PATH}/rapidjson/lib)
 
-# 查找当前目录下的所有源文件并将名称保存到 DIR_LIB_SRCS 变量
-#aux_source_directory(. DIR_LIB_SRCS)
 
-# include path
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src       DIR_MAIN_SRCS)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/api/binance   DIR_BINANCE_SRCS)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/api/gateio    DIR_GATEIO_SRCS)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/api/okx     DIR_OKX_SRCS)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/api/bybit    DIR_BYBIT_SRCS)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/api/coinbase   DIR_COINBASE_SRCS)
+
+
+
 include_directories(
         ${3RD_PATH}
+        ${INC_DIR}
+        ${API_INC_DIR}
         ${SYSTEM_INC_DIR}
-        ${BOOST_INCLUDE_DIR}
-        ${CPPRESTSDK_INCLUDE_DIR}
-        #${COMPILE_VERSION}
-        ${CPP_REDIS_INCLUDE_DIR}
-        ${CPP_CRYPTLITE_INCLUDE_DIR}
-        ${CPP_PYTHON_INCLUDE_DIR}
-        ${TACOPIE_INCLUDE_DIR}
-        ${ZMQ_INCLUDE_DIR}
-        ${MYSQL_INCLUDE_DIR}
-        ${SQLITE_INCLUDE_DIR}
-        ./
+        ${FMT_INCLUDE_DIR}
+        ${SHMQUEUE_INCLUDE_DIR}
 )
 
-include_directories(${PROJECT_SOURCE_DIR}/com)
-include_directories(${PROJECT_SOURCE_DIR}/../include)
-include_directories(${PROJECT_SOURCE_DIR}/include)
-include_directories(${PROJECT_SOURCE_DIR}/include/concurrentqueue)
-include_directories(${PROJECT_SOURCE_DIR}/api)
-include_directories(${PROJECT_SOURCE_DIR}/api/binance)
-include_directories(${PROJECT_SOURCE_DIR}/api/coinbase)
-include_directories(${PROJECT_SOURCE_DIR}/api/gateio)
-include_directories(${PROJECT_SOURCE_DIR}/api/bybit)
-include_directories(${PROJECT_SOURCE_DIR}/api/okx)
-include_directories(${DB_VERSION_DIR}/include)
-include_directories(${DB_VERSION_DIR})
-
-# link path
 link_directories(
-        ${CPPRESTSDK_LIBRARY}
-        ${BOOST_LIBRARY}
-        ${CPP_REDIS_LIBRARY}
-        ${CPP_ZMQ_LIBRARY}
-        ${NANOLOGLIT_LIBRARY}
-        ${MYSQL_LIBRARY}
-        ${SQLITE_LIBRARY}
-        ./lib
+        ${FMT_LIBRARY}
 )
 
 link_libraries(
         pthread
-        ssl
-        boost_system
-        boost_iostreams
-        crypto
-        cpprest
-        z
-        rt
-        nanologlite
-        dl
-        cpp_redis
+        boost_system 
+        crypto 
+        ssl 
+        cpprest 
+        z 
+        rt  
+        dl 
+        cpp_redis 
+        tacopie 
+        tbb 
+        stdc++fs 
+        fmt
         zmq
-        tacopie
+        uv
         mysqlclient
-        sqlite3
 )
 
-aux_source_directory(${PROJECT_SOURCE_DIR}/src MAIN_SRCS)
-aux_source_directory(${PROJECT_SOURCE_DIR}/api/binance BINANCE_SRCS)
-aux_source_directory(${PROJECT_SOURCE_DIR}/api/coinbase COINBASE_SRCS)
-aux_source_directory(${PROJECT_SOURCE_DIR}/api/gateio GATEIO_SRCS)
-aux_source_directory(${PROJECT_SOURCE_DIR}/api/bybit BYBIT_SRCS)
-aux_source_directory(${PROJECT_SOURCE_DIR}/api/okx OKX_SRCS)
-
-
-#add_subdirectory(restart)
-add_subdirectory(test)
-
-add_executable(risk_monitor
-        ${MAIN_SRCS}
-        ${BINANCE_SRCS}
-        ${COINBASE_SRCS}
-        ${GATEIO_SRCS}
-        ${BYBIT_SRCS}
-        ${OKX_SRCS}
-        )
+add_executable(Monitor
+        ${DIR_MAIN_SRCS}
+        ${DIR_BASE_SRCS}
+        ${DIR_OMS_SRCS}
+        ${DIR_OPERATION_SRCS}
+        ${DIR_BINANCE_SRCS}
+        ${DIR_GATEIO_SRCS}
+        ${DIR_OKX_SRCS}
+        ${DIR_BYBIT_SRCS}
+        ${DIR_COINBASE_SRCS}
+        # ${HUOBI_SRCS}
+        # ${XT_SRCS}
+        # ${KUCOIN_SRCS}
+)

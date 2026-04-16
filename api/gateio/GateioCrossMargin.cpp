@@ -1,4 +1,4 @@
-#include "GateioCrossMargin.h"
+#include "gateio/GateioCrossMargin.h"
 
 
 GateioCrossMargin::GateioCrossMargin(AccountInfo& info) {

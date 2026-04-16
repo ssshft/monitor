@@ -1,11 +1,11 @@
 #pragma once
 
 #include "MonitorConfig.h"
-#include "GateioSpot.h"
-#include "GateioDelivery.h"
-#include "GateioPerpetual.h"
-#include "GateioCrossMargin.h"
-#include "GateioUnified.h"
+#include "gateio/GateioSpot.h"
+#include "gateio/GateioDelivery.h"
+#include "gateio/GateioPerpetual.h"
+#include "gateio/GateioCrossMargin.h"
+#include "gateio/GateioUnified.h"
 #include <map>
 #include <set>
 

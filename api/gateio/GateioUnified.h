@@ -4,7 +4,7 @@
 #include <cpprest/http_client.h>
 #include <cpprest/http_msg.h>
 #include "Utility.h"
-#include "GateioObject.h"
+#include "gateio/GateioObject.h"
 
 using namespace web;
 using namespace web::websockets::client;

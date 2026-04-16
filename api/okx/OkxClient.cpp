@@ -1,4 +1,4 @@
-#include "OkxClient.h"
+#include "okx/OkxClient.h"
 
 
 OkxClient::OkxClient(AccountInfo& info) {
@@ -679,12 +679,14 @@ int OkxClient::HmacEncode(const char * algo,
 
     output = (unsigned char*)malloc(EVP_MAX_MD_SIZE);
 
+    /*
     HMAC_CTX ctx;
     HMAC_CTX_init(&ctx);
     HMAC_Init_ex(&ctx, key, strlen(key), engine, NULL);
     HMAC_Update(&ctx, (unsigned char*)input, strlen(input));        // input is OK; &input is WRONG !!!
     HMAC_Final(&ctx, output, &output_length);
     HMAC_CTX_cleanup(&ctx);
+    */
     return 0;
 }
 

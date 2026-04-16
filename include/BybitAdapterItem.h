@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MonitorConfig.h"
-#include "Bybit.h"
+#include "bybit/Bybit.h"
 #include <map>
 #include <set>
 
