@@ -1,15 +1,7 @@
 #pragma once
 
-#include <cpprest/ws_client.h>
-#include <cpprest/http_client.h>
-#include <cpprest/http_msg.h>
 #include "Utility.h"
 #include "bybit/BybitObject.h"
-
-using namespace web;
-using namespace web::websockets::client;
-using namespace web::http;
-using namespace web::http::client;
 
 
 class Bybit
@@ -17,13 +9,13 @@ class Bybit
 public:
 	Bybit(AccountInfo& info);
 	virtual ~Bybit();
-    bool QueryAccount(bybit::TotalAccountInfo& totalAccountInfo, vector<bybit::Asset>& vAsset, vector<string>& vErrorMsg);
-    bool QueryPosition(vector<bybit::Position>& vPosition, vector<string>& vErrorMsg);
-    bool QueryOpenOrder(vector<bybit::Order>& vOpenOrder, vector<string>& vErrorMsg);
+    bool QueryAccount(bybit::TotalAccountInfo& totalAccountInfo, std::vector<bybit::Asset>& vAsset, std::vector<std::string>& vErrorMsg);
+    bool QueryPosition(std::vector<bybit::Position>& vPosition, std::vector<std::string>& vErrorMsg);
+    bool QueryOpenOrder(std::vector<bybit::Order>& vOpenOrder, std::vector<std::string>& vErrorMsg);
 
 private:
-	string accountUrl;
-    string positionUrl;
-    string orderUrl;
+	std::string accountUrl;
+    std::string positionUrl;
+    std::string orderUrl;
 	AccountInfo accountInfo;
 };
