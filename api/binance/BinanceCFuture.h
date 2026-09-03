@@ -1,17 +1,8 @@
 #pragma once
 
-#include <cpprest/ws_client.h>
-#include <cpprest/http_client.h>
-#include <cpprest/http_msg.h>
 #include "Utility.h"
 #include "binance/BinanceObject.h"
 #include "IGException.h"
-
-
-using namespace web;
-using namespace web::websockets::client;
-using namespace web::http;
-using namespace web::http::client;
 
 
 class BinanceCFuture
@@ -20,15 +11,13 @@ public:
 	BinanceCFuture(AccountInfo& info);
 	virtual ~BinanceCFuture();
 
-    bool QueryAccount(vector<binance::CFutureAsset>& vCFutureAsset, vector<binance::CFuturePosition>& vCFuturePosition, vector<string>& vErrorMsg);
-    vector<binance::CFutureTrade> QueryTrades(string symbol, int days);
-	bool QueryPositionRisk(vector<binance::PositionRisk>& vPositionRisk, vector<string>& vErrorMsg);
-	bool QueryOpenOrder(vector<binance::FutureOpenOrder>& vOpenOrder, vector<string>& vErrorMsg);
+    bool QueryAccount(std::vector<binance::CFutureAsset>& vCFutureAsset, std::vector<binance::CFuturePosition>& vCFuturePosition, std::vector<std::string>& vErrorMsg);
+	bool QueryPositionRisk(std::vector<binance::PositionRisk>& vPositionRisk, std::vector<std::string>& vErrorMsg);
+	bool QueryOpenOrder(std::vector<binance::FutureOpenOrder>& vOpenOrder, std::vector<std::string>& vErrorMsg);
 private:
-	web::uri baseUrl;
-	web::uri accountUrl;
-    web::uri tradesUrl;
-	web::uri positionRiskUrl;
-	web::uri openOrderUrl;
+	std::string baseUrl;
+	std::string accountUrl;
+	std::string positionRiskUrl;
+	std::string openOrderUrl;
 	AccountInfo accountInfo;
 };

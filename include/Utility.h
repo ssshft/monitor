@@ -1,9 +1,5 @@
 #pragma once
 
-#include <openssl/hmac.h>
-#include <cpprest/http_client.h>
-#include <cpprest/http_msg.h>
-#include <cpprest/json.h>
 #include <chrono>
 #include <string>
 #include <vector>

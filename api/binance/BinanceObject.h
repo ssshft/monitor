@@ -175,6 +175,12 @@ namespace binance {
         double cumQuote{0.0};
         string side{""};
         int64_t time{0};
+
+        string toString() {
+            stringstream ss;
+            ss << "symbol:" << symbol << " orderId:" << orderId << " clientOrderId:" << clientOrderId << " price:" << price << " origQty:" << origQty << " executedQty:" << executedQty << " cumQuote:" << cumQuote << " side:" << side << " time:" << time;
+            return ss.str();
+        }
     };
 
     struct FutureOpenOrder {

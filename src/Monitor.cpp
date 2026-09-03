@@ -493,7 +493,7 @@ int main(int argc, char* argv[]) {
     BasicInfoMgr::GetInstance().Init();
 
     while(1) {
-        log_maintain(program, logPath, std::to_string(logLevel));
+        log_maintain(program, logPath, logLevel);
         usleep(1000);
     }
 

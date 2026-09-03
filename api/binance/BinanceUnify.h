@@ -1,16 +1,9 @@
 #pragma once
 
-#include <cpprest/ws_client.h>
-#include <cpprest/http_client.h>
-#include <cpprest/http_msg.h>
+
 #include "Utility.h"
 #include "binance/BinanceObject.h"
 #include "IGException.h"
-
-using namespace web;
-using namespace web::websockets::client;
-using namespace web::http;
-using namespace web::http::client;
 
 
 class BinanceUnify
@@ -18,20 +11,20 @@ class BinanceUnify
 public:
 	BinanceUnify(AccountInfo& info);
 	virtual ~BinanceUnify();
-    bool QueryBalance(vector<binance::UnifyAsset>& vUnifyAsset, vector<string>& vErrorMsg);
-    bool QueryAccount(binance::UnifyAccount& unifyAccount, vector<string>& vErrorMsg);
-    bool QueryUmPosition(vector<binance::UnifyPosition>& vUnifyPosition, vector<string>& vErrorMsg);
-    bool QueryCmPosition(vector<binance::UnifyPosition>& vUnifyPosition, vector<string>& vErrorMsg);
-	bool QueryUmOpenOrder(vector<binance::UnifyOpenOrder>& vOpenOrder, vector<string>& vErrorMsg);
-    bool QueryCmOpenOrder(vector<binance::UnifyOpenOrder>& vOpenOrder, vector<string>& vErrorMsg);
+    bool QueryBalance(std::vector<binance::UnifyAsset>& vUnifyAsset, std::vector<std::string>& vErrorMsg);
+    bool QueryAccount(binance::UnifyAccount& unifyAccount, std::vector<std::string>& vErrorMsg);
+    bool QueryUmPosition(std::vector<binance::UnifyPosition>& vUnifyPosition, std::vector<std::string>& vErrorMsg);
+    bool QueryCmPosition(std::vector<binance::UnifyPosition>& vUnifyPosition, std::vector<std::string>& vErrorMsg);
+	bool QueryUmOpenOrder(std::vector<binance::UnifyOpenOrder>& vOpenOrder, std::vector<std::string>& vErrorMsg);
+    bool QueryCmOpenOrder(std::vector<binance::UnifyOpenOrder>& vOpenOrder, std::vector<std::string>& vErrorMsg);
 
 private:
-	web::uri baseUrl;
-    web::uri balanceUrl;
-	web::uri accountUrl;
-    web::uri umPositionUrl;
-	web::uri cmPositionUrl;
-	web::uri umOpenOrderUrl;
-    web::uri cmOpenOrderUrl;
+	std::string baseUrl;
+    std::string balanceUrl;
+	std::string accountUrl;
+    std::string umPositionUrl;
+	std::string cmPositionUrl;
+	std::string umOpenOrderUrl;
+    std::string cmOpenOrderUrl;
 	AccountInfo accountInfo;
 };

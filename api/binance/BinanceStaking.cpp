@@ -9,127 +9,137 @@ BinanceStaking::BinanceStaking(AccountInfo& info) {
 BinanceStaking::~BinanceStaking() {
 }
 
-vector<binance::StakingPosition> BinanceStaking::QueryPosition() {
-    vector<binance::StakingPosition> v;
+bool BinanceStaking::QueryPosition(std::vector<binance::StakingPosition> vStakingPosition, std::vector<std::string>& vErrorMsg) {
+    bool query = true;
+    int status = 0;
+    std::string body;
+
+    std::string qs = fmt::format("recvWindow={}&timestamp={}", 5000, crypto::getCurrentTimeMilli());
+    std::string sig = crypto::getBinanceSignatureRest(accountInfo.secretKey, qs);
+    std::string fullPath = fmt::format("{}?{}&signature=", positionUrl, qs, sig);
+
     try {
-        http_client_config config;
-        config.set_timeout(utility::seconds(5));
-        http_client client(accountInfo.restUrl, config);
-        http_request request(methods::GET);
-        request.headers().add("X-MBX-APIKEY", accountInfo.apiKey);
-        uri_builder builder(positionUrl);
+        if (!Net::Instance().syncGet(crypto::host_of(accountInfo.restUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
+            std::string errMsg = "BinanceStaking QueryPosition syncGet return false";
+            LOG_INFO("QueryPosition AccountId: {} Error: {}", accountInfo.accountId, errMsg);
+            vErrorMsg.emplace_back(errMsg);
+            return false;
+        }
+        if (status != 200) {
+            std::string errMsg = fmt::format("BinanceStaking QueryPosition status: {}", status);
+            LOG_INFO("QueryPosition AccountId: {} Error: {}", accountInfo.accountId, errMsg);
+            vErrorMsg.emplace_back(errMsg);
+            return false;
+        }
 
-        builder.append_query("recvWindow", 5000);
-        builder.append_query("timestamp", gettickcount());
-        auto signature = getSignature(builder.query(), accountInfo.secretKey);
-        builder.append_query("signature", signature);    
+        rapidjson::Document d;
+        rapidjson::Value &res = d.Parse<rapidjson::kParseNumbersAsStringsFlag>(body.c_str());
 
-        request.set_request_uri(builder.to_string());
-        client.request(request)
-        .then([](http_response response) -> pplx::task<json::value> {  // if the status is OK extract the body of the response into a JSON value
-            auto code = response.status_code();
-            if(code == status_codes::OK || code == status_codes::BadRequest) {  // || code == status_codes::TooManyRequests || code == status_codes::Unauthorized
-                return response.extract_json();
-            }
-                
-            LOG_INFO("BinanceStaking response: '%s' ", response.to_string().c_str());
-            throw exception();
-            return pplx::task_from_result(json::value());  // return an empty JSON value
-        })
-        .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
-            json::value const& content = previousTask.get();
-            if (content.is_array()) {
-                auto positionArray = content.as_array();
-                for(auto& position : positionArray) {
-                    binance::StakingPosition stakingPosition;
-                    if (position.has_field("positionId")) {
-                        stakingPosition.positionId = position.at("positionId").as_string();
-                    }
-                    if (position.has_field("projectId")) {
-                        stakingPosition.projectId = position.at("projectId").as_string();
-                    }
-                    if (position.has_field("asset")) {
-                        stakingPosition.asset = position.at("asset").as_string();
-                    }
-                    if (position.has_field("amount")) {
-                        stakingPosition.amount = stod(position.at("amount").as_string());
-                    }
-                    if (position.has_field("purchaseTime")) {
-                        stakingPosition.purchaseTime = stoll(position.at("purchaseTime").as_string());
-                    }
-                    if (position.has_field("duration")) {
-                        stakingPosition.duration = stoi(position.at("duration").as_string());
-                    }
-                    if (position.has_field("accrualDays")) {
-                        stakingPosition.accrualDays = stoi(position.at("accrualDays").as_string());
-                    }
-                    if (position.has_field("rewardAsset")) {
-                        stakingPosition.rewardAsset = position.at("rewardAsset").as_string();
-                    }
-                    if (position.has_field("APY")) {
-                        stakingPosition.apy = stod(position.at("APY").as_string());
-                    }
-                    if (position.has_field("rewardAmt")) {
-                        stakingPosition.rewardAmt = stod(position.at("rewardAmt").as_string());
-                    }
-                    if (position.has_field("extraRewardAsset")) {
-                        stakingPosition.extraRewardAsset = position.at("extraRewardAsset").as_string();
-                    }
-                    if (position.has_field("extraRewardAPY")) {
-                        stakingPosition.extraRewardApy = stod(position.at("extraRewardAPY").as_string());
-                    }
-                    if (position.has_field("estExtraRewardAmt")) {
-                        stakingPosition.estExtraRewardAmt = stod(position.at("estExtraRewardAmt").as_string());
-                    }
-                    if (position.has_field("nextInterestPay")) {
-                        stakingPosition.nextInterestPay = stod(position.at("nextInterestPay").as_string());
-                    }
-                    if (position.has_field("nextInterestPayDate")) {
-                        stakingPosition.nextInterestPayDate = stoll(position.at("nextInterestPayDate").as_string());
-                    }
-                    if (position.has_field("payInterestPeriod")) {
-                        stakingPosition.payInterestPeriod = stoi(position.at("payInterestPeriod").as_string());
-                    }
-                    if (position.has_field("redeemAmountEarly")) {
-                        stakingPosition.redeemAmountEarly = stod(position.at("redeemAmountEarly").as_string());
-                    }
-                    if (position.has_field("interestEndDate")) {
-                        stakingPosition.interestEndDate = stoll(position.at("interestEndDate").as_string());
-                    }
-                    if (position.has_field("deliverDate")) {
-                        stakingPosition.deliverDate = stoll(position.at("deliverDate").as_string());
-                    }
-                    if (position.has_field("redeemPeriod")) {
-                        stakingPosition.redeemPeriod = stoi(position.at("redeemPeriod").as_string());
-                    }
-                    if (position.has_field("redeemingAmt")) {
-                        stakingPosition.redeemingAmt = stod(position.at("redeemingAmt").as_string());
-                    }
-                    if (position.has_field("partialAmtDeliverDate")) {
-                        stakingPosition.partialAmtDeliverDate = stoll(position.at("partialAmtDeliverDate").as_string());
-                    }
-                    if (position.has_field("canRedeemEarly")) {
-                        stakingPosition.canRedeemEarly = position.at("canRedeemEarly").as_bool();
-                    }
-                    if (position.has_field("renewable")) {
-                        stakingPosition.renewable = position.at("renewable").as_bool();
-                    }
-                    if (position.has_field("type")) {
-                        stakingPosition.type = position.at("type").as_string();
-                    }
-                    if (position.has_field("status")) {
-                        stakingPosition.status = position.at("status").as_string();
-                    }
-                        
-                    v.emplace_back(stakingPosition);
+        if (res.IsArray()) {
+            for (rapidjson::SizeType i = 0; i < res.Size(); ++i) {
+                binance::StakingPosition stakingPosition;
+                if (res[i].HasMember("positionId")) {
+                    stakingPosition.positionId = res[i]["positionId"].GetString();
                 }
+                if (res[i].HasMember("projectId")) {
+                    stakingPosition.projectId = res[i]["projectId"].GetString();
+                }
+                if (res[i].HasMember("asset")) {
+                    stakingPosition.asset = res[i]["asset"].GetString();
+                }
+                if (res[i].HasMember("amount")) {
+                    stakingPosition.amount = std::stod(res[i]["amount"].GetString());
+                }
+                if (res[i].HasMember("purchaseTime")) {
+                    stakingPosition.purchaseTime = std::stoll(res[i]["purchaseTime"].GetString());
+                }
+                if (res[i].HasMember("duration")) {
+                    stakingPosition.duration = std::stoi(res[i]["duration"].GetString());
+                }
+                if (res[i].HasMember("accrualDays")) {
+                    stakingPosition.accrualDays = std::stoi(res[i]["accrualDays"].GetString());
+                }
+                if (res[i].HasMember("rewardAsset")) {
+                    stakingPosition.rewardAsset = res[i]["rewardAsset"].GetString();
+                }
+                if (res[i].HasMember("APY")) {
+                    stakingPosition.apy = std::stod(res[i]["APY"].GetString());
+                }
+                if (res[i].HasMember("rewardAmt")) {
+                    stakingPosition.rewardAmt = std::stod(res[i]["rewardAmt"].GetString());
+                }
+                if (res[i].HasMember("extraRewardAsset")) {
+                    stakingPosition.extraRewardAsset = res[i]["extraRewardAsset"].GetString();
+                }
+                if (res[i].HasMember("extraRewardAPY")) {
+                    stakingPosition.extraRewardApy = std::stod(res[i]["extraRewardAPY"].GetString());
+                }
+                if (res[i].HasMember("estExtraRewardAmt")) {
+                    stakingPosition.estExtraRewardAmt = std::stod(res[i]["estExtraRewardAmt"].GetString());
+                }
+                if (res[i].HasMember("nextInterestPay")) {
+                    stakingPosition.nextInterestPay = std::stod(res[i]["nextInterestPay"].GetString());
+                }
+                if (res[i].HasMember("nextInterestPayDate")) {
+                    stakingPosition.nextInterestPayDate = std::stoll(res[i]["nextInterestPayDate"].GetString());
+                }
+                if (res[i].HasMember("payInterestPeriod")) {
+                    stakingPosition.payInterestPeriod = std::stoi(res[i]["payInterestPeriod"].GetString());
+                }
+                if (res[i].HasMember("redeemAmountEarly")) {
+                    stakingPosition.redeemAmountEarly = std::stod(res[i]["redeemAmountEarly"].GetString());
+                }
+                if (res[i].HasMember("interestEndDate")) {
+                    stakingPosition.interestEndDate = std::stoll(res[i]["interestEndDate"].GetString());
+                }
+                if (res[i].HasMember("deliverDate")) {
+                    stakingPosition.deliverDate = std::stoll(res[i]["deliverDate"].GetString());
+                }
+                if (res[i].HasMember("redeemPeriod")) {
+                    stakingPosition.redeemPeriod = std::stoi(res[i]["redeemPeriod"].GetString());
+                }
+                if (res[i].HasMember("redeemingAmt")) {
+                    stakingPosition.redeemingAmt = std::stod(res[i]["redeemingAmt"].GetString());
+                }
+                if (res[i].HasMember("partialAmtDeliverDate")) {
+                    stakingPosition.partialAmtDeliverDate = std::stoll(res[i]["partialAmtDeliverDate"].GetString());
+                }
+                if (res[i].HasMember("canRedeemEarly")) {
+                    stakingPosition.canRedeemEarly = res[i]["canRedeemEarly"].GetBool();
+                }
+                if (res[i].HasMember("renewable")) {
+                    stakingPosition.renewable = res[i]["renewable"].GetBool();
+                }
+                if (res[i].HasMember("type")) {
+                    stakingPosition.type = res[i]["type"].GetString();
+                }
+                if (res[i].HasMember("status")) {
+                    stakingPosition.status = res[i]["status"].GetString();
+                }
+                    
+                LOG_INFO("QueryPosition AccountId: {}  stakingPosition: {}", accountInfo.accountId, stakingPosition.toString());
+                vStakingPosition.emplace_back(stakingPosition);
             }
-  
-        })
-        .wait();
-    } catch(exception& e) {
-        LOG_INFO("AccountId: %d   BinanceStaking Error: '%s' ", accountInfo.accountId, e.what());
+        }
+        else if (res.HasMember("code")) {
+            query = false;
+            int code = std::stoi(res["code"].GetString());
+            std::string msg = "";
+            if (res.HasMember("msg")) {
+                msg = res["msg"].GetString();
+            }
+
+            std::string errMsg = fmt::format("BinanceStaking QueryPosition code: {}, msg: {}", code, msg);
+            LOG_INFO("QueryPosition AccountId: {} Error: {}", accountInfo.accountId, errMsg);
+            vErrorMsg.emplace_back(errMsg);
+        }
+    }
+    catch(exception& e) {
+        query = false;
+        std::string errMsg = fmt::format("BinanceStaking QueryPosition exception: {}", e.what());
+        LOG_INFO("QueryPosition AccountId: {} Error: {}", accountInfo.accountId, errMsg);
+        vErrorMsg.emplace_back(errMsg);
     }
 
-    return v;
+    return query;
 }
