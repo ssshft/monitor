@@ -1,15 +1,7 @@
 #pragma once
 
-#include <cpprest/ws_client.h>
-#include <cpprest/http_client.h>
-#include <cpprest/http_msg.h>
 #include "Utility.h"
 #include "gateio/GateioObject.h"
-
-using namespace web;
-using namespace web::websockets::client;
-using namespace web::http;
-using namespace web::http::client;
 
 
 class GateioUnified
@@ -17,9 +9,9 @@ class GateioUnified
 public:
 	GateioUnified(AccountInfo& info);
 	virtual ~GateioUnified();
-    bool QueryAccount(vector<gateio::SpotAsset>& vSpotAsset, vector<string>& vErrorMsg);
+    bool QueryAccount(gateio::UnifyTotalAccount& unifyTotalAccount, std::vector<gateio::SpotAsset>& vSpotAsset, std::vector<std::string>& vErrorMsg);
 
 private:
-	string accountUrl;
+	std::string accountUrl;
 	AccountInfo accountInfo;
 };

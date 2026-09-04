@@ -1,15 +1,9 @@
 #pragma once
 
-#include <cpprest/ws_client.h>
-#include <cpprest/http_client.h>
-#include <cpprest/http_msg.h>
 #include "Utility.h"
 #include "gateio/GateioObject.h"
 
-using namespace web;
-using namespace web::websockets::client;
-using namespace web::http;
-using namespace web::http::client;
+
 
 
 class GateioSpot
@@ -17,9 +11,11 @@ class GateioSpot
 public:
 	GateioSpot(AccountInfo& info);
 	virtual ~GateioSpot();
-    bool QueryAccount(vector<gateio::SpotAsset>& vSpotAsset, vector<string>& vErrorMsg);
+    bool QueryAccount(std::vector<gateio::SpotAsset>& vSpotAsset, std::vector<std::string>& vErrorMsg);
+	bool QueryOpenOrder(std::vector<gateio::SpotOrder> vSpotOpenOrder, std::vector<std::string>& vErrorMsg);
 
 private:
-	string accountUrl;
+	std::string accountUrl;
+	std::string openOrderUrl;
 	AccountInfo accountInfo;
 };

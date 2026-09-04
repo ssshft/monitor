@@ -2,652 +2,353 @@
 
 
 GateioPerpetual::GateioPerpetual(AccountInfo& info) {
-    accountUrl = "/api/v4/futures/";
-    positionUrl = "/api/v4/futures/";
-    orderUrl = "/api/v4/futures/";
+    accountUrl = "/api/v4/futures/usdt/accounts";
+    positionUrl = "/api/v4/futures/usdt/positions";
+    orderUrl = "/api/v4/futures/usdt/orders";
     accountInfo = info;
 }
 
 GateioPerpetual::~GateioPerpetual() {
 }
 
-bool GateioPerpetual::QueryAccount(vector<gateio::FutureAsset>& vFutureAsset, vector<string>& vErrorMsg) {
+bool GateioPerpetual::QueryAccount(std::vector<gateio::FutureAsset>& vFutureAsset, std::vector<std::string>& vErrorMsg) {
     bool query = true;
-    vector<string> vSettle;
-    if (accountInfo.unified == 1) {
-        vSettle.push_back("usdt");
-    } else {
-        vSettle.push_back("usdt");
-        vSettle.push_back("btc");
+    int status = 0;
+    std::string body;
+
+    std::string time_str = std::to_string(crypto::getCurrentTimeSeconds());    
+    std::string sign = crypto::getGateioSignatureRest("GET", accountUrl, time_str, "", "", accountInfo.secretKey);
+    std::vector<std::pair<std::string, std::string>> headers = {{"KEY", accountInfo.apiKey}, {"Timestamp", time_str}, {"SIGN", sign}};
+
+    try {
+        if (!Net::Instance().syncGet(crypto::host_of(accountInfo.restUrl), accountUrl, {}, headers, body, status)) {
+            std::string errMsg = "GateioPerpetual QueryAccount syncGet return false";
+            LOG_INFO("QueryAccount AccountId: {} Error: {}", accountInfo.accountId, errMsg);
+            vErrorMsg.emplace_back(errMsg);
+            return false;
+        }
+        if (status != 200) {
+            std::string errMsg = fmt::format("GateioPerpetual QueryAccount status: {}", status);
+            LOG_INFO("QueryAccount AccountId: {} Error: {}", accountInfo.accountId, errMsg);
+            vErrorMsg.emplace_back(errMsg);
+            return false;
+        }
+
+        rapidjson::Document d;
+        rapidjson::Value &res = d.Parse<rapidjson::kParseNumbersAsStringsFlag>(body.c_str());
+
+        gateio::FutureAsset futureAsset;
+        if (res.HasMember("currency")) {
+            futureAsset.currency = crypto::to_upper(res["currency"].GetString());
+        }
+        if (res.HasMember("total")) {
+            futureAsset.total = std::stod(res["total"].GetString());
+        }
+        if (res.HasMember("unrealised_pnl")) {
+            futureAsset.unrealisedPnl = std::stod(res["unrealised_pnl"].GetString());
+        }  
+        if (res.HasMember("position_margin")) {
+            futureAsset.positionMargin = std::stod(res["position_margin"].GetString());
+        }  
+        if (res.HasMember("order_margin")) {
+            futureAsset.orderMargin = std::stod(res["order_margin"].GetString());
+        }  
+
+        if (res.HasMember("available")) {
+            futureAsset.available = std::stod(res["available"].GetString());
+        }  
+        if (res.HasMember("position_initial_margin")) {
+            futureAsset.positionInitialMargin = std::stod(res["position_initial_margin"].GetString());
+        }  
+        if (res.HasMember("point")) {
+            futureAsset.point = std::stod(res["point"].GetString());
+        }  
+        if (res.HasMember("bonus")) {
+            futureAsset.bonus = std::stod(res["bonus"].GetString());
+        }  
+        if (res.HasMember("in_dual_mode")) {
+            futureAsset.inDualMode = crypto::to_upper(res["in_dual_mode"].GetString());
+        }
+  
+        if (futureAsset.total >= 0.0000000001) {
+            LOG_INFO("QueryAccount AccountId: {}   GateioPerpetual asset: {}", accountInfo.accountId, futureAsset.toString());
+            vFutureAsset.emplace_back(futureAsset);
+        }
+
+        if (res.has_field("label")) {
+            std::string label = res["label"].GetString();
+            std::string msg = "";
+            if (label != "USER_NOT_FOUND") {
+                query = false;
+                if (res.HasMember("message")) {
+                    msg = res["message"].GetString();
+                } else {
+                    msg = label;
+                }
+            }
+
+            std::string errMsg = fmt::format("GateioPerpetual QueryAccount code: {}, msg: {}", code, msg);
+            LOG_INFO("QueryAccount AccountId: {} Error: {}", accountInfo.accountId, errMsg);
+            vErrorMsg.emplace_back(errMsg);
+        } 
     }
-    for (size_t i = 0; i < vSettle.size(); ++i) {
-        vector<gateio::FutureAsset> vSettleAccount;
-        vector<string> vErr;
-        bool querySettleAccount = QuerySettleAccount(vSettle[i], vSettleAccount, vErr);
-        query = query && querySettleAccount;
-        vFutureAsset.insert(vFutureAsset.end(), vSettleAccount.begin(), vSettleAccount.end());
-        vErrorMsg.insert(vErrorMsg.end(), vErr.begin(), vErr.end());
+    catch(exception& e) {
+        query = false;
+        std::string errMsg = fmt::format("GateioPerpetual QueryAccount exception: {}", e.what());
+        LOG_INFO("QueryAccount AccountId: {} Error: {}", accountInfo.accountId, errMsg);
+        vErrorMsg.emplace_back(errMsg);
     }
+
     return query;
 }
 
 bool GateioPerpetual::QueryPosition(vector<gateio::FuturePosition>& vFuturePosition, vector<string>& vErrorMsg) {
     bool query = true;
-    vector<string> vSettle;
-    if (accountInfo.unified == 1) {
-        vSettle.push_back("usdt");
-    } else {
-        vSettle.push_back("usdt");
-        vSettle.push_back("btc");
+    int status = 0;
+    std::string body;
+
+    std::string time_str = std::to_string(crypto::getCurrentTimeSeconds());    
+    std::string sign = crypto::getGateioSignatureRest("GET", positionUrl, time_str, "", "", accountInfo.secretKey);
+    std::vector<std::pair<std::string, std::string>> headers = {{"KEY", accountInfo.apiKey}, {"Timestamp", time_str}, {"SIGN", sign}};
+
+    try {
+        if (!Net::Instance().syncGet(crypto::host_of(accountInfo.restUrl), positionUrl, {}, headers, body, status)) {
+            std::string errMsg = "GateioPerpetual QueryPosition syncGet return false";
+            LOG_INFO("QueryPosition AccountId: {} Error: {}", accountInfo.accountId, errMsg);
+            vErrorMsg.emplace_back(errMsg);
+            return false;
+        }
+        if (status != 200) {
+            std::string errMsg = fmt::format("GateioPerpetual QueryPosition status: {}", status);
+            LOG_INFO("QueryPosition AccountId: {} Error: {}", accountInfo.accountId, errMsg);
+            vErrorMsg.emplace_back(errMsg);
+            return false;
+        }
+
+        rapidjson::Document d;
+        rapidjson::Value &res = d.Parse<rapidjson::kParseNumbersAsStringsFlag>(body.c_str());
+
+        if (res.IsArray()) {
+            for (rapidjson::SizeType i = 0; i < res.Size(); ++i) {
+                gateio::FuturePosition futurePosition;
+
+                if (res[i].HasMember("contract")) {
+                    futurePosition.contract = crypto::to_upper(res[i]["contract"].GetString());
+                }
+
+                futurePosition.instrumentType = "usdt";
+
+                if (res[i].HasMember("size")) {
+                    futurePosition.size = std::stoll(res[i]["size"].GetString());
+                }
+
+                if (res[i].HasMember("leverage")) {
+                    futurePosition.leverage = std::stoi(res[i]["leverage"].GetString());
+                }
+
+                if (res[i].HasMember("risk_limit")) {
+                    futurePosition.riskLimit = std::stoi(res[i]["risk_limit"].GetString());
+                }
+
+                if (res[i].HasMember("leverage_max")) {
+                    futurePosition.leverageMax = std::stoi(res[i]["leverage_max"].GetString());
+                }
+   
+                if (res[i].HasMember("maintenance_rate")) {
+                    futurePosition.maintenanceRate = std::stod(res[i]["maintenance_rate"].GetString());
+                }
+   
+                if (res[i].HasMember("value")) {
+                    futurePosition.value = std::stod(res[i]["value"].GetString());
+                }
+
+                if (res[i].HasMember("margin")) {
+                    futurePosition.margin = std::stod(res[i]["margin"].GetString());
+                }
+
+                if (res[i].HasMember("entry_price")) {
+                    futurePosition.entryPrice = std::stod(res[i]["entry_price"].GetString());
+                }
+
+                if (res[i].HasMember("liq_price")) {
+                    futurePosition.liqPrice = std::stod(res[i]["liq_price"].GetString());
+                }
+
+                if (res[i].HasMember("mark_price")) {
+                    futurePosition.markPrice = std::stod(res[i]["mark_price"].GetString());
+                }
+
+                if (res[i].HasMember("unrealised_pnl")) {
+                    futurePosition.unrealisedPnl = std::stod(res[i]["unrealised_pnl"].GetString());
+                }
+
+        
+                if (res[i].HasMember("realised_pnl")) {
+                    futurePosition.realisedPnl = std::stod(res[i]["realised_pnl"].GetString());
+                }
+
+
+                if (res[i].HasMember("history_pnl")) {
+                    futurePosition.historyPnl = std::stod(res[i]["history_pnl"].GetString());
+                }
+
+
+                if (res[i].HasMember("last_close_pnl")) {
+                    futurePosition.lastClosePnl = std::stod(res[i]["last_close_pnl"].GetString());
+                }
+
+                if (res[i].HasMember("realised_point")) {
+                    futurePosition.realisedPoint = std::stod(res[i]["realised_point"].GetString());
+                }  
+        
+                if (res[i].HasMember("history_point")) {
+                    futurePosition.historyPoint = std::stod(res[i]["history_point"].GetString());
+                }  
+       
+                if (fabs(futurePosition.size) > 0.0000000001) {
+                    LOG_INFO("QueryPosition AccountId: {}   GateioPerpetual position: {}", accountInfo.accountId, futurePosition.toString());
+                    vFuturePosition.emplace_back(futurePosition);
+                }
+            }
+        }
+
+        if (res.has_field("label")) {
+            std::string label = res["label"].GetString();
+            std::string msg = "";
+            if (label != "USER_NOT_FOUND") {
+                query = false;
+                if (res.HasMember("message")) {
+                    msg = res["message"].GetString();
+                } else {
+                    msg = label;
+                }
+            }
+
+            std::string errMsg = fmt::format("GateioPerpetual QueryPosition code: {}, msg: {}", code, msg);
+            LOG_INFO("QueryPosition AccountId: {} Error: {}", accountInfo.accountId, errMsg);
+            vErrorMsg.emplace_back(errMsg);
+        } 
     }
-    for (size_t i = 0; i < vSettle.size(); ++i) {
-        vector<gateio::FuturePosition> vSettlePosition;
-        vector<string> vErr;
-        bool querySettlePosition = QuerySettlePosition(vSettle[i], vSettlePosition, vErr);
-        query = query && querySettlePosition;
-        vFuturePosition.insert(vFuturePosition.end(), vSettlePosition.begin(), vSettlePosition.end());
-        vErrorMsg.insert(vErrorMsg.end(), vErr.begin(), vErr.end());
+    catch(exception& e) {
+        query = false;
+        std::string errMsg = fmt::format("GateioPerpetual QueryPosition exception: {}", e.what());
+        LOG_INFO("QueryPosition AccountId: {} Error: {}", accountInfo.accountId, errMsg);
+        vErrorMsg.emplace_back(errMsg);
     }
+
     return query;
 }
 
 bool GateioPerpetual::QueryOpenOrder(vector<gateio::FutureOrder>& vFutureOrder, vector<string>& vErrorMsg) {
     bool query = true;
-    vector<string> vSettle;
-    if (accountInfo.unified == 1) {
-        vSettle.push_back("usdt");
-    } else {
-        vSettle.push_back("usdt");
-        vSettle.push_back("btc");
-    }
-    for (size_t i = 0; i < vSettle.size(); ++i) {
-        vector<gateio::FutureOrder> vSettleOrder;
-        vector<string> vErr;
-        bool querySettleOpenOrder = QuerySettleOpenOrder(vSettle[i], vSettleOrder, vErr);
-        query = query && querySettleOpenOrder;
-        vFutureOrder.insert(vFutureOrder.end(), vSettleOrder.begin(), vSettleOrder.end());
-        vErrorMsg.insert(vErrorMsg.end(), vErr.begin(), vErr.end());
-    }
-    return query;
-}
+    int status = 0;
+    std::string body;
 
-bool GateioPerpetual::QueryOrder(vector<gateio::FutureOrder>& vFutureOrder, vector<string>& vErrorMsg) {
-    bool query = true;
-    vector<string> vSettle;
-    if (accountInfo.unified == 1) {
-        vSettle.push_back("usdt");
-    } else {
-        vSettle.push_back("usdt");
-        vSettle.push_back("btc");
-    }
-    for (size_t i = 0; i < vSettle.size(); ++i) {
-        vector<gateio::FutureOrder> vSettleOrder;
-        vector<string> vErr;
-        bool querySettleOpenOrder = QuerySettleOrder(vSettle[i], vSettleOrder, vErr);
-        query = query && querySettleOpenOrder;
-        vFutureOrder.insert(vFutureOrder.end(), vSettleOrder.begin(), vSettleOrder.end());
-        vErrorMsg.insert(vErrorMsg.end(), vErr.begin(), vErr.end());
-    }
-    return query;
-}
+    std::string time_str = std::to_string(crypto::getCurrentTimeSeconds());    
+    std::string sign = crypto::getGateioSignatureRest("GET", orderUrl, time_str, "", "", accountInfo.secretKey);
+    std::vector<std::pair<std::string, std::string>> headers = {{"KEY", accountInfo.apiKey}, {"Timestamp", time_str}, {"SIGN", sign}};
 
-bool GateioPerpetual::QuerySettleAccount(string settle, vector<gateio::FutureAsset>& vFutureAsset, vector<string>& vErrorMsg) {
-    int count = 0;
-    bool query = true;
-    while (count < 3) {
-        query = true;
-        vFutureAsset.clear();
-        vErrorMsg.clear();
-
-        try {
-            http_client_config config;
-            config.set_timeout(utility::seconds(5));
-            http_client client(accountInfo.restUrl, config);
-            http_request request(methods::GET);
-            string accountSettleUrl = accountUrl + settle + "/accounts";
-            uri_builder builder(accountSettleUrl);
-
-            string hashStr = sha512("");
-            int64_t timestamp = gettickcount() / 1000;
-            stringstream ss;
-            ss << "GET" << "\n" << accountSettleUrl << "\n" << "" << "\n" << hashStr << "\n" << timestamp;
-            string message = ss.str();
-            string signature = getSignatureGate(message, accountInfo.secretKey);
-            request.headers().add("Accept", "application/json");  
-            request.headers().add("Content-Type", "application/json");  
-            request.headers().add("SIGN", signature);  
-            request.headers().add("Timestamp", timestamp);
-            request.headers().add("KEY", accountInfo.apiKey);
-
-            request.set_request_uri(builder.to_string());
-            client.request(request)
-            .then([](http_response response) -> pplx::task<json::value> {  // if the status is OK extract the body of the response into a JSON value
-                auto code = response.status_code();
-                if (code == status_codes::OK || code == status_codes::BadRequest || code == status_codes::NotFound) {  // || code == status_codes::TooManyRequests || code == status_codes::Unauthorized
-                    return response.extract_json();
-                }
-                
-                LOG_INFO("GateioPerpetual QueryAccount response: '%s' ", response.to_string().c_str());
-                throw exception();
-                return pplx::task_from_result(json::value());  // return an empty JSON value
-            })
-            .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
-                json::value const& content = previousTask.get();
-                //LOG_INFO("GateioPerpetual QueryAccount AccountId: %d  content: %s", accountInfo.accountId, content.to_string().c_str());
-                gateio::FutureAsset futureAsset;
-
-                if (content.has_field("currency")) {
-                    string currency = content.at("currency").as_string();
-                    futureAsset.currency = boost::to_upper_copy(currency);
-                }
-                if (content.has_field("total")) {
-                    futureAsset.total = fabs(stod(content.at("total").as_string()));
-                }
-                if (content.has_field("unrealised_pnl")) {
-                    futureAsset.unrealisedPnl = stod(content.at("unrealised_pnl").as_string());
-                }
-                if (content.has_field("position_margin")) {
-                    futureAsset.positionMargin = stod(content.at("position_margin").as_string());
-                }
-                if (content.has_field("order_margin")) {
-                    futureAsset.orderMargin = stod(content.at("order_margin").as_string());
-                }
-                if (content.has_field("available")) {
-                    futureAsset.available = fabs(stod(content.at("available").as_string()));
-                }
-                if (content.has_field("position_initial_margin")) {
-                    futureAsset.positionInitialMargin = stod(content.at("position_initial_margin").as_string());
-                }
-                if (content.has_field("point")) {
-                    futureAsset.point = stod(content.at("point").as_string());
-                }
-                if (content.has_field("bonus")) {
-                    futureAsset.bonus = stod(content.at("bonus").as_string());
-                }
-                if (content.has_field("in_dual_mode")) {
-                    futureAsset.inDualMode = content.at("in_dual_mode").as_bool();
-                }
-
-                if (futureAsset.total >= 0.0000000001) {
-            	    LOG_INFO("QueryAccount AccountId: %d   GateioPerpetual asset: %s", accountInfo.accountId, futureAsset.toString().c_str());
-                    vFutureAsset.emplace_back(futureAsset);
-                }
-
-	        if (content.has_field("label")) {
-                    string label = content.at("label").as_string();
-		    if (label != "USER_NOT_FOUND") {
-                    	query = false;
-                    	stringstream ss;
-                    	string msg = "";
-                    	if (label.size() > 0) {
-                            if (content.has_field("message")) {
-                                msg = content.at("message").as_string();
-                            } else {
-                                msg = content.at("label").as_string();
-                            }
-                        }
-                        ss << "GateioPerpetual QueryAccount msg:" << msg;
-                        string errMsg = ss.str();
-                        LOG_INFO("QueryAccount AccountId: %d   GateioPerpetual Error: '%s' ", accountInfo.accountId, errMsg.c_str());
-                        vErrorMsg.emplace_back(errMsg);
-		    }
-                }
-
-            })
-            .wait();
-        } catch(exception& e) {
-            query = false;
-            string errMsg = string("GateioPerpetual QueryAccount ") + string(e.what());
-            LOG_INFO("QueryAccount AccountId: %d  settle:%s GateioPerpetual Error: '%s' ", accountInfo.accountId, settle.c_str(), errMsg.c_str());
+    try {
+        if (!Net::Instance().syncGet(crypto::host_of(accountInfo.restUrl), orderUrl, {}, headers, body, status)) {
+            std::string errMsg = "GateioPerpetual QueryOpenOrder syncGet return false";
+            LOG_INFO("QueryOpenOrder AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
+            return false;
         }
-
-        if (query) {
-            break;
-        }
-        usleep(1);
-        count++;
-    }
-    return query;
-}
-
-bool GateioPerpetual::QuerySettlePosition(string settle, vector<gateio::FuturePosition>& vFuturePosition, vector<string>& vErrorMsg) {
-    int count = 0;
-    bool query = true;
-    while (count < 3) {
-        query = true;
-        vFuturePosition.clear();
-        vErrorMsg.clear();
-
-        try {
-            http_client_config config;
-            config.set_timeout(utility::seconds(5));
-            http_client client(accountInfo.restUrl, config);
-            http_request request(methods::GET);
-            string positionSettleUrl = positionUrl + settle + "/positions";
-            uri_builder builder(positionSettleUrl);
-
-            string hashStr = sha512("");
-            int64_t timestamp = gettickcount() / 1000;
-            stringstream ss;
-            ss << "GET" << "\n" << positionSettleUrl << "\n" << "" << "\n" << hashStr << "\n" << timestamp;
-            string message = ss.str();
-            string signature = getSignatureGate(message, accountInfo.secretKey);
-            request.headers().add("Accept", "application/json");  
-            request.headers().add("Content-Type", "application/json");  
-            request.headers().add("SIGN", signature);  
-            request.headers().add("Timestamp", timestamp);
-            request.headers().add("KEY", accountInfo.apiKey);
-
-            request.set_request_uri(builder.to_string());
-            client.request(request)
-            .then([](http_response response) -> pplx::task<json::value> {  // if the status is OK extract the body of the response into a JSON value
-                auto code = response.status_code();
-                if (code == status_codes::OK || code == status_codes::BadRequest || code == status_codes::NotFound) {  // || code == status_codes::TooManyRequests || code == status_codes::Unauthorized
-                    return response.extract_json();
-                }
-                
-                LOG_INFO("GateioPerpetual QueryPosition response: '%s' ", response.to_string().c_str());
-                throw exception();
-                return pplx::task_from_result(json::value());  // return an empty JSON value
-            })
-            .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
-                json::value const& content = previousTask.get();
-                //LOG_INFO("GateioPerpetual QuerySettlePosition AccountId: %d  content: %s", accountInfo.accountId, content.to_string().c_str());
-                if (content.is_array()) {
-                    auto positionArray = content.as_array();
-                    for (auto& position: positionArray) {
-                        gateio::FuturePosition futurePosition;
-                        if (position.has_field("contract")) {
-                            futurePosition.contract = position.at("contract").as_string();
-                        }
-                        futurePosition.instrumentType = settle;
-                        if (position.has_field("size")) {
-                            futurePosition.size = position.at("size").as_number().to_int64();
-                        }
-                        if (position.has_field("leverage")) {
-                            futurePosition.leverage = stoi(position.at("leverage").as_string());
-                        }
-                        if (position.has_field("risk_limit")) {
-                            futurePosition.riskLimit = stoi(position.at("risk_limit").as_string());
-                        }
-                        if (position.has_field("leverage_max")) {
-                            futurePosition.leverageMax = stoi(position.at("leverage_max").as_string());
-                        }
-                        if (position.has_field("maintenance_rate")) {
-                            futurePosition.maintenanceRate = stod(position.at("maintenance_rate").as_string());
-                        }
-                        if (position.has_field("value")) {
-                            futurePosition.value = stod(position.at("value").as_string());
-                        }
-                        if (position.has_field("margin")) {
-                            futurePosition.margin = stod(position.at("margin").as_string());
-                        }
-                        if (position.has_field("entry_price")) {
-                            futurePosition.entryPrice = stod(position.at("entry_price").as_string());
-                        }
-                        if (position.has_field("liq_price")) {
-                            futurePosition.liqPrice = stod(position.at("liq_price").as_string());
-                        }
-                        if (position.has_field("mark_price")) {
-                            futurePosition.markPrice = stod(position.at("mark_price").as_string());
-                        }
-                        if (position.has_field("unrealised_pnl")) {
-                            futurePosition.unrealisedPnl = stod(position.at("unrealised_pnl").as_string());
-                        }
-                        if (position.has_field("realised_pnl")) {
-                            futurePosition.realisedPnl = stod(position.at("realised_pnl").as_string());
-                        }
-                        if (position.has_field("history_pnl")) {
-                            futurePosition.historyPnl = stod(position.at("history_pnl").as_string());
-                        }
-                        if (position.has_field("last_close_pnl")) {
-                            futurePosition.lastClosePnl = stod(position.at("last_close_pnl").as_string());
-                        }
-                        if (position.has_field("realised_point")) {
-                            futurePosition.realisedPoint = stod(position.at("realised_point").as_string());
-                        }
-                        if (position.has_field("history_point")) {
-                            futurePosition.historyPoint = stod(position.at("history_point").as_string());
-                        }
-                        if (fabs(futurePosition.size) > 0.0000000001) {
-            		    LOG_INFO("QueryPosition AccountId: %d   GateioPerpetual position: %s", accountInfo.accountId, futurePosition.toString().c_str());
-                            vFuturePosition.emplace_back(futurePosition);
-                        }
-                    }
-                }            
-
-	        if (content.has_field("label")) {
-                    string label = content.at("label").as_string();
-		    if (label != "USER_NOT_FOUND") {
-                    	query = false;
-                    	stringstream ss;
-                    	string msg = "";
-                    	if (label.size() > 0) {
-                            if (content.has_field("message")) {
-                                msg = content.at("message").as_string();
-                            } else {
-                                msg = content.at("label").as_string();
-                            }
-                        }
-                        ss << "GateioPerpetual QueryPosition msg:" << msg;
-                        string errMsg = ss.str();
-                        LOG_INFO("QueryPosition AccountId: %d   GateioPerpetual Error: '%s' ", accountInfo.accountId, errMsg.c_str());
-                        vErrorMsg.emplace_back(errMsg);
-		    }
-                }
-
-            })
-            .wait();
-        } catch(exception& e) {
-            query = false;
-            string errMsg = string("GateioPerpetual QueryPosition ") + string(e.what());
-            LOG_INFO("QueryPosition AccountId: %d   GateioPerpetual Error: '%s' ", accountInfo.accountId, errMsg.c_str());
+        if (status != 200) {
+            std::string errMsg = fmt::format("GateioPerpetual QueryOpenOrder status: {}", status);
+            LOG_INFO("QueryOpenOrder AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
+            return false;
         }
 
-        if (query) {
-            break;
-        }
-        usleep(1);
-        count++;
-    }
-    return query;
-}
+        rapidjson::Document d;
+        rapidjson::Value &res = d.Parse<rapidjson::kParseNumbersAsStringsFlag>(body.c_str());
 
-bool GateioPerpetual::QuerySettleOpenOrder(string settle, vector<gateio::FutureOrder>& vFutureOrder, vector<string>& vErrorMsg) {
-    int count = 0;
-    bool query = true;
-    while (count < 3) {
-        query = true;
-        vFutureOrder.clear();
-        vErrorMsg.clear();
+        if (res.IsArray()) {
+            for (rapidjson::SizeType i = 0; i < res.Size(); ++i) {
+                gateio::FutureOrder futureOrder;
 
-        try {
-            http_client_config config;
-            config.set_timeout(utility::seconds(5));
-            http_client client(accountInfo.restUrl, config);
-            http_request request(methods::GET);
-            string orderSettleUrl = orderUrl + settle + "/orders";
-            uri_builder builder(orderSettleUrl);
-            builder.append_query("status", "open");
-
-            string hashStr = sha512("");
-            int64_t timestamp = gettickcount() / 1000;
-
-            string queryStr = builder.to_string();
-            string queryBody = "";
-            size_t pos = queryStr.find("?");
-            if (pos != string::npos) {
-                queryBody = queryStr.substr(pos + 1, queryStr.size());
-            }
-
-            stringstream ss;
-            ss << "GET" << "\n" << orderSettleUrl << "\n" << queryBody << "\n" << hashStr << "\n" << timestamp;
-
-            string message = ss.str();
-            string signature = getSignatureGate(message, accountInfo.secretKey);
-            request.headers().add("Accept", "application/json");  
-            request.headers().add("Content-Type", "application/json");  
-            request.headers().add("SIGN", signature);  
-            request.headers().add("Timestamp", timestamp);
-            request.headers().add("KEY", accountInfo.apiKey);
-            
-
-            request.set_request_uri(builder.to_string());
-            client.request(request)
-            .then([](http_response response) -> pplx::task<json::value> {  // if the status is OK extract the body of the response into a JSON value
-                auto code = response.status_code();
-                if (code == status_codes::OK || code == status_codes::BadRequest || code == status_codes::NotFound) {  // || code == status_codes::TooManyRequests || code == status_codes::Unauthorized
-                    return response.extract_json();
+                if (res[i].HasMember("contract")) {
+                    futureOrder.contract = crypto::to_upper(res[i]["contract"].GetString());
                 }
-                
-                LOG_INFO("GateioPerpetual QueryOpenOrder response: '%s' ", response.to_string().c_str());
-                throw exception();
-                return pplx::task_from_result(json::value());  // return an empty JSON value
-            })
-            .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
-                json::value const& content = previousTask.get();
-                if (content.is_array()) {
-                    auto openOrderArray = content.as_array();
-                    for (auto& openOrder: openOrderArray) {
-                        gateio::FutureOrder futureOrder;
-                        if (openOrder.has_field("contract")) {
-                            futureOrder.contract = openOrder.at("contract").as_string();
-                        }
-                        if (openOrder.has_field("create_time")) {
-                            futureOrder.createTime = openOrder.at("create_time").as_number().to_int64();
-                        }
-                        if (openOrder.has_field("finish_time")) {
-                            futureOrder.finishTime = openOrder.at("finish_time").as_number().to_int64();
-                        }
-                        if (openOrder.has_field("size")) {
-                            futureOrder.size = openOrder.at("size").as_integer();
-                        }
-                        if (openOrder.has_field("left")) {
-                            futureOrder.left = openOrder.at("left").as_integer();
-                        }
-                        if (openOrder.has_field("price")) {
-                            string s = openOrder.at("price").as_string();
-                            if (s != "") {
-                                futureOrder.price = stod(s);
-                            }   
-                        }
-                        if (openOrder.has_field("fill_price")) {
-                            string s = openOrder.at("fill_price").as_string();
-                            if (s != "") {
-                                futureOrder.fillPrice = stod(s);
-                            }
-                        }
-                        if (openOrder.has_field("mkfr")) {
-                            string s = openOrder.at("mkfr").as_string();
-                            if (s != "") {
-                                futureOrder.mkfr = stod(s);
-                            }
-                        }
-                        if (openOrder.has_field("tkfr")) {
-                            string s = openOrder.at("tkfr").as_string();
-                            if (s != "") {
-                                futureOrder.tkfr = stod(s);
-                            }
-                        }
-                        if (openOrder.has_field("status")) {
-                            futureOrder.status = openOrder.at("status").as_string();
-                        }
-                        if (openOrder.has_field("finishAs")) {
-                            futureOrder.finishAs = openOrder.at("finishAs").as_string();
-                        }
 
-            		LOG_INFO("QueryOpenOrder AccountId: %d   GateioPerpetual order: %s", accountInfo.accountId, futureOrder.toString().c_str());
-                        vFutureOrder.emplace_back(futureOrder);
+                if (res[i].HasMember("create_time")) {
+                    futureOrder.createTime = std::stoll(res[i]["create_time"].GetString());
+                }
+
+                if (res[i].HasMember("finish_time")) {
+                    futureOrder.finishTime = std::stoll(res[i]["finish_time"].GetString());
+                }
+
+                if (res[i].HasMember("size")) {
+                    futureOrder.size = std::stoi(res[i]["size"].GetString());
+                }
+
+                if (res[i].HasMember("left")) {
+                    futureOrder.left = std::stoi(res[i]["left"].GetString());
+                }
+
+                if (res[i].HasMember("price")) {
+                    if (!crypto::str_cmp(res[i]["price"].GetString(), "")) {
+                        futureOrder.price = std::stod(res[i]["price"].GetString());
                     }
                 }
 
-	        if (content.has_field("label")) {
-                    string label = content.at("label").as_string();
-		    if (label != "USER_NOT_FOUND") {
-                    	query = false;
-                    	stringstream ss;
-                    	string msg = "";
-                    	if (label.size() > 0) {
-                            if (content.has_field("message")) {
-                                msg = content.at("message").as_string();
-                            } else {
-                                msg = content.at("label").as_string();
-                            }
-                        }
-                        ss << "GateioPerpetual QueryOpenOrder msg:" << msg;
-                        string errMsg = ss.str();
-                        LOG_INFO("QueryOpenOrder AccountId: %d   GateioPerpetual Error: '%s' ", accountInfo.accountId, errMsg.c_str());
-                        vErrorMsg.emplace_back(errMsg);
-		    }
+                if (res[i].HasMember("fill_price")) {
+                    if (!crypto::str_cmp(res[i]["fill_price"].GetString(), "")) {
+                        futureOrder.fillPrice = std::stod(res[i]["fill_price"].GetString());
+                    }
                 }
 
-            })
-            .wait();
-        } catch(exception& e) {
-            query = false;
-            string errMsg = string("GateioPerpetual QueryOpenOrder ") + string(e.what());
-            LOG_INFO("QueryOpenOrder AccountId: %d   GateioPerpetual Error: '%s' ", accountInfo.accountId, errMsg.c_str());
-            vErrorMsg.emplace_back(errMsg);
-        }
-
-        if (query) {
-            break;
-        }
-        usleep(1);
-        count++;
-    }
-    return query;
-}
-
-bool GateioPerpetual::QuerySettleOrder(string settle, vector<gateio::FutureOrder>& vFutureOrder, vector<string>& vErrorMsg) {
-    int count = 0;
-    bool query = true;
-    while (count < 3) {
-        query = true;
-        vFutureOrder.clear();
-        vErrorMsg.clear();
-
-        try {
-            http_client_config config;
-            config.set_timeout(utility::seconds(5));
-            http_client client(accountInfo.restUrl, config);
-            http_request request(methods::GET);
-            string orderSettleUrl = orderUrl + settle + "/orders_timerange";
-            uri_builder builder(orderSettleUrl);
+                if (res[i].HasMember("mkfr")) {
+                    if (!crypto::str_cmp(res[i]["mkfr"].GetString(), "")) {
+                        futureOrder.mkfr = std::stod(res[i]["mkfr"].GetString());
+                    }
+                }
    
-            string hashStr = sha512("");
-            int64_t timestamp = gettickcount() / 1000;
-
-            string queryStr = builder.to_string();
-            string queryBody = "";
-            size_t pos = queryStr.find("?");
-            if (pos != string::npos) {
-                queryBody = queryStr.substr(pos + 1, queryStr.size());
-            }
-
-            stringstream ss;
-            ss << "GET" << "\n" << orderSettleUrl << "\n" << queryBody << "\n" << hashStr << "\n" << timestamp;
-
-            string message = ss.str();
-            string signature = getSignatureGate(message, accountInfo.secretKey);
-            request.headers().add("Accept", "application/json");  
-            request.headers().add("Content-Type", "application/json");  
-            request.headers().add("SIGN", signature);  
-            request.headers().add("Timestamp", timestamp);
-            request.headers().add("KEY", accountInfo.apiKey);
-            
-
-            request.set_request_uri(builder.to_string());
-            client.request(request)
-            .then([](http_response response) -> pplx::task<json::value> {  // if the status is OK extract the body of the response into a JSON value
-                auto code = response.status_code();
-                if (code == status_codes::OK || code == status_codes::BadRequest || code == status_codes::NotFound) {  // || code == status_codes::TooManyRequests || code == status_codes::Unauthorized
-                    return response.extract_json();
-                }
-                
-                LOG_INFO("GateioPerpetual QueryOrder response: '%s' ", response.to_string().c_str());
-                throw exception();
-                return pplx::task_from_result(json::value());  // return an empty JSON value
-            })
-            .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
-                json::value const& content = previousTask.get();
-                if (content.is_array()) {
-                    auto openOrderArray = content.as_array();
-                    for (auto& openOrder: openOrderArray) {
-                        gateio::FutureOrder futureOrder;
-                        if (openOrder.has_field("contract")) {
-                            futureOrder.contract = openOrder.at("contract").as_string();
-                        }
-                        if (openOrder.has_field("create_time")) {
-                            futureOrder.createTime = openOrder.at("create_time").as_number().to_int64();
-                        }
-                        if (openOrder.has_field("finish_time")) {
-                            string s = openOrder.at("finish_time").as_string();
-                            if (s != "") {
-                                futureOrder.finishTime = stoll(s);
-                            }
-                        }
-                        if (openOrder.has_field("size")) {
-                            futureOrder.size = openOrder.at("size").as_integer();
-                        }
-                        if (openOrder.has_field("left")) {
-                            futureOrder.left = openOrder.at("left").as_integer();
-                        }
-                        if (openOrder.has_field("price")) {
-                            string s = openOrder.at("price").as_string();
-                            if (s != "") {
-                                futureOrder.price = stod(s);
-                            }    
-                        }
-                        if (openOrder.has_field("fill_price")) {
-                            string s = openOrder.at("fill_price").as_string();
-                            if (s != "") {
-                                futureOrder.fillPrice = stod(s);
-                            }
-                        }
-                        if (openOrder.has_field("mkfr")) {
-                            string s = openOrder.at("mkfr").as_string();
-                            if (s != "") {
-                                futureOrder.mkfr = stod(s);
-                            }
-                        }
-                        if (openOrder.has_field("tkfr")) {
-                            string s = openOrder.at("tkfr").as_string();
-                            if (s != "") {
-                                futureOrder.tkfr = stod(s);
-                            }
-                        }
-                        if (openOrder.has_field("status")) {
-                            futureOrder.status = openOrder.at("status").as_string();
-                        }
-                        if (openOrder.has_field("finish_as")) {
-                            futureOrder.finishAs = openOrder.at("finish_as").as_string();
-                        }
-
-            		    LOG_INFO("QueryOrder AccountId: %d   GateioPerpetual order: %s", accountInfo.accountId, futureOrder.toString().c_str());
-                        if (futureOrder.finishAs == "liquidated" || futureOrder.finishAs == "auto_deleveraged") {
-                            vFutureOrder.emplace_back(futureOrder);
-                        }
-                        
+                if (res[i].HasMember("tkfr")) {
+                    if (!crypto::str_cmp(res[i]["tkfr"].GetString(), "")) {
+                        futureOrder.tkfr = std::stod(res[i]["tkfr"].GetString());
                     }
                 }
 
-	            if (content.has_field("label")) {
-                    string label = content.at("label").as_string();
-		            if (label != "USER_NOT_FOUND") {
-                    	query = false;
-                    	stringstream ss;
-                    	string msg = "";
-                    	if (label.size() > 0) {
-                            if (content.has_field("message")) {
-                                msg = content.at("message").as_string();
-                            } else {
-                                msg = content.at("label").as_string();
-                            }
-                        }
-                        ss << "GateioPerpetual QueryOrder msg:" << msg;
-                        string errMsg = ss.str();
-                        LOG_INFO("QueryOrder AccountId: %d   GateioPerpetual Error: '%s' ", accountInfo.accountId, errMsg.c_str());
-                        vErrorMsg.emplace_back(errMsg);
-		            }
+                if (res[i].HasMember("status")) {
+                    futureOrder.status = res[i]["status"].GetString();
                 }
 
-            })
-            .wait();
-        } catch(exception& e) {
-            query = false;
-            string errMsg = string("GateioPerpetual QueryOrder ") + string(e.what());
-            LOG_INFO("QueryOrder AccountId: %d   GateioPerpetual Error: '%s' ", accountInfo.accountId, errMsg.c_str());
-            vErrorMsg.emplace_back(errMsg);
+                if (res[i].HasMember("finishAs")) {
+                    futureOrder.finishAs = res[i]["finishAs"].GetString();
+                }
+            	
+                LOG_INFO("QueryOpenOrder AccountId: {}  GateioPerpetual order: {}", accountInfo.accountId, futureOrder.toString());
+                vFutureOrder.emplace_back(futureOrder);
+            }
         }
 
-        if (query) {
-            break;
-        }
-        usleep(1);
-        count++;
+        if (res.has_field("label")) {
+            std::string label = res["label"].GetString();
+            std::string msg = "";
+            if (label != "USER_NOT_FOUND") {
+                query = false;
+                if (res.HasMember("message")) {
+                    msg = res["message"].GetString();
+                } else {
+                    msg = label;
+                }
+            }
+
+            std::string errMsg = fmt::format("GateioPerpetual QueryOpenOrder code: {}, msg: {}", code, msg);
+            LOG_INFO("QueryOpenOrder AccountId: {} Error: {}", accountInfo.accountId, errMsg);
+            vErrorMsg.emplace_back(errMsg);
+        } 
     }
+    catch(exception& e) {
+        query = false;
+        std::string errMsg = fmt::format("GateioPerpetual QueryOpenOrder exception: {}", e.what());
+        LOG_INFO("QueryOpenOrder AccountId: {} Error: {}", accountInfo.accountId, errMsg);
+        vErrorMsg.emplace_back(errMsg);
+    }
+
     return query;
 }

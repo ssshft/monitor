@@ -46,7 +46,7 @@ public:
             auto promise = std::make_shared<std::promise<std::pair<boost::system::error_code, net::HttpResponse>>>();
             auto future  = promise->get_future();
 
-            it->second->async_request(boost::beast::http::verb::get, target, std::string(), std::string(), extra_headers, [promise](boost::system::error_code ec, net::HttpResponse resp) {
+            it->second->async_request(boost::beast::http::verb::get, target, std::string(), "application/json", extra_headers, [promise](boost::system::error_code ec, net::HttpResponse resp) {
                     promise->set_value(std::make_pair(ec, std::move(resp)));
                 });
 

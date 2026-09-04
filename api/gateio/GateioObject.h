@@ -18,6 +18,48 @@ namespace gateio {
 	    }
     };
 
+    struct SpotOrder {
+        std::string id{""};
+        std::string text{""}
+        std::string currency_pair{""};
+        std::string status{""};
+        std::string type{""};
+        std::string time_in_force{""};
+        std::string side{""};
+        double amount{0.0};
+        double price{0.0};
+        double left{0.0};
+        double filled_total{0.0};
+        int64_t update_time{0};
+
+	    std::string toString() {
+	        stringstream ss;
+	        ss << "id:" << id << " text:" << text << " currency_pair:" << currency_pair << " status:" << status << " type:" << type << " time_in_force:" << time_in_force << " side:" << side << " amount:" << amount << " price:" << price << " left:" << left << " filled_total: " << filled_total << " update_time: " << update_time;
+	        return ss.str();
+	    }
+    };
+
+    struct UnifyTotalAccount {
+        double total{0.0};
+        double borrowed{0.0};
+        double totalInitialMargin{0.0};
+        double totalMarginBalance{0.0};
+        double totalMaintenanceMargin{0.0};
+        double totalInitialMarginRate{0.0};
+        double totalMaintenanceMarginRate{0.0};
+        double totalAvailableMargin{0.0};
+        double unifiedAccountTotal{0.0};
+        double unifiedAccountTotalLiab{0.0};
+        double unifiedAccountTotalEquity{0.0};
+        double leverage{0.0};
+
+        std::string toString() {
+            stringstream ss;
+            ss << "total: " << total << " borrowed:" << borrowed << " totalInitialMargin:" << totalInitialMargin << " totalMarginBalance:" << totalMarginBalance << " totalMaintenanceMargin:" << totalMaintenanceMargin << " totalInitialMarginRate:" << totalInitialMarginRate << " totalMaintenanceMarginRate:" << totalMaintenanceMarginRate << " totalAvailableMargin:" << totalAvailableMargin << " unifiedAccountTotal:" << unifiedAccountTotal << " unifiedAccountTotalLiab:" << unifiedAccountTotalLiab << " unifiedAccountTotalEquity:" << unifiedAccountTotalEquity << " leverage:" << leverage;
+            return ss.str();
+        }
+    };
+
     struct FutureAsset {
         string currency{""};
         double total{0.0};

@@ -9,95 +9,116 @@ GateioUnified::GateioUnified(AccountInfo& info) {
 GateioUnified::~GateioUnified() {
 }
 
-bool GateioUnified::QueryAccount(vector<gateio::SpotAsset>& vSpotAsset, vector<string>& vErrorMsg) {
-    int count = 0;
+bool GateioUnified::QueryAccount(gateio::UnifyTotalAccount& unifyTotalAccount, std::vector<gateio::SpotAsset>& vSpotAsset, std::vector<std::string>& vErrorMsg) {
     bool query = true;
-    while (count < 3) {
-        query = true;
-        vSpotAsset.clear();
-        vErrorMsg.clear();
-        try {
-            http_client_config config;
-            config.set_timeout(utility::seconds(5));
-            http_client client(accountInfo.restUrl, config);
-            http_request request(methods::GET);
-            uri_builder builder(accountUrl);
-            
-            string hashStr = sha512("");
-            int64_t timestamp = gettickcount() / 1000;
-            stringstream ss;
-            ss << "GET" << "\n" << accountUrl << "\n" << "" << "\n" << hashStr << "\n" << timestamp;
-            string message = ss.str();
-            string signature = getSignatureGate(message, accountInfo.secretKey);
-            request.headers().add("Accept", "application/json");  
-            request.headers().add("Content-Type", "application/json");  
-            request.headers().add("SIGN", signature);  
-            request.headers().add("Timestamp", timestamp);
-            request.headers().add("KEY", accountInfo.apiKey);
+    int status = 0;
+    std::string body;
 
-            request.set_request_uri(builder.to_string());
-            
-            client.request(request)
-            .then([](http_response response) -> pplx::task<json::value> {  // if the status is OK extract the body of the response into a JSON value
-                auto code = response.status_code();
-                if(code == status_codes::OK || code == status_codes::BadRequest || code == status_codes::NotFound) {  // || code == status_codes::TooManyRequests || code == status_codes::Unauthorized
-                    return response.extract_json();
-                }
-                
-                LOG_INFO("GateioUnified QueryAccount response: '%s' ", response.to_string().c_str());
-                throw exception();
-                return pplx::task_from_result(json::value());  // return an empty JSON value
-            })
-            .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
-                json::value const& content = previousTask.get();
-                LOG_INFO("get_unified_account: %s", content.serialize().c_str());
-                
-                auto balances = content.at("balances").as_object();
-                for (auto iter = balances.begin(); iter != balances.end(); ++iter) {
-                    gateio::SpotAsset spotAsset;
-                    spotAsset.currency = iter->first;;
-                    spotAsset.total = stod(iter->second.at("equity").as_string());
-                    spotAsset.available = stod(iter->second.at("available").as_string());
-                    spotAsset.locked = fabs(stod(iter->second.at("freeze").as_string()));
-                   
-                    if (fabs(spotAsset.total) >= 0.0000000001) {
-                        LOG_INFO("QueryAccount AccountId: %d   GateioUnified asset: %s", accountInfo.accountId, spotAsset.toString().c_str());
-                        vSpotAsset.emplace_back(spotAsset);
-                    }
-                }
+    std::string time_str = std::to_string(crypto::getCurrentTimeSeconds());    
+    std::string sign = crypto::getGateioSignatureRest("GET", accountUrl, time_str, "", "", accountInfo.secretKey);
+    std::vector<std::pair<std::string, std::string>> headers = {{"KEY", accountInfo.apiKey}, {"Timestamp", time_str}, {"SIGN", sign}};
 
-                if (content.has_field("label")) {
-                    query = false;
-                    stringstream ss;
-                    string label = content.at("label").as_string();
-                    string msg = "";
-                    if (label.size() > 0) {
-                        if (content.has_field("message")) {
-                            msg = content.at("message").as_string();
-                        } else {
-                            msg = content.at("label").as_string();
-                        }
-                    }
-                    ss << "GateioUnified QueryAccount msg:" << msg;
-                    string errMsg = ss.str();
-                    LOG_INFO("QueryAccount AccountId: %d   GateioUnified Error: '%s' ", accountInfo.accountId, errMsg.c_str());
-                    vErrorMsg.emplace_back(errMsg);
-                }      
-
-            })
-            .wait();
-        } catch(exception& e) {
-            query = false;
-            string errMsg = string("GateioUnified QueryAccount") + string(e.what());
-            LOG_INFO("QueryAccount AccountId: %d   GateioUnified Error: '%s' ", accountInfo.accountId, errMsg.c_str());
+    try {
+        if (!Net::Instance().syncGet(crypto::host_of(accountInfo.restUrl), accountUrl, {}, headers, body, status)) {
+            std::string errMsg = "GateioUnified QueryAccount syncGet return false";
+            LOG_INFO("QueryAccount AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
+            return false;
+        }
+        if (status != 200) {
+            std::string errMsg = fmt::format("GateioUnified QueryAccount status: {}", status);
+            LOG_INFO("QueryAccount AccountId: {} Error: {}", accountInfo.accountId, errMsg);
+            vErrorMsg.emplace_back(errMsg);
+            return false;
         }
 
-        if (query) {
-            break;
+        rapidjson::Document d;
+        rapidjson::Value &res = d.Parse<rapidjson::kParseNumbersAsStringsFlag>(body.c_str());
+
+        if (res.HasMember("total")) {
+            unifyTotalAccount.total = std::stod(res["total"].GetString());
         }
-        usleep(1);
-        count++;
+        if (res.HasMember("borrowed")) {
+            unifyTotalAccount.borrowed = std::stod(res["borrowed"].GetString());
+        }
+        if (res.HasMember("total_initial_margin")) {
+            unifyTotalAccount.totalInitialMargin = std::stod(res["total_initial_margin"].GetString());
+        }
+        if (res.HasMember("total_margin_balance")) {
+            unifyTotalAccount.totalMarginBalance = std::stod(res["total_margin_balance"].GetString());
+        }
+        if (res.HasMember("total_maintenance_margin")) {
+            unifyTotalAccount.totalMaintenanceMargin = std::stod(res["total_maintenance_margin"].GetString());
+        }
+        if (res.HasMember("total_initial_margin_rate")) {
+            unifyTotalAccount.totalInitialMarginRate = std::stod(res["total_initial_margin_rate"].GetString());
+        }
+        if (res.HasMember("total_maintenance_margin_rate")) {
+            unifyTotalAccount.totalMaintenanceMarginRate = std::stod(res["total_maintenance_margin_rate"].GetString());
+        }
+        if (res.HasMember("total_available_margin")) {
+            unifyTotalAccount.totalAvailableMargin = std::stod(res["total_available_margin"].GetString());
+        }
+        if (res.HasMember("unified_account_total")) {
+            unifyTotalAccount.unifiedAccountTotal = std::stod(res["unified_account_total"].GetString());
+        }
+        if (res.HasMember("unified_account_total_liab")) {
+            unifyTotalAccount.unifiedAccountTotalLiab = std::stod(res["unified_account_total_liab"].GetString());
+        }
+        if (res.HasMember("unified_account_total_equity")) {
+            unifyTotalAccount.unifiedAccountTotalEquity = std::stod(res["unified_account_total_equity"].GetString());
+        }
+        if (res.HasMember("leverage")) {
+            unifyTotalAccount.leverage = std::stod(res["leverage"].GetString());
+        }
+
+        if (res.HasMember("balances")) {
+            const rapidjson::Value& balances = res["balances"];
+            
+            // 遍历 balances 对象的所有成员
+            for (rapidjson::Value::ConstMemberIterator it = balances.MemberBegin();  it != balances.MemberEnd(); ++it) {
+                gateio::SpotAsset spotAsset;
+               
+                spotAsset.currency = it->name.GetString();  // 获取币种名称（如 "ETH", "POINT"）
+                const rapidjson::Value& detail = it->value;
+                if (detail.HasMember("available")) {
+                    spotAsset.available = std::stod(detail["available"].GetString());
+                }
+                if (detail.HasMember("freeze") && detail["freeze"].IsString()) {
+                     spotAsset.locked = std::stod(detail["freeze"].GetString());
+                }
+
+                if ((spotAsset.available + spotAsset.locked) >= 0.0000000001) {
+                    spotAsset.total = spotAsset.available + spotAsset.locked;
+                    LOG_INFO("QueryAccount AccountId: {}   GateioUnified asset: {}", accountInfo.accountId, spotAsset.toString());
+                    vSpotAsset.emplace_back(spotAsset);
+                }
+            }
+        }
+
+        if (res.has_field("label")) {
+            query = false;
+            std::string label = res["label"].GetString();
+            std::string msg = "";
+            if (label.size() > 0) {
+                if (res.HasMember("message")) {
+                    msg = res["message"].GetString();
+                } else {
+                    msg = label;
+                }
+            }
+
+            std::string errMsg = fmt::format("GateioUnified QueryAccount code: {}, msg: {}", code, msg);
+            LOG_INFO("QueryAccount AccountId: {} Error: {}", accountInfo.accountId, errMsg);
+            vErrorMsg.emplace_back(errMsg);
+        } 
     }
+    catch(exception& e) {
+        query = false;
+        std::string errMsg = fmt::format("GateioUnified QueryAccount exception: {}", e.what());
+        LOG_INFO("QueryAccount AccountId: {} Error: {}", accountInfo.accountId, errMsg);
+        vErrorMsg.emplace_back(errMsg);
+    }
+
     return query;
 }
