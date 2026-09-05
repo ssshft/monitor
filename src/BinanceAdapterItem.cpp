@@ -7,9 +7,6 @@ BinanceAdapterItem::BinanceAdapterItem(AccountInfo info) {
     binanceSpot = new BinanceSpot(accountInfo);
     binanceUFuture = new BinanceUFuture(accountInfo);
     binanceCFuture = new BinanceCFuture(accountInfo);
-    binanceSaving = new BinanceSaving(accountInfo);
-    binanceMargin = new BinanceMargin(accountInfo);
-    binanceLoan = new BinanceLoan(accountInfo);
     binanceUnify = new BinanceUnify(accountInfo);
 
     baseAsset = accountInfo.baseAsset;

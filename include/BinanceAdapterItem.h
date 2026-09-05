@@ -4,9 +4,6 @@
 #include "binance/BinanceSpot.h"
 #include "binance/BinanceUFuture.h"
 #include "binance/BinanceCFuture.h"
-#include "binance/BinanceSaving.h"
-#include "binance/BinanceMargin.h"
-#include "binance/BinanceLoan.h"
 #include "binance/BinanceUnify.h"
 #include <map>
 #include <set>
@@ -64,16 +61,10 @@ private:
     BinanceSpot* binanceSpot;
     BinanceUFuture* binanceUFuture;
     BinanceCFuture* binanceCFuture;
-    BinanceSaving* binanceSaving;
-    BinanceMargin* binanceMargin;
-    BinanceLoan* binanceLoan;
     BinanceUnify* binanceUnify;
     bool spotEnable;
     bool uFutureEnable;
     bool cFutureEnable;
-    bool savingEnable;
-    bool marginEnable;
-    bool loanEnable;
     bool unifyEnable;
 
     vector<binance::SpotAsset> vSpotAsset;
