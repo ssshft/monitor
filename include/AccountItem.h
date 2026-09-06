@@ -5,14 +5,15 @@
 #include <map>
 #include <queue>
 #include "Utility.h"
+#include "securitymanager.h"
 
 using namespace std;
 
 
-class BinanceAccountItem {
+class AccountItem {
 public:
-	BinanceAccountItem(int id, string n, string ty, string ex, int he);
-	~BinanceAccountItem();
+	AccountItem(int id, string n, string ty, string ex, int he, sm::SecurityManager* s);
+	~AccountItem();
     void UpdateByAdapter();
     void UpdateByBinanceAdapter();
     void UpdateByCoinbaseAdapter();
@@ -55,7 +56,7 @@ public:
     vector<MsgCard> GetOrderAlarmMsg();
     
 private:
-    int customerId;
+    int accountId;
     string name;
     string type;
     string exchangeStr;
@@ -117,4 +118,6 @@ private:
     double totalExposure;
 
     string orderAlarmMsg;
+
+    sm::SecurityManager* smc;
 };

@@ -1,4 +1,4 @@
-#include "BinanceAccountItem.h"
+#include "AccountItem.h"
 #include "BasicInfoMgr.h"
 #include "BinanceMdMgr.h"
 #include "BinanceAdapterMgr.h"
@@ -9,23 +9,22 @@
 #include "OkxAdapterMgr.h"
 
 
-BinanceAccountItem::BinanceAccountItem(int id, string n, string ty, string ex, int he) {
-    customerId = id;
-    type = ty;
+AccountItem::AccountItem(int id, string n, string ty, string ex, int he, sm::SecurityManager* s) {
+    accountId = id;
     name = n;
     type = ty;
     exchangeStr = ex;
     hedge = he;
     unified = 0;
-    baseAsset = MonitorConfig::GetInstance().GetBaseAssetById(customerId);
-    riskInfo.accountId = customerId;
+    baseAsset = MonitorConfig::GetInstance().GetBaseAssetById(accountId);
+
+    riskInfo.accountId = accountId;
     riskInfo.name = name;
     riskInfo.baseAsset = baseAsset;
     MINDOUBLE = 0.0000000001;
     adapterQuery = true;
 
-    alarmInfo = MonitorConfig::GetInstance().GetAlarmInfoById(customerId);
-    triggerInterval = MonitorConfig::GetInstance().GetTriggerInterval();
+    alarmInfo = MonitorConfig::GetInstance().GetAlarmInfoById(accountId);
 
     maxLeverageUD = true;
     maxLeverageUS = true;
@@ -42,18 +41,17 @@ BinanceAccountItem::BinanceAccountItem(int id, string n, string ty, string ex, i
     totalExposure = 0.0;
 
     orderAlarmMsg = "";
+
+    smc = s;
 }
 
-BinanceAccountItem::~BinanceAccountItem() {
+AccountItem::~AccountItem() {
     Clear();
 }
 
-
-void BinanceAccountItem::UpdateByAdapter() {
+void AccountItem::UpdateByAdapter() {
     if (exchangeStr == "BINANCE") {
         UpdateByBinanceAdapter();
-    } else if (exchangeStr == "COINBASE") {
-        UpdateByCoinbaseAdapter();
     } else if (exchangeStr == "GATEIO") {
         UpdateByGateioAdapter();
     } else if (exchangeStr == "BYBIT") {
@@ -63,8 +61,8 @@ void BinanceAccountItem::UpdateByAdapter() {
     }
 }
 
-void BinanceAccountItem::UpdateByBinanceAdapter() {
-    BinanceAdapterItem* item = BinanceAdapterMgr::GetInstance().GetAdapterItem(customerId);
+void AccountItem::UpdateByBinanceAdapter() {
+    BinanceAdapterItem* item = BinanceAdapterMgr::GetInstance().GetAdapterItem(accountId);
     if (item) {
         riskInfo.dUpdateTime = item->GetUpdateTime();
         adapterQuery = item->GetQueryStatus();
@@ -75,295 +73,173 @@ void BinanceAccountItem::UpdateByBinanceAdapter() {
         totalMarginBalance = unifyAccount.accountEquity;
         unifyMaintenanceMarginRate = unifyAccount.uniMMR;
 
-        // saving
-        vector<binance::SavingAsset>& vSavingAsset = item->GetSavingAsset();
-        for (size_t i = 0; i < vSavingAsset.size(); ++i) {
-            igmonitor::SavAsset savAsset;
-            savAsset.asset = vSavingAsset[i].asset;
-            savAsset.amountD = vSavingAsset[i].amount;
-            savAsset.amountInBTCD = vSavingAsset[i].amountInBTC;
-            savAsset.amountInUSDTD = vSavingAsset[i].amountInUSDT;
-            mSavAsset.insert(make_pair(savAsset.asset, savAsset));
-        }
-
-
         // spot
-        vector<binance::SpotAsset>& vSpotAsset = item->GetSpotAsset();
+        std::vector<binance::SpotAsset>& vSpotAsset = item->GetSpotAsset();
         for (size_t i = 0; i < vSpotAsset.size(); ++i) {
-            string ass = vSpotAsset[i].assetType;
-            bool exist = false;
-            if (ass.substr(0, 2) == "LD") {
-                string savingAssetType = ass.substr(2, ass.size());
-                auto it = mSavAsset.find(savingAssetType);
-                if (it != mSavAsset.end() && it->second.amountD >= MINDOUBLE) {
-                    exist = true;
-                }
-            }
-
-            if (!exist) {
-                auto iter = mSpotAsset.find(ass);
-                if (iter == mSpotAsset.end()) {
-                    igmonitor::Asset asset;
-                    asset.asset = vSpotAsset[i].assetType;
-                    asset.frozenAmountD = vSpotAsset[i].locked;
-                    asset.totalAmountD = vSpotAsset[i].free + vSpotAsset[i].locked;
-                    asset.netAmountD = asset.totalAmountD;
-                    asset.availableAmountD = vSpotAsset[i].free;
-                    asset.underwayOrderValueD = GetUnderwayOrderValue(asset.asset, asset.frozenAmountD);
-                    mSpotAsset.insert(make_pair(asset.asset, asset));
-                } else {
-                    iter->second.frozenAmountD = vSpotAsset[i].locked;
-                    iter->second.totalAmountD = vSpotAsset[i].free + vSpotAsset[i].locked;
-                    iter->second.netAmountD = iter->second.totalAmountD;
-                    iter->second.availableAmountD = vSpotAsset[i].free;
-                    iter->second.underwayOrderValueD = GetUnderwayOrderValue(iter->second.asset, iter->second.frozenAmountD);
-                }
-            }
+            igmonitor::Asset asset;
+            asset.asset = vSpotAsset[i].assetType;
+            asset.frozenAmountD = vSpotAsset[i].locked;
+            asset.totalAmountD = vSpotAsset[i].free + vSpotAsset[i].locked;
+            asset.netAmountD = asset.totalAmountD;
+            asset.availableAmountD = vSpotAsset[i].free;
+            asset.underwayOrderValueD = GetUnderwayOrderValue(asset.asset, asset.frozenAmountD);
+            mSpotAsset[asset.asset] = asset;            
         }
 
-        vector<binance::SpotOpenOrder>& vSpotOpenOrder = item->GetSpotOpenOrder();
+        std::vector<binance::SpotOpenOrder>& vSpotOpenOrder = item->GetSpotOpenOrder();
         for (size_t i = 0; i < vSpotOpenOrder.size(); ++i) {
-            string symbol = vSpotOpenOrder[i].symbol;
-            string instKey = exchangeStr + "|" + symbol + "|SPOT";
-            string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+            std::string symbol = vSpotOpenOrder[i].symbol;
+            std::string instKey = exchangeStr + "|" + symbol + "|SPOT";
+            std::string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
 
             double openQty = vSpotOpenOrder[i].origQty - vSpotOpenOrder[i].executedQty;
             auto iter = mSpotOpenOrder.find(key);
             if (iter != mSpotOpenOrder.end()) {
                 iter->second.openQty += fabs(openQty);
-            } else {
+            } 
+            else {
                 igmonitor::OpenOrder openOrder;
                 openOrder.symbol = symbol;
                 openOrder.openQty = openQty;
-                mSpotOpenOrder.insert(make_pair(key, openOrder));
+                mSpotOpenOrder[key] = openOrder;
             }
        }
 
         // ufuture
-        vector<binance::UFutureAsset>& vUFutureAsset = item->GetUFutureAsset();
+        std::vector<binance::UFutureAsset>& vUFutureAsset = item->GetUFutureAsset();
         for (size_t i = 0; i < vUFutureAsset.size(); ++i) {
-            string ass = vUFutureAsset[i].assetType;
+            std::string ass = vUFutureAsset[i].assetType;
             double positionValue = item->GetUAssetPositionValue(ass);
             double floatAmount = item->GetUFloatAmount(ass);
-            auto iter = mUFutureAsset.find(ass);
-            if (iter == mUFutureAsset.end()) {
-                igmonitor::Asset asset;
-                asset.asset = vUFutureAsset[i].assetType;
-                asset.positionValueD = positionValue;
-                asset.totalAmountD = vUFutureAsset[i].walletBalance;
-                //asset.floatAmountD = vUFutureAsset[i].unrealizedProfit;
-                asset.floatAmountD = floatAmount;
-                asset.marginAmountD = vUFutureAsset[i].initialMargin; // vUFutureAsset[i].initialMargin + vUFutureAsset[i].maintMargin;
-                asset.frozenMarginAmountD = vUFutureAsset[i].openOrderInitialMargin;
-                asset.netAmountD = asset.totalAmountD + asset.floatAmountD;
-                asset.availableAmountD = vUFutureAsset[i].availableBalance;
-                //asset.underwayOrderValueD = GetUnderwayOrderValue(asset.asset, asset.frozenMarginAmountD);
-                if (fabs(asset.netAmountD) > MINDOUBLE) {
-                    asset.realLeverageRatioD = fabs(asset.positionValueD / asset.netAmountD);
-                    stringstream ss;
-                    ss << "accountId:" << customerId << " asset:" << ass << " positionValueD:" << asset.positionValueD << " totalAmountD:" << asset.totalAmountD << " floatAmountD:" << asset.floatAmountD << " netAmountD:" << asset.netAmountD;
-                    LOG_INFO("realLeverageRatioD: %s", ss.str().c_str()); 
-                }
-                mUFutureAsset.insert(make_pair(asset.asset, asset));
-            } else {
-                iter->second.positionValueD = positionValue;
-                iter->second.totalAmountD = vUFutureAsset[i].walletBalance;
-                //iter->second.floatAmountD = vUFutureAsset[i].unrealizedProfit;
-                iter->second.floatAmountD = floatAmount;
-                iter->second.marginAmountD = vUFutureAsset[i].initialMargin;  // vUFutureAsset[i].initialMargin + vUFutureAsset[i].maintMargin;
-                iter->second.frozenMarginAmountD = vUFutureAsset[i].openOrderInitialMargin;
-                iter->second.netAmountD = iter->second.totalAmountD + iter->second.floatAmountD;
-                iter->second.availableAmountD = vUFutureAsset[i].availableBalance;
-                //iter->second.underwayOrderValueD = GetUnderwayOrderValue(iter->second.asset, iter->second.frozenMarginAmountD);
-                if (fabs(iter->second.netAmountD) > MINDOUBLE) {
-                    iter->second.realLeverageRatioD = fabs(iter->second.positionValueD / iter->second.netAmountD);
-                    stringstream ss;
-                    ss << "accountId:" << customerId << " asset:" << ass << " positionValueD:" << iter->second.positionValueD << " totalAmountD:" << iter->second.totalAmountD << " floatAmountD:" << iter->second.floatAmountD << " netAmountD:" << iter->second.netAmountD;
-                    LOG_INFO("realLeverageRatioD: %s", ss.str().c_str()); 
-                }
+
+            igmonitor::Asset asset;
+            asset.asset = vUFutureAsset[i].assetType;
+            asset.positionValueD = positionValue;
+            asset.totalAmountD = vUFutureAsset[i].walletBalance;
+            asset.floatAmountD = floatAmount;
+            asset.marginAmountD = vUFutureAsset[i].initialMargin;
+            asset.frozenMarginAmountD = vUFutureAsset[i].openOrderInitialMargin;
+            asset.netAmountD = asset.totalAmountD + asset.floatAmountD;
+            asset.availableAmountD = vUFutureAsset[i].availableBalance;
+            if (fabs(asset.netAmountD) > MINDOUBLE) {
+                asset.realLeverageRatioD = fabs(asset.positionValueD / asset.netAmountD);
             }
+
+            mUFutureAsset[asset.asset] = asset;
         }
 
-        vector<binance::UFuturePosition>& vUFuturePosition = item->GetUFuturePosition();
+        std::vector<binance::UFuturePosition>& vUFuturePosition = item->GetUFuturePosition();
         for (size_t i = 0; i < vUFuturePosition.size(); ++i) {
-            string symbol = vUFuturePosition[i].symbol;
-            string positionSide = vUFuturePosition[i].positionSide;
+            std::string symbol = vUFuturePosition[i].symbol;
+            std::string positionSide = vUFuturePosition[i].positionSide;
             double liquidationPrice = item->GetUPositionLiquidationPrice(symbol, positionSide);
             double longFrozenPosition = 0.0;
             double shortFrozenPosition = 0.0;
             item->GetULongShortFrozenPosition(symbol, longFrozenPosition, shortFrozenPosition);
-            auto iter = mUFuturePosition.find(symbol);
-            if (iter == mUFuturePosition.end()) {
-                igmonitor::Position position;
-                position.symbol = vUFuturePosition[i].symbol;
-                position.netPositionD = vUFuturePosition[i].positionAmt;
-                position.netAvgPriceD = vUFuturePosition[i].entryPrice;
-                position.floatAmountD = vUFuturePosition[i].unrealizedProfit;
-                position.liquidationPrice = liquidationPrice;
-                string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
-                position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
-                position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
-                position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
-                mUFuturePosition.insert(make_pair(position.symbol, position));
-            } else {
-                iter->second.netPositionD = vUFuturePosition[i].positionAmt;
-                iter->second.netAvgPriceD = vUFuturePosition[i].entryPrice;
-                iter->second.floatAmountD = vUFuturePosition[i].unrealizedProfit;
-                iter->second.liquidationPrice = liquidationPrice;
-                iter->second.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
-                iter->second.underwayAbsPositioD = fabs(iter->second.underwayNetPositionD);
-            }
+       
+            igmonitor::Position position;
+            position.symbol = vUFuturePosition[i].symbol;
+            position.netPositionD = vUFuturePosition[i].positionAmt;
+            position.netAvgPriceD = vUFuturePosition[i].entryPrice;
+            position.floatAmountD = vUFuturePosition[i].unrealizedProfit;
+            position.liquidationPrice = liquidationPrice;
+            std::string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
+            position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+            position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
+            position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
+
+            mUFuturePosition[position.symbol] = position;
         }
 
         vector<binance::FutureOpenOrder>& vUFutureOpenOrder = item->GetUOpenOrder();
         for (size_t i = 0; i < vUFutureOpenOrder.size(); ++i) {
-            string symbol = vUFutureOpenOrder[i].symbol;
-            string instKey = exchangeStr + "|" + symbol + "|FUTURES";
-            string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+            std::string symbol = vUFutureOpenOrder[i].symbol;
+            std::string instKey = exchangeStr + "|" + symbol + "|FUTURES";
+            std::string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
 
             double openQty = vUFutureOpenOrder[i].origQty - vUFutureOpenOrder[i].executedQty;
             auto iter = mUFutureOpenOrder.find(key);
             if (iter != mUFutureOpenOrder.end()) {
                 iter->second.openQty += fabs(openQty);
-            } else {
+            } 
+            else {
                 igmonitor::OpenOrder openOrder;
                 openOrder.symbol = symbol;
                 openOrder.openQty = openQty;
-                mUFutureOpenOrder.insert(make_pair(key, openOrder));
+                mUFutureOpenOrder[key] = openOrder;
             }
         }
-
 
         // cfuture
-        vector<binance::CFutureAsset>& vCFutureAsset = item->GetCFutureAsset();
+        std::vector<binance::CFutureAsset>& vCFutureAsset = item->GetCFutureAsset();
         for (size_t i = 0; i < vCFutureAsset.size(); ++i) {
-            string ass = vCFutureAsset[i].assetType;
+            std::string ass = vCFutureAsset[i].assetType;
             double positionValue = item->GetCAssetPositionValue(ass);
             double floatAmount = item->GetCFloatAmount(ass);
-            auto iter = mCFutureAsset.find(ass);
-            if (iter == mCFutureAsset.end()) {
-                igmonitor::Asset asset;
-                asset.asset = vCFutureAsset[i].assetType;
-                asset.positionValueD = positionValue;
-                asset.totalAmountD = vCFutureAsset[i].walletBalance;
-                //asset.floatAmountD = vCFutureAsset[i].unrealizedProfit;
-                asset.floatAmountD = floatAmount;
-                asset.marginAmountD = vCFutureAsset[i].initialMargin;  // vCFutureAsset[i].initialMargin + vCFutureAsset[i].maintMargin;
-                asset.frozenMarginAmountD = vCFutureAsset[i].openOrderInitialMargin;
-                asset.netAmountD = asset.totalAmountD + asset.floatAmountD;
-                asset.availableAmountD = vCFutureAsset[i].availableBalance;
-                //asset.underwayOrderValueD = GetUnderwayOrderValue(asset.asset, asset.frozenMarginAmountD);
-                if (fabs(asset.netAmountD) > MINDOUBLE) {
-                    asset.realLeverageRatioD = fabs(asset.positionValueD / asset.netAmountD);
-                    stringstream ss;
-                    ss << "accountId:" << customerId << " asset:" << ass << " positionValueD:" << asset.positionValueD << " totalAmountD:" << asset.totalAmountD << " floatAmountD:" << asset.floatAmountD << " netAmountD:" << asset.netAmountD;
-                    LOG_INFO("realLeverageRatioD: %s", ss.str().c_str()); 
-                }
-                mCFutureAsset.insert(make_pair(asset.asset, asset));
-            } else {
-                iter->second.positionValueD = positionValue;
-                iter->second.totalAmountD = vCFutureAsset[i].walletBalance;
-                //iter->second.floatAmountD = vCFutureAsset[i].unrealizedProfit;
-                iter->second.floatAmountD = floatAmount;
-                iter->second.marginAmountD = vCFutureAsset[i].initialMargin;  // vCFutureAsset[i].initialMargin + vCFutureAsset[i].maintMargin;
-                iter->second.frozenMarginAmountD = vCFutureAsset[i].openOrderInitialMargin;
-                iter->second.netAmountD = iter->second.totalAmountD + iter->second.floatAmountD;
-                iter->second.availableAmountD = vCFutureAsset[i].availableBalance;
-                //iter->second.underwayOrderValueD = GetUnderwayOrderValue(iter->second.asset, iter->second.frozenMarginAmountD);
-                if (fabs(iter->second.netAmountD) > MINDOUBLE) {
-                    iter->second.realLeverageRatioD = fabs(iter->second.positionValueD / iter->second.netAmountD);
-                    stringstream ss;
-                    ss << "accountId:" << customerId << " asset:" << ass << " positionValueD:" << iter->second.positionValueD << " totalAmountD:" << iter->second.totalAmountD << " floatAmountD:" << iter->second.floatAmountD << " netAmountD:" << iter->second.netAmountD;
-                    LOG_INFO("realLeverageRatioD: %s", ss.str().c_str()); 
-                }
+  
+            igmonitor::Asset asset;
+            asset.asset = vCFutureAsset[i].assetType;
+            asset.positionValueD = positionValue;
+            asset.totalAmountD = vCFutureAsset[i].walletBalance;
+            asset.floatAmountD = floatAmount;
+            asset.marginAmountD = vCFutureAsset[i].initialMargin;
+            asset.frozenMarginAmountD = vCFutureAsset[i].openOrderInitialMargin;
+            asset.netAmountD = asset.totalAmountD + asset.floatAmountD;
+            asset.availableAmountD = vCFutureAsset[i].availableBalance;
+            if (fabs(asset.netAmountD) > MINDOUBLE) {
+                asset.realLeverageRatioD = fabs(asset.positionValueD / asset.netAmountD);
             }
+
+            mCFutureAsset[asset.asset] = asset;
         }
 
-        vector<binance::CFuturePosition>& vCFuturePosition = item->GetCFuturePosition();
+        std::vector<binance::CFuturePosition>& vCFuturePosition = item->GetCFuturePosition();
         for (size_t i = 0; i < vCFuturePosition.size(); ++i) {
-            string symbol = vCFuturePosition[i].symbol;
-            string positionSide = vCFuturePosition[i].positionSide;
+            std::string symbol = vCFuturePosition[i].symbol;
+            std::string positionSide = vCFuturePosition[i].positionSide;
             double liquidationPrice = item->GetCPositionLiquidationPrice(symbol, positionSide);
             double longFrozenPosition = 0.0;
             double shortFrozenPosition = 0.0;
             item->GetCLongShortFrozenPosition(symbol, longFrozenPosition, shortFrozenPosition);
-            auto iter = mCFuturePosition.find(symbol);
-            if (iter == mCFuturePosition.end()) {
-                igmonitor::Position position;
-                position.symbol = vCFuturePosition[i].symbol;
-                position.netPositionD = vCFuturePosition[i].positionAmt;
-                position.netAvgPriceD = vCFuturePosition[i].entryPrice;
-                position.floatAmountD = vCFuturePosition[i].unrealizedProfit;
-                position.liquidationPrice = liquidationPrice;
-                string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
-                position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
-                position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
-                position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
-                mCFuturePosition.insert(make_pair(position.symbol, position));
-            } else {
-                iter->second.netPositionD = vCFuturePosition[i].positionAmt;
-                iter->second.netAvgPriceD = vCFuturePosition[i].entryPrice;
-                iter->second.floatAmountD = vCFuturePosition[i].unrealizedProfit;
-                iter->second.liquidationPrice = liquidationPrice;
-                iter->second.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
-                iter->second.underwayAbsPositioD = fabs(iter->second.underwayNetPositionD);
-            }
+ 
+            igmonitor::Position position;
+            position.symbol = vCFuturePosition[i].symbol;
+            position.netPositionD = vCFuturePosition[i].positionAmt;
+            position.netAvgPriceD = vCFuturePosition[i].entryPrice;
+            position.floatAmountD = vCFuturePosition[i].unrealizedProfit;
+            position.liquidationPrice = liquidationPrice;
+            std::string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
+            position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+            position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
+            position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
+
+            mCFuturePosition[position.symbol] = position;
         }
 
-        vector<binance::FutureOpenOrder>& vCFutureOpenOrder = item->GetCOpenOrder();
+        std::vector<binance::FutureOpenOrder>& vCFutureOpenOrder = item->GetCOpenOrder();
         for (size_t i = 0; i < vCFutureOpenOrder.size(); ++i) {
-            string symbol = vCFutureOpenOrder[i].symbol;
-            string instKey = exchangeStr + "|" + symbol + "|FUTURES";
-            string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+            std::string symbol = vCFutureOpenOrder[i].symbol;
+            std::string instKey = exchangeStr + "|" + symbol + "|FUTURES";
+            std::string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
 
             double openQty = vCFutureOpenOrder[i].origQty - vCFutureOpenOrder[i].executedQty;
             auto iter = mCFutureOpenOrder.find(key);
             if (iter != mCFutureOpenOrder.end()) {
                 iter->second.openQty += fabs(openQty);
-            } else {
+            } 
+            else {
                 igmonitor::OpenOrder openOrder;
                 openOrder.symbol = symbol;
                 openOrder.openQty = openQty;
-                mCFutureOpenOrder.insert(make_pair(key, openOrder));
+                mCFutureOpenOrder[key] = openOrder;
             }
-        }
-
-        // margin account
-        vector<binance::MarginAsset>& vMarginAsset = item->GetMarginAsset();
-        for (size_t i = 0; i < vMarginAsset.size(); ++i) {
-            igmonitor::MarAsset marAsset;
-            marAsset.asset = vMarginAsset[i].asset;
-            marAsset.borrowed = vMarginAsset[i].borrowed;
-            marAsset.free = vMarginAsset[i].free;
-            marAsset.interest = vMarginAsset[i].interest;
-            marAsset.locked = vMarginAsset[i].locked;
-            marAsset.netAsset = vMarginAsset[i].netAsset;
-            mMarAsset.insert(make_pair(marAsset.asset, marAsset));
-        }
-        
-        binance::TotalMarginAsset& totalMarginAsset = item->GetTotalMarginAsset();
-        totalMarAsset.marginLevel = totalMarginAsset.marginLevel;
-        totalMarAsset.totalAssetOfBtc = totalMarginAsset.totalAssetOfBtc;
-        totalMarAsset.totalLiabilityOfBtc = totalMarginAsset.totalLiabilityOfBtc;
-        totalMarAsset.totalNetAssetOfBtc = totalMarginAsset.totalNetAssetOfBtc;
-
-
-        // loan
-        vector<binance::LoanBorrow>& vLoanBorrow = item->GetLoanBorrow();
-        for (size_t i = 0; i < vLoanBorrow.size(); ++i) {
-            igmonitor::LoBo lb;
-            lb.loanCoin = vLoanBorrow[i].loanCoin;
-            lb.loanAmount = vLoanBorrow[i].loanAmount;
-            lb.collateralCoin = vLoanBorrow[i].collateralCoin;
-            lb.collateralAmount = vLoanBorrow[i].collateralAmount;
-            vLoBo.emplace_back(lb);
         }
 
         // unified
         if (unified == 1) {
-            vector<binance::UnifyAsset>& vUnifyAsset = item->GetUnifyAsset();
+            std::vector<binance::UnifyAsset>& vUnifyAsset = item->GetUnifyAsset();
             for (size_t i = 0; i < vUnifyAsset.size(); ++i) {
-                string ass = vUnifyAsset[i].asset;
+                std::string ass = vUnifyAsset[i].asset;
                 double positionValue = item->GetUnifyPositionValue(ass);
                 double floatAmount = item->GetUnifyFloatAmount(ass);
                 igmonitor::Asset asset;
@@ -374,16 +250,13 @@ void BinanceAccountItem::UpdateByBinanceAdapter() {
                 asset.netAmountD = asset.totalAmountD + asset.floatAmountD;
                 if (fabs(asset.netAmountD) > MINDOUBLE) {
                     asset.realLeverageRatioD = fabs(asset.positionValueD / asset.netAmountD);
-                    stringstream ss;
-                    ss << "accountId:" << customerId << " asset:" << ass << " positionValueD:" << asset.positionValueD << " totalAmountD:" << asset.totalAmountD << " floatAmountD:" << asset.floatAmountD << " netAmountD:" << asset.netAmountD;
-                    LOG_INFO("realLeverageRatioD: %s", ss.str().c_str()); 
                 }
                 mUFutureAsset[asset.asset] = asset;
             }
 
-            vector<binance::UnifyPosition>& vUmUnifyPosition = item->GetUmUnifyPosition();
+            std::vector<binance::UnifyPosition>& vUmUnifyPosition = item->GetUmUnifyPosition();
             for (size_t i = 0; i < vUmUnifyPosition.size(); ++i) {
-                string symbol = vUmUnifyPosition[i].symbol;
+                std::string symbol = vUmUnifyPosition[i].symbol;
                 double longFrozenPosition = 0.0;
                 double shortFrozenPosition = 0.0;
                 item->GetUmUnifyLongShortFrozenPosition(symbol, longFrozenPosition, shortFrozenPosition);
@@ -392,16 +265,16 @@ void BinanceAccountItem::UpdateByBinanceAdapter() {
                 position.netPositionD = vUmUnifyPosition[i].positionAmt;
                 position.netAvgPriceD = vUmUnifyPosition[i].entryPrice;
                 position.floatAmountD = vUmUnifyPosition[i].unRealizedProfit;
-                string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
+                std::string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
                 position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
                 position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
                 position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
                 mUFuturePosition[position.symbol] = position;
             }
 
-            vector<binance::UnifyPosition>& vCmUnifyPosition = item->GetCmUnifyPosition();
+            std::vector<binance::UnifyPosition>& vCmUnifyPosition = item->GetCmUnifyPosition();
             for (size_t i = 0; i < vCmUnifyPosition.size(); ++i) {
-                string symbol = vCmUnifyPosition[i].symbol;
+                std::string symbol = vCmUnifyPosition[i].symbol;
                 double longFrozenPosition = 0.0;
                 double shortFrozenPosition = 0.0;
                 item->GetCmUnifyLongShortFrozenPosition(symbol, longFrozenPosition, shortFrozenPosition);
@@ -411,18 +284,18 @@ void BinanceAccountItem::UpdateByBinanceAdapter() {
                 position.netPositionD = vCmUnifyPosition[i].positionAmt;
                 position.netAvgPriceD = vCmUnifyPosition[i].entryPrice;
                 position.floatAmountD = vCmUnifyPosition[i].unRealizedProfit;
-                string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
+                std::string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
                 position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
                 position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
                 position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
                 mCFuturePosition[position.symbol] = position;
             }
 
-            vector<binance::UnifyOpenOrder>& vUmUnifyOpenOrder = item->GetUmUnifyOpenOrder();
+            std::vector<binance::UnifyOpenOrder>& vUmUnifyOpenOrder = item->GetUmUnifyOpenOrder();
             for (size_t i = 0; i < vUmUnifyOpenOrder.size(); ++i) {
-                string symbol = vUmUnifyOpenOrder[i].symbol;
-                string instKey = exchangeStr + "|" + symbol + "|FUTURES";
-                string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+                std::string symbol = vUmUnifyOpenOrder[i].symbol;
+                std::string instKey = exchangeStr + "|" + symbol + "|FUTURES";
+                std::string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
 
                 double openQty = vUmUnifyOpenOrder[i].origQty - vUmUnifyOpenOrder[i].executedQty;
                 auto iter = mUFutureOpenOrder.find(key);
@@ -432,15 +305,15 @@ void BinanceAccountItem::UpdateByBinanceAdapter() {
                     igmonitor::OpenOrder openOrder;
                     openOrder.symbol = symbol;
                     openOrder.openQty = openQty;
-                    mUFutureOpenOrder.insert(make_pair(key, openOrder));
+                    mUFutureOpenOrder[key] = openOrder;
                 }
             }
 
-            vector<binance::UnifyOpenOrder>& vCmUnifyOpenOrder = item->GetCmUnifyOpenOrder();
+            std::vector<binance::UnifyOpenOrder>& vCmUnifyOpenOrder = item->GetCmUnifyOpenOrder();
             for (size_t i = 0; i < vCmUnifyOpenOrder.size(); ++i) {
-                string symbol = vCmUnifyOpenOrder[i].symbol;
-                string instKey = exchangeStr + "|" + symbol + "|FUTURES";
-                string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+                std::string symbol = vCmUnifyOpenOrder[i].symbol;
+                std::string instKey = exchangeStr + "|" + symbol + "|FUTURES";
+                std::string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
 
                 double openQty = vCmUnifyOpenOrder[i].origQty - vCmUnifyOpenOrder[i].executedQty;
                 auto iter = mCFutureOpenOrder.find(key);
@@ -450,48 +323,15 @@ void BinanceAccountItem::UpdateByBinanceAdapter() {
                     igmonitor::OpenOrder openOrder;
                     openOrder.symbol = symbol;
                     openOrder.openQty = openQty;
-                    mCFutureOpenOrder.insert(make_pair(key, openOrder));
+                    mCFutureOpenOrder[key] = openOrder;
                 }
             }
         }
     }
 }
 
-void BinanceAccountItem::UpdateByCoinbaseAdapter() {
-    CoinbaseAdapterItem* item = CoinbaseAdapterMgr::GetInstance().GetAdapterItem(customerId);
-    if (item) {
-        riskInfo.dUpdateTime = item->GetUpdateTime();
-        adapterQuery = item->GetQueryStatus();
-        adapterQueryErrMsg = item->GetQueryErrMsg();
-        unified = item->isUnified();
-    
-        // spot
-        vector<coinbase::SpotAsset>& vSpotAsset = item->GetSpotAsset();
-        for (size_t i = 0; i < vSpotAsset.size(); ++i) {
-            string ass = vSpotAsset[i].symbol;
-            auto iter = mSpotAsset.find(ass);
-            if (iter == mSpotAsset.end()) {
-                igmonitor::Asset asset;
-                asset.asset = vSpotAsset[i].symbol;
-                asset.frozenAmountD = vSpotAsset[i].holds;
-                asset.totalAmountD = vSpotAsset[i].amount;
-                asset.netAmountD = asset.totalAmountD;
-                asset.availableAmountD = vSpotAsset[i].amount - vSpotAsset[i].holds;
-                asset.underwayOrderValueD = GetUnderwayOrderValue(asset.asset, asset.frozenAmountD);
-                mSpotAsset.insert(make_pair(asset.asset, asset));
-            } else {
-                iter->second.frozenAmountD = vSpotAsset[i].holds;
-                iter->second.totalAmountD = vSpotAsset[i].amount;
-                iter->second.netAmountD = iter->second.totalAmountD;
-                iter->second.availableAmountD = vSpotAsset[i].amount - vSpotAsset[i].holds;
-                iter->second.underwayOrderValueD = GetUnderwayOrderValue(iter->second.asset, iter->second.frozenAmountD);
-            }
-        }
-    }
-}
-
-void BinanceAccountItem::UpdateByGateioAdapter() {
-    GateioAdapterItem* item = GateioAdapterMgr::GetInstance().GetAdapterItem(customerId);
+void AccountItem::UpdateByGateioAdapter() {
+    GateioAdapterItem* item = GateioAdapterMgr::GetInstance().GetAdapterItem(accountId);
     if (item) {
         riskInfo.dUpdateTime = item->GetUpdateTime();
         adapterQuery = item->GetQueryStatus();
@@ -505,160 +345,36 @@ void BinanceAccountItem::UpdateByGateioAdapter() {
         // spot
         vector<gateio::SpotAsset>& vSpotAsset = item->GetSpotAsset();
         for (size_t i = 0; i < vSpotAsset.size(); ++i) {
-            string ass = vSpotAsset[i].currency;
-            auto iter = mSpotAsset.find(ass);
-            if (iter == mSpotAsset.end()) {
-                igmonitor::Asset asset;
-                asset.asset = vSpotAsset[i].currency;
-                asset.frozenAmountD = vSpotAsset[i].locked;
-                // asset.totalAmountD = vSpotAsset[i].available + vSpotAsset[i].locked;
-                asset.totalAmountD = vSpotAsset[i].total;
-                asset.netAmountD = asset.totalAmountD;
-                asset.availableAmountD = vSpotAsset[i].available;
-                asset.underwayOrderValueD = GetUnderwayOrderValue(asset.asset, asset.frozenAmountD);
-                mSpotAsset.insert(make_pair(asset.asset, asset));
-            } else {
-                iter->second.frozenAmountD = vSpotAsset[i].locked;
-                iter->second.totalAmountD = vSpotAsset[i].available + vSpotAsset[i].locked;
-                iter->second.netAmountD = iter->second.totalAmountD;
-                iter->second.availableAmountD = vSpotAsset[i].available;
-                iter->second.underwayOrderValueD = GetUnderwayOrderValue(iter->second.asset, iter->second.frozenAmountD);
-            }
+            igmonitor::Asset asset;
+            asset.asset = vSpotAsset[i].currency;
+            asset.frozenAmountD = vSpotAsset[i].locked;
+            asset.totalAmountD = vSpotAsset[i].total;
+            asset.netAmountD = asset.totalAmountD;
+            asset.availableAmountD = vSpotAsset[i].available;
+            asset.underwayOrderValueD = GetUnderwayOrderValue(asset.asset, asset.frozenAmountD);
+            mSpotAsset[asset.asset] = asset;
         }
-
-        vector<gateio::FutureAsset>& vDeliveryAsset = item->GetDeliveryAsset();
-        for (size_t i = 0; i < vDeliveryAsset.size(); ++i) {
-            string ass = vDeliveryAsset[i].currency;
-            double positionValue = item->GetDeliveryPositionValue(ass);
-            double floatAmount = item->GetDeliveryFloatAmount(ass);
-            auto iter = mDeliveryAsset.find(ass);
-            if (iter == mDeliveryAsset.end()) {
-                igmonitor::Asset asset;
-                asset.asset = vDeliveryAsset[i].currency;
-                asset.positionValueD = positionValue;
-                asset.totalAmountD = vDeliveryAsset[i].total;
-                //asset.floatAmountD = vDeliveryAsset[i].unrealisedPnl;
-                asset.floatAmountD = floatAmount;
-                asset.marginAmountD = vDeliveryAsset[i].positionInitialMargin;
-                asset.frozenMarginAmountD = vDeliveryAsset[i].orderMargin;
-                asset.netAmountD = asset.totalAmountD + asset.floatAmountD;
-                asset.availableAmountD = vDeliveryAsset[i].available;
-                //asset.underwayOrderValueD = GetUnderwayOrderValue(asset.asset, asset.frozenMarginAmountD);
-                if (fabs(asset.netAmountD) > MINDOUBLE) {
-                    asset.realLeverageRatioD = fabs(asset.positionValueD / asset.netAmountD);
-                    stringstream ss;
-                    ss << "accountId:" << customerId << " asset:" << ass << " positionValueD:" << asset.positionValueD << " totalAmountD:" << asset.totalAmountD << " floatAmountD:" << asset.floatAmountD << " netAmountD:" << asset.netAmountD;
-                    LOG_INFO("realLeverageRatioD: %s", ss.str().c_str()); 
-                }
-                mDeliveryAsset.insert(make_pair(asset.asset, asset));
-            } else {
-                iter->second.positionValueD = positionValue;
-                iter->second.totalAmountD = vDeliveryAsset[i].total;
-                //iter->second.floatAmountD = vDeliveryAsset[i].unrealisedPnl;
-                iter->second.floatAmountD = floatAmount;
-                iter->second.marginAmountD = vDeliveryAsset[i].positionInitialMargin;
-                iter->second.frozenMarginAmountD = vDeliveryAsset[i].orderMargin;
-                iter->second.netAmountD = iter->second.totalAmountD + iter->second.floatAmountD;                
-                iter->second.availableAmountD = vDeliveryAsset[i].available;
-                //iter->second.underwayOrderValueD = GetUnderwayOrderValue(iter->second.asset, iter->second.frozenMarginAmountD);
-                if (fabs(iter->second.netAmountD) > MINDOUBLE) {
-                    iter->second.realLeverageRatioD = fabs(iter->second.positionValueD / iter->second.netAmountD);
-                    stringstream ss;
-                    ss << "accountId:" << customerId << " asset:" << ass << " positionValueD:" << iter->second.positionValueD << " totalAmountD:" << iter->second.totalAmountD << " floatAmountD:" << iter->second.floatAmountD << " netAmountD:" << iter->second.netAmountD;
-                    LOG_INFO("realLeverageRatioD: %s", ss.str().c_str()); 
-                }
-            }
-        }
-
-        vector<gateio::FuturePosition>& vDeliveryPosition = item->GetDeliveryPosition();
-        for (size_t i = 0; i < vDeliveryPosition.size(); ++i) {
-            string symbol = vDeliveryPosition[i].contract;
-            double longFrozenPosition = 0.0;
-            double shortFrozenPosition = 0.0;
-            item->GetDeliveryLongShortFrozenPosition(symbol, longFrozenPosition, shortFrozenPosition);
-            auto iter = mDeliveryPosition.find(symbol);
-            if (iter == mDeliveryPosition.end()) {
-                igmonitor::Position position;
-                position.symbol = vDeliveryPosition[i].contract;
-                position.netPositionD = vDeliveryPosition[i].size;
-                position.netAvgPriceD = vDeliveryPosition[i].entryPrice;
-                position.floatAmountD = vDeliveryPosition[i].unrealisedPnl;
-                position.liquidationPrice = vDeliveryPosition[i].liqPrice;
-                string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
-                position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
-                position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
-                position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
-                mDeliveryPosition.insert(make_pair(position.symbol, position));
-            } else {
-                iter->second.netPositionD = vDeliveryPosition[i].size;
-                iter->second.netAvgPriceD = vDeliveryPosition[i].entryPrice;
-                iter->second.floatAmountD = vDeliveryPosition[i].unrealisedPnl;
-                iter->second.liquidationPrice = vDeliveryPosition[i].liqPrice;
-                iter->second.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
-                iter->second.underwayAbsPositioD = fabs(iter->second.underwayNetPositionD);
-            }
-        }
-
-        vector<gateio::FutureOrder>& vDeliveryOpenOrder = item->GetDeliveryOpenOrder();
-        for (size_t i = 0; i < vDeliveryOpenOrder.size(); ++i) {
-            string symbol = vDeliveryOpenOrder[i].contract;
-            string instKey = exchangeStr + "|" + symbol + "|FUTURES";
-            string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
-            double openQty = vDeliveryOpenOrder[i].left;
-            auto iter = mDeliveryOpenOrder.find(key);
-            if (iter != mDeliveryOpenOrder.end()) {
-                iter->second.openQty += fabs(openQty);
-            } else {
-                igmonitor::OpenOrder openOrder;
-                openOrder.symbol = symbol;
-                openOrder.openQty = openQty;
-                mDeliveryOpenOrder.insert(make_pair(key, openOrder));
-            }
-        }
-
 
         vector<gateio::FutureAsset>& vPerpetualAsset = item->GetPerpetualAsset();
         for (size_t i = 0; i < vPerpetualAsset.size(); ++i) {
             string ass = vPerpetualAsset[i].currency;
             double positionValue = item->GetPerpetualPositionValue(ass);
             double floatAmount = item->GetPerpetualFloatAmount(ass);
-            auto iter = mPerpetualAsset.find(ass);
-            if (iter == mPerpetualAsset.end()) {
-                igmonitor::Asset asset;
-                asset.asset = vPerpetualAsset[i].currency;
-                asset.positionValueD = positionValue;
-                asset.totalAmountD = vPerpetualAsset[i].total;
-                //asset.floatAmountD = vPerpetualAsset[i].unrealisedPnl;
-                asset.floatAmountD = floatAmount;
-                asset.marginAmountD = vPerpetualAsset[i].positionInitialMargin;
-                asset.frozenMarginAmountD = vPerpetualAsset[i].orderMargin;
-                asset.netAmountD = asset.totalAmountD + asset.floatAmountD;
-                asset.availableAmountD = vPerpetualAsset[i].available;
-                //asset.underwayOrderValueD = GetUnderwayOrderValue(asset.asset, asset.frozenMarginAmountD);
-                if (fabs(asset.netAmountD) > MINDOUBLE) {
-                    asset.realLeverageRatioD = fabs(asset.positionValueD / asset.netAmountD);
-                    stringstream ss;
-                    ss << "accountId:" << customerId << " asset:" << ass << " positionValueD:" << asset.positionValueD << " totalAmountD:" << asset.totalAmountD << " floatAmountD:" << asset.floatAmountD << " netAmountD:" << asset.netAmountD;
-                    LOG_INFO("realLeverageRatioD: %s", ss.str().c_str()); 
-                }
-                mPerpetualAsset.insert(make_pair(asset.asset, asset));
-            } else {
-                iter->second.positionValueD = positionValue;
-                iter->second.totalAmountD = vPerpetualAsset[i].total;
-                //iter->second.floatAmountD = vPerpetualAsset[i].unrealisedPnl;
-                iter->second.floatAmountD = floatAmount;
-                iter->second.marginAmountD = vPerpetualAsset[i].positionInitialMargin;
-                iter->second.frozenMarginAmountD = vPerpetualAsset[i].orderMargin;
-                iter->second.netAmountD = iter->second.totalAmountD + iter->second.floatAmountD;                
-                iter->second.availableAmountD = vPerpetualAsset[i].available;
-                //iter->second.underwayOrderValueD = GetUnderwayOrderValue(iter->second.asset, iter->second.frozenMarginAmountD);
-                if (fabs(iter->second.netAmountD) > MINDOUBLE) {
-                    iter->second.realLeverageRatioD = fabs(iter->second.positionValueD / iter->second.netAmountD);
-                    stringstream ss;
-                    ss << "accountId:" << customerId << " asset:" << ass << " positionValueD:" << iter->second.positionValueD << " totalAmountD:" << iter->second.totalAmountD << " floatAmountD:" << iter->second.floatAmountD << " netAmountD:" << iter->second.netAmountD;
-                    LOG_INFO("realLeverageRatioD: %s", ss.str().c_str()); 
-                }
+ 
+            igmonitor::Asset asset;
+            asset.asset = vPerpetualAsset[i].currency;
+            asset.positionValueD = positionValue;
+            asset.totalAmountD = vPerpetualAsset[i].total;
+            asset.floatAmountD = floatAmount;
+            asset.marginAmountD = vPerpetualAsset[i].positionInitialMargin;
+            asset.frozenMarginAmountD = vPerpetualAsset[i].orderMargin;
+            asset.netAmountD = asset.totalAmountD + asset.floatAmountD;
+            asset.availableAmountD = vPerpetualAsset[i].available;
+            if (fabs(asset.netAmountD) > MINDOUBLE) {
+                asset.realLeverageRatioD = fabs(asset.positionValueD / asset.netAmountD);
             }
+
+            mPerpetualAsset[asset.asset] = asset;
         }
 
         vector<gateio::FuturePosition>& vPerpetualPosition = item->GetPerpetualPosition();
@@ -667,27 +383,19 @@ void BinanceAccountItem::UpdateByGateioAdapter() {
             double longFrozenPosition = 0.0;
             double shortFrozenPosition = 0.0;
             item->GetPerpetualLongShortFrozenPosition(symbol, longFrozenPosition, shortFrozenPosition);
-            auto iter = mPerpetualPosition.find(symbol);
-            if (iter == mPerpetualPosition.end()) {
-                igmonitor::Position position;
-                position.symbol = vPerpetualPosition[i].contract;
-                position.netPositionD = vPerpetualPosition[i].size;
-                position.netAvgPriceD = vPerpetualPosition[i].entryPrice;
-                position.floatAmountD = vPerpetualPosition[i].unrealisedPnl;
-                position.liquidationPrice = vPerpetualPosition[i].liqPrice;
-                string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
-                position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
-                position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
-                position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
-                mPerpetualPosition.insert(make_pair(position.symbol, position));
-            } else {
-                iter->second.netPositionD = vPerpetualPosition[i].size;
-                iter->second.netAvgPriceD = vPerpetualPosition[i].entryPrice;
-                iter->second.floatAmountD = vPerpetualPosition[i].unrealisedPnl;
-                iter->second.liquidationPrice = vPerpetualPosition[i].liqPrice;
-                iter->second.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
-                iter->second.underwayAbsPositioD = fabs(iter->second.underwayNetPositionD);
-            }
+
+            igmonitor::Position position;
+            position.symbol = vPerpetualPosition[i].contract;
+            position.netPositionD = vPerpetualPosition[i].size;
+            position.netAvgPriceD = vPerpetualPosition[i].entryPrice;
+            position.floatAmountD = vPerpetualPosition[i].unrealisedPnl;
+            position.liquidationPrice = vPerpetualPosition[i].liqPrice;
+            string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
+            position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+            position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
+            position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
+
+            mPerpetualPosition[position.symbol] = position;
         }
 
         vector<gateio::FutureOrder>& vPerpetualOpenOrder = item->GetPerpetualOpenOrder();
@@ -703,63 +411,14 @@ void BinanceAccountItem::UpdateByGateioAdapter() {
                 igmonitor::OpenOrder openOrder;
                 openOrder.symbol = symbol;
                 openOrder.openQty = openQty;
-                mPerpetualOpenOrder.insert(make_pair(key, openOrder));
+                mPerpetualOpenOrder[key] = openOrder;
             }
-        }
-
-        vector<gateio::FutureOrder>& vPerpetualOrder = item->GetPerpetualOrder();
-        for (size_t i = 0; i < vPerpetualOrder.size(); ++i) {
-            igmonitor::Order order;
-            order.symbol = vPerpetualOrder[i].contract;
-            order.instType = "FUTURES";
-            order.volume = fabs(vPerpetualOrder[i].size);
-            order.price = vPerpetualOrder[i].price;
-            order.filledVolume = fabs(vPerpetualOrder[i].size - vPerpetualOrder[i].left);
-            order.avgPrice = vPerpetualOrder[i].fillPrice;
-            order.side = vPerpetualOrder[i].size >= 0 ? "BUY" : "SELL";
-            order.status = vPerpetualOrder[i].status;
-            if (vPerpetualOrder[i].finishAs == "auto_deleveraged") {
-                order.category = "adl";
-            }
-            order.updateTime = vPerpetualOrder[i].finishTime * 1000;
-            order.createTime = vPerpetualOrder[i].createTime * 1000;
-
-            string instKey = exchangeStr + "|" + order.symbol + "|FUTURES";
-            string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
-            mOrder[key] = order;
-        }
-
-        vector<gateio::CrossMarginAsset>& vCrossMarginAsset = item->GetCrossMarginAsset();
-        for (size_t i = 0; i < vCrossMarginAsset.size(); ++i) {
-            string ass = vCrossMarginAsset[i].currency;
-            double positionValue = item->GetPerpetualPositionValue(ass);
-            double floatAmount = item->GetPerpetualFloatAmount(ass);
-            double total = item->GetPerpetualAssetTotal(ass);
-            igmonitor::Asset asset;
-            asset.asset = vCrossMarginAsset[i].currency;
-            asset.positionValueD = positionValue;
-            asset.totalAmountD = vCrossMarginAsset[i].available + vCrossMarginAsset[i].freeze + total;
-            asset.floatAmountD = floatAmount;
-            // asset.marginAmountD = vPerpetualAsset[i].positionInitialMargin;
-            // asset.frozenMarginAmountD = vPerpetualAsset[i].orderMargin;
-            asset.netAmountD = asset.totalAmountD + asset.floatAmountD;
-            asset.availableAmountD = vCrossMarginAsset[i].available;
-            if (fabs(asset.netAmountD) > MINDOUBLE) {
-                asset.realLeverageRatioD = fabs(asset.positionValueD / asset.netAmountD);
-                stringstream ss;
-                ss << "accountId:" << customerId << " asset:" << ass << " positionValueD:" << asset.positionValueD << " totalAmountD:" << asset.totalAmountD << " floatAmountD:" << asset.floatAmountD << " netAmountD:" << asset.netAmountD;
-                LOG_INFO("realLeverageRatioD: %s", ss.str().c_str());
-            }
-            // mCrossMarAsset.insert(make_pair(asset.asset, asset));
-            if (unified == 1) {
-                mPerpetualAsset[asset.asset] = asset; // 先使用统一账户的资产信息当作永续合约的资产信息（这样改动最小）
-            } 
         }
     }
 }
 
-void BinanceAccountItem::UpdateByBybitAdapter() {
-    BybitAdapterItem* item = BybitAdapterMgr::GetInstance().GetAdapterItem(customerId);
+void AccountItem::UpdateByBybitAdapter() {
+    BybitAdapterItem* item = BybitAdapterMgr::GetInstance().GetAdapterItem(accountId);
     if (item) {
         riskInfo.dUpdateTime = item->GetUpdateTime();
         adapterQuery = item->GetQueryStatus();
@@ -775,43 +434,20 @@ void BinanceAccountItem::UpdateByBybitAdapter() {
             string ass = vAsset[i].coin;
             double positionValue = item->GetPositionValue(ass);
             double floatAmount = item->GetFloatAmount(ass);
-            auto iter = mUFutureAsset.find(ass);
-            if (iter == mUFutureAsset.end()) {
-                igmonitor::Asset asset;
-                asset.asset = vAsset[i].coin;
-                asset.positionValueD = positionValue;
-                asset.totalAmountD = vAsset[i].walletBalance;
-                //asset.floatAmountD = vAsset[i].unrealisedPnl;
-                asset.floatAmountD = floatAmount;
-                asset.marginAmountD = vAsset[i].totalPositionIM;
-                asset.frozenMarginAmountD = vAsset[i].totalOrderIM;
-                asset.netAmountD = asset.totalAmountD + asset.floatAmountD;
-                // asset.availableAmountD = vAsset[i].available;
-                //asset.underwayOrderValueD = GetUnderwayOrderValue(asset.asset, asset.frozenMarginAmountD);
-                if (fabs(asset.netAmountD) > MINDOUBLE) {
-                    asset.realLeverageRatioD = fabs(asset.positionValueD / asset.netAmountD);
-                    stringstream ss;
-                    ss << "accountId:" << customerId << " asset:" << ass << " positionValueD:" << asset.positionValueD << " totalAmountD:" << asset.totalAmountD << " floatAmountD:" << asset.floatAmountD << " netAmountD:" << asset.netAmountD;
-                    LOG_INFO("realLeverageRatioD: %s", ss.str().c_str()); 
-                }
-                mUFutureAsset.insert(make_pair(asset.asset, asset));
-            } else {
-                iter->second.positionValueD = positionValue;
-                iter->second.totalAmountD = vAsset[i].walletBalance;
-                //iter->second.floatAmountD = vAsset[i].unrealisedPnl;
-                iter->second.floatAmountD = floatAmount;
-                iter->second.marginAmountD = vAsset[i].totalPositionIM;
-                iter->second.frozenMarginAmountD = vAsset[i].totalOrderIM;
-                iter->second.netAmountD = iter->second.totalAmountD + iter->second.floatAmountD;              
-                // iter->second.availableAmountD = vAsset[i].available;
-                //iter->second.underwayOrderValueD = GetUnderwayOrderValue(iter->second.asset, iter->second.frozenMarginAmountD);
-                if (fabs(iter->second.netAmountD) > MINDOUBLE) {
-                    iter->second.realLeverageRatioD = fabs(iter->second.positionValueD / iter->second.netAmountD);
-                    stringstream ss;
-                    ss << "accountId:" << customerId << " asset:" << ass << " positionValueD:" << iter->second.positionValueD << " totalAmountD:" << iter->second.totalAmountD << " floatAmountD:" << iter->second.floatAmountD << " netAmountD:" << iter->second.netAmountD;
-                    LOG_INFO("realLeverageRatioD: %s", ss.str().c_str()); 
-                }
+    
+            igmonitor::Asset asset;
+            asset.asset = vAsset[i].coin;
+            asset.positionValueD = positionValue;
+            asset.totalAmountD = vAsset[i].walletBalance;
+            asset.floatAmountD = floatAmount;
+            asset.marginAmountD = vAsset[i].totalPositionIM;
+            asset.frozenMarginAmountD = vAsset[i].totalOrderIM;
+            asset.netAmountD = asset.totalAmountD + asset.floatAmountD;
+            if (fabs(asset.netAmountD) > MINDOUBLE) {
+                asset.realLeverageRatioD = fabs(asset.positionValueD / asset.netAmountD);
             }
+
+            mUFutureAsset[asset.asset] = asset;
         }
 
         vector<bybit::Position>& vPosition = item->GetPosition();
@@ -820,27 +456,19 @@ void BinanceAccountItem::UpdateByBybitAdapter() {
             double longFrozenPosition = 0.0;
             double shortFrozenPosition = 0.0;
             item->GetLongShortFrozenPosition(symbol, longFrozenPosition, shortFrozenPosition);
-            auto iter = mUFuturePosition.find(symbol);
-            if (iter == mUFuturePosition.end()) {
-                igmonitor::Position position;
-                position.symbol = vPosition[i].symbol;
-                position.netPositionD = vPosition[i].size;
-                position.netAvgPriceD = vPosition[i].avgPrice;
-                position.floatAmountD = vPosition[i].unrealisedPnl;
-                position.liquidationPrice = vPosition[i].liqPrice;
-                string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
-                position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
-                position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
-                position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
-                mUFuturePosition.insert(make_pair(position.symbol, position));
-            } else {
-                iter->second.netPositionD = vPosition[i].size;
-                iter->second.netAvgPriceD = vPosition[i].avgPrice;
-                iter->second.floatAmountD = vPosition[i].unrealisedPnl;
-                iter->second.liquidationPrice = vPosition[i].liqPrice;
-                iter->second.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
-                iter->second.underwayAbsPositioD = fabs(iter->second.underwayNetPositionD);
-            }
+  
+            igmonitor::Position position;
+            position.symbol = vPosition[i].symbol;
+            position.netPositionD = vPosition[i].size;
+            position.netAvgPriceD = vPosition[i].avgPrice;
+            position.floatAmountD = vPosition[i].unrealisedPnl;
+            position.liquidationPrice = vPosition[i].liqPrice;
+            string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
+            position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+            position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
+            position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
+
+            mUFuturePosition[position.symbol] = position;
         }
 
         vector<bybit::Order>& vOpenOrder = item->GetOpenOrder();
@@ -856,15 +484,15 @@ void BinanceAccountItem::UpdateByBybitAdapter() {
                 igmonitor::OpenOrder openOrder;
                 openOrder.symbol = symbol;
                 openOrder.openQty = openQty;
-                mUFutureOpenOrder.insert(make_pair(key, openOrder));
+                mUFutureOpenOrder[key] = openOrder;
             }
         }
 
     }
 }
 
-void BinanceAccountItem::UpdateByOkxAdapter() {
-    OkxAdapterItem* item = OkxAdapterMgr::GetInstance().GetAdapterItem(customerId);
+void AccountItem::UpdateByOkxAdapter() {
+    OkxAdapterItem* item = OkxAdapterMgr::GetInstance().GetAdapterItem(accountId);
     if (item) {
         riskInfo.dUpdateTime = item->GetUpdateTime();
         adapterQuery = item->GetQueryStatus();
@@ -877,41 +505,21 @@ void BinanceAccountItem::UpdateByOkxAdapter() {
             string ass = vAsset[i].ccy;
             double positionValue = item->GetPositionValue(ass);
             double floatAmount = item->GetFloatAmount(ass);
-            auto iter = mUFutureAsset.find(ass);
-            if (iter == mUFutureAsset.end()) { // 暂不使用计算的浮动盈亏，直接用交易所的浮动盈亏
-                igmonitor::Asset asset;
-                asset.asset = vAsset[i].ccy;
-                asset.positionValueD = positionValue;
-                asset.totalAmountD = vAsset[i].cashBal;
-                asset.floatAmountD = floatAmount;
-                // asset.floatAmountD = vAsset[i].upl;
-                asset.marginAmountD = vAsset[i].availableEq;
-                asset.frozenMarginAmountD = vAsset[i].frozenBal;
-                asset.netAmountD = asset.totalAmountD + asset.floatAmountD;
-                if (fabs(asset.netAmountD) > MINDOUBLE) {
-                    asset.realLeverageRatioD = fabs(asset.positionValueD / asset.netAmountD);
-                    stringstream ss;
-                    ss << "accountId:" << customerId << " asset:" << ass << " positionValueD:" << asset.positionValueD << " totalAmountD:" << asset.totalAmountD << " floatAmountD:" << asset.floatAmountD << " netAmountD:" << asset.netAmountD;
-                    LOG_INFO("realLeverageRatioD: %s", ss.str().c_str()); 
-                }
-                mUFutureAsset.insert(make_pair(asset.asset, asset));
-            } else {
-                iter->second.positionValueD = positionValue;
-                iter->second.totalAmountD = vAsset[i].cashBal;
-                //iter->second.floatAmountD = floatAmount;
-                iter->second.floatAmountD = vAsset[i].upl;
-                iter->second.marginAmountD = vAsset[i].availableEq;
-                iter->second.frozenMarginAmountD = vAsset[i].frozenBal;
-                iter->second.netAmountD = iter->second.totalAmountD + iter->second.floatAmountD;              
-                // iter->second.availableAmountD = vAsset[i].available;
-                //iter->second.underwayOrderValueD = GetUnderwayOrderValue(iter->second.asset, iter->second.frozenMarginAmountD);
-                if (fabs(iter->second.netAmountD) > MINDOUBLE) {
-                    iter->second.realLeverageRatioD = fabs(iter->second.positionValueD / iter->second.netAmountD);
-                    stringstream ss;
-                    ss << "accountId:" << customerId << " asset:" << ass << " positionValueD:" << iter->second.positionValueD << " totalAmountD:" << iter->second.totalAmountD << " floatAmountD:" << iter->second.floatAmountD << " netAmountD:" << iter->second.netAmountD;
-                    LOG_INFO("realLeverageRatioD: %s", ss.str().c_str()); 
-                }
+
+            igmonitor::Asset asset;
+            asset.asset = vAsset[i].ccy;
+            asset.positionValueD = positionValue;
+            asset.totalAmountD = vAsset[i].cashBal;
+            asset.floatAmountD = floatAmount;  // 暂不使用计算的浮动盈亏，直接用交易所的浮动盈亏
+            // asset.floatAmountD = vAsset[i].upl;
+            asset.marginAmountD = vAsset[i].availableEq;
+            asset.frozenMarginAmountD = vAsset[i].frozenBal;
+            asset.netAmountD = asset.totalAmountD + asset.floatAmountD;
+            if (fabs(asset.netAmountD) > MINDOUBLE) {
+                asset.realLeverageRatioD = fabs(asset.positionValueD / asset.netAmountD);
             }
+
+            mUFutureAsset[asset.asset] = asset;
         }
 
         vector<okx::OkxPosition>& vPosition = item->GetPosition();
@@ -920,27 +528,19 @@ void BinanceAccountItem::UpdateByOkxAdapter() {
             double longFrozenPosition = 0.0;
             double shortFrozenPosition = 0.0;
             item->GetLongShortFrozenPosition(symbol, longFrozenPosition, shortFrozenPosition);
-            auto iter = mUFuturePosition.find(symbol);
-            if (iter == mUFuturePosition.end()) {
-                igmonitor::Position position;
-                position.symbol = vPosition[i].instId;
-                position.netPositionD = vPosition[i].pos;
-                position.netAvgPriceD = vPosition[i].avgPx;
-                position.floatAmountD = vPosition[i].upl;
-                position.liquidationPrice = vPosition[i].liqPx;
-                string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
-                position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
-                position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
-                position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
-                mUFuturePosition.insert(make_pair(position.symbol, position));
-            } else {
-                iter->second.netPositionD = vPosition[i].pos;
-                iter->second.netAvgPriceD = vPosition[i].avgPx;
-                iter->second.floatAmountD = vPosition[i].upl;
-                iter->second.liquidationPrice = vPosition[i].liqPx;
-                iter->second.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
-                iter->second.underwayAbsPositioD = fabs(iter->second.underwayNetPositionD);
-            }
+ 
+            igmonitor::Position position;
+            position.symbol = vPosition[i].instId;
+            position.netPositionD = vPosition[i].pos;
+            position.netAvgPriceD = vPosition[i].avgPx;
+            position.floatAmountD = vPosition[i].upl;
+            position.liquidationPrice = vPosition[i].liqPx;
+            string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
+            position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+            position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
+            position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
+
+            mUFuturePosition[position.symbol] = position;
         }
 
         vector<okx::OkxOrder>& vOpenOrder = item->GetOpenOrder();
@@ -956,35 +556,16 @@ void BinanceAccountItem::UpdateByOkxAdapter() {
                 igmonitor::OpenOrder openOrder;
                 openOrder.symbol = symbol;
                 openOrder.openQty = openQty;
-                mUFutureOpenOrder.insert(make_pair(key, openOrder));
+                mUFutureOpenOrder[key] = openOrder;
             }
-        }
-
-        vector<okx::OkxOrder>& vOrder = item->GetOrder();
-        for (size_t i = 0; i < vOrder.size(); ++i) {
-            igmonitor::Order order;
-            order.symbol = vOpenOrder[i].instId;
-            order.instType = vOpenOrder[i].instType;
-            order.volume = vOpenOrder[i].sz;
-            order.price = vOpenOrder[i].px;
-            order.filledVolume = vOpenOrder[i].accFillSz;
-            order.avgPrice = vOpenOrder[i].avgPx;
-            order.side = vOpenOrder[i].side;
-            order.status = vOpenOrder[i].state;
-            order.category = vOpenOrder[i].category;
-            order.updateTime = vOpenOrder[i].updateTime;
-            order.createTime = vOpenOrder[i].createTime;
-
-            string instKey = exchangeStr + "|" + order.symbol + "|" + order.instType;
-            mOrder[instKey] = order;
         }
     }
 }
 
-void BinanceAccountItem::ClearZero() {
+void AccountItem::ClearZero() {
     // clear asset
     for (auto iter = mSpotAsset.begin(); iter != mSpotAsset.end();) {
-        if (fabs(iter->second.netAmountS) <= MINDOUBLE && fabs(iter->second.initialAmount) <= MINDOUBLE) {
+        if (fabs(iter->second.netAmountD) <= MINDOUBLE) {
             mSpotAsset.erase(iter++);
         } else {
             iter++;
@@ -992,7 +573,7 @@ void BinanceAccountItem::ClearZero() {
     }
 
     for (auto iter = mUFutureAsset.begin(); iter != mUFutureAsset.end();) {
-        if (fabs(iter->second.netAmountS) <= MINDOUBLE && fabs(iter->second.initialAmount) <= MINDOUBLE) {
+        if (fabs(iter->second.netAmountD) <= MINDOUBLE) {
             mUFutureAsset.erase(iter++);
         } else {
             iter++;
@@ -1000,7 +581,7 @@ void BinanceAccountItem::ClearZero() {
     }
 
     for (auto iter = mCFutureAsset.begin(); iter != mCFutureAsset.end();) {
-        if (fabs(iter->second.netAmountS) <= MINDOUBLE && fabs(iter->second.initialAmount) <= MINDOUBLE) {
+        if (fabs(iter->second.netAmountD) <= MINDOUBLE) {
             mCFutureAsset.erase(iter++);
         } else {
             iter++;
@@ -1009,7 +590,7 @@ void BinanceAccountItem::ClearZero() {
 
     // clear position
     for (auto iter = mUFuturePosition.begin(); iter != mUFuturePosition.end();) {
-        if (fabs(iter->second.netPositionS) <= MINDOUBLE && fabs(iter->second.netPositionD) <= MINDOUBLE) {
+        if (fabs(iter->second.netPositionD) <= MINDOUBLE) {
             mUFuturePosition.erase(iter++);
         } else {
             iter++;
@@ -1017,7 +598,7 @@ void BinanceAccountItem::ClearZero() {
     }
 
     for (auto iter = mCFuturePosition.begin(); iter != mCFuturePosition.end();) {
-        if (fabs(iter->second.netPositionS) <= MINDOUBLE && fabs(iter->second.netPositionD) <= MINDOUBLE) {
+        if (fabs(iter->second.netPositionD) <= MINDOUBLE) {
             mCFuturePosition.erase(iter++);
         } else {
             iter++;
@@ -1025,34 +606,25 @@ void BinanceAccountItem::ClearZero() {
     }
 }
 
-void BinanceAccountItem::Clear() {
-    mSavAsset.clear();
+void AccountItem::Clear() {
     mSpotAsset.clear();
     mUFutureAsset.clear();
     mCFutureAsset.clear();
-    mDeliveryAsset.clear();
     mPerpetualAsset.clear();
     mUFuturePosition.clear();
     mCFuturePosition.clear();
-    mDeliveryPosition.clear();
     mPerpetualPosition.clear();
     mSpotOpenOrder.clear();
     mUFutureOpenOrder.clear();
     mCFutureOpenOrder.clear();
-    mDeliveryOpenOrder.clear();
     mPerpetualOpenOrder.clear();
-    mMarAsset.clear();
-    mDeliveryAsset.clear();
     mPerpetualAsset.clear();
-    mCrossMarAsset.clear();
     mTotalAsset.clear();
     mExposure.clear();
     mPositionFundingRate.clear();
-    vLoBo.clear();
-    mOrder.clear();
 }
 
-void BinanceAccountItem::CalculateTotalAsset() {
+void AccountItem::CalculateTotalAsset() {
     for (auto iter = mSpotAsset.begin(); iter != mSpotAsset.end(); ++iter) {
         UpdateTotalAsset(iter->second);
     }
@@ -1065,41 +637,18 @@ void BinanceAccountItem::CalculateTotalAsset() {
         UpdateTotalAsset(iter->second);
     }
 
-    for (auto iter = mMarAsset.begin(); iter != mMarAsset.end(); ++iter) {
-        UpdateTotalAsset(iter->second);
-    }
-
-    for (auto iter = mSavAsset.begin(); iter != mSavAsset.end(); ++iter) {
-        UpdateTotalAsset(iter->second);
-    }
-
-    for (auto iter = mDeliveryAsset.begin(); iter != mDeliveryAsset.end(); ++iter) {
-        UpdateTotalAsset(iter->second);
-    }
-
     for (auto iter = mPerpetualAsset.begin(); iter != mPerpetualAsset.end(); ++iter) {
         UpdateTotalAsset(iter->second);
     }
 
-    for (auto iter = mCrossMarAsset.begin(); iter != mCrossMarAsset.end(); ++iter) {
-        UpdateTotalAsset(iter->second);
-    }
-
-    for (size_t i = 0; i < vLoBo.size(); ++i) {
-        UpdateTotalAsset(vLoBo[i]);
-    }
-
     for (auto iter = mTotalAsset.begin(); iter != mTotalAsset.end(); ++iter) {
-        if (fabs(iter->second.netAmountS) > MINDOUBLE) {
-            iter->second.realLeverageRatioS = fabs(iter->second.positionValueS / iter->second.netAmountS);
-        }
         if (fabs(iter->second.netAmountD) > MINDOUBLE) {
             iter->second.realLeverageRatioD = fabs(iter->second.positionValueD / iter->second.netAmountD);
         }
     }
 }
 
-void BinanceAccountItem::UpdateTotalAsset(igmonitor::Asset& asset) {
+void AccountItem::UpdateTotalAsset(igmonitor::Asset& asset) {
     auto iter = mTotalAsset.find(asset.asset);
     if (iter != mTotalAsset.end()) {
         iter->second.positionValueS += asset.positionValueS;
@@ -1121,65 +670,11 @@ void BinanceAccountItem::UpdateTotalAsset(igmonitor::Asset& asset) {
         iter->second.frozenMarginAmountD += asset.frozenMarginAmountD;
         iter->second.initialAmount += asset.initialAmount;
     } else {
-        mTotalAsset.insert(make_pair(asset.asset, asset));
+        mTotalAsset[asset.asset] = asset;
     }
 }
 
-void BinanceAccountItem::UpdateTotalAsset(igmonitor::MarAsset& asset) {
-    auto iter = mTotalAsset.find(asset.asset);
-    if (iter != mTotalAsset.end()) {
-        iter->second.totalAmountD += asset.free;
-        iter->second.netAmountD += asset.netAsset;
-    } else {
-        igmonitor::Asset ass;
-        ass.asset = asset.asset;
-        ass.totalAmountD = asset.free;
-        ass.netAmountD = asset.netAsset;
-        mTotalAsset.insert(make_pair(ass.asset, ass));
-    }
-}
-
-void BinanceAccountItem::UpdateTotalAsset(igmonitor::SavAsset& asset) {
-    auto iter = mTotalAsset.find(asset.asset);
-    if (iter != mTotalAsset.end()) {
-        iter->second.totalAmountD += asset.amountD;
-        iter->second.netAmountD += asset.amountD;
-    } else {
-        igmonitor::Asset ass;
-        ass.asset = asset.asset;
-        ass.totalAmountD = asset.amountD;
-        ass.netAmountD = asset.amountD;
-        mTotalAsset.insert(make_pair(ass.asset, ass));
-    }
-}
-
-void BinanceAccountItem::UpdateTotalAsset(igmonitor::LoBo& lb) {
-    auto iter = mTotalAsset.find(lb.loanCoin);
-    if (iter != mTotalAsset.end()) {
-        iter->second.totalAmountD -= lb.loanAmount;
-        iter->second.netAmountD -= lb.loanAmount;
-    } else {
-        igmonitor::Asset ass;
-        ass.asset = lb.loanCoin;
-        ass.totalAmountD = -lb.loanAmount;
-        ass.netAmountD = -lb.loanAmount;
-        mTotalAsset.insert(make_pair(ass.asset, ass));
-    }
-
-    auto it = mTotalAsset.find(lb.collateralCoin);
-    if (it != mTotalAsset.end()) {
-        it->second.totalAmountD += lb.collateralAmount;
-        it->second.netAmountD += lb.collateralAmount;
-    } else {
-        igmonitor::Asset ass;
-        ass.asset = lb.collateralCoin;
-        ass.totalAmountD = lb.collateralAmount;
-        ass.netAmountD = lb.collateralAmount;
-        mTotalAsset.insert(make_pair(ass.asset, ass));
-    }
-}
-
-void BinanceAccountItem::CalculateExposure() {
+void AccountItem::CalculateExposure() {
     for (auto iter = mUFuturePosition.begin(); iter != mUFuturePosition.end(); ++iter) {
         UpdateExposure("UFuture", iter->second);
         InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(iter->second.key);
@@ -1193,16 +688,6 @@ void BinanceAccountItem::CalculateExposure() {
         InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(iter->second.key);
         if (info.instrumentType == "SWAP" ||info.instrumentType == "InstType_BTC_SWAP") {
             UpdatePositionFundingRate(iter->second);
-        }
-    }
-
-    for (auto iter = mDeliveryPosition.begin(); iter != mDeliveryPosition.end(); ++iter) {
-        string key = iter->second.key;
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
-        if (info.instrumentType == "InstType_USDT_FUTURES" || info.calculateType == 0) {
-            UpdateExposure("UFuture", iter->second);
-        } else if (info.instrumentType == "InstType_BTC_FUTURES" || info.calculateType == 1) {
-            UpdateExposure("CFuture", iter->second);
         }
     }
 
@@ -1243,7 +728,7 @@ void BinanceAccountItem::CalculateExposure() {
                 
                 if (price > MINDOUBLE) {
                     stringstream ss;
-                    ss << "accountId:" << customerId << " asset:" << asset << " price:" << price << " exposureAmountD:" << iter->second.exposureAmountD;
+                    ss << "accountId:" << accountId << " asset:" << asset << " price:" << price << " exposureAmountD:" << iter->second.exposureAmountD;
                     LOG_INFO("CalculateExposure: %s", ss.str().c_str());  
                     iter->second.exposureValueS = iter->second.exposureAmountS / price;
                     iter->second.exposureValueD = iter->second.exposureAmountD / price;
@@ -1264,7 +749,7 @@ void BinanceAccountItem::CalculateExposure() {
                 
                 if (price > MINDOUBLE) {
                     stringstream ss;
-                    ss << "accountId:" << customerId << " asset:" << asset << " price:" << price << " exposureAmountD:" << iter->second.exposureAmountD;
+                    ss << "accountId:" << accountId << " asset:" << asset << " price:" << price << " exposureAmountD:" << iter->second.exposureAmountD;
                     LOG_INFO("CalculateExposure: %s", ss.str().c_str());  
                     iter->second.exposureValueS = iter->second.exposureAmountS * price;
                     iter->second.exposureValueD = iter->second.exposureAmountD * price;
@@ -1284,7 +769,7 @@ void BinanceAccountItem::CalculateExposure() {
 
                         if (price > MINDOUBLE) {
                             stringstream ss;
-                            ss << "accountId:" << customerId << " asset:" << asset << " price:" << price << " exposureAmountD:" << iter->second.exposureAmountD;
+                            ss << "accountId:" << accountId << " asset:" << asset << " price:" << price << " exposureAmountD:" << iter->second.exposureAmountD;
                             LOG_INFO("CalculateExposure: %s", ss.str().c_str());  
                             iter->second.exposureValueS = iter->second.exposureAmountS * price;
                             iter->second.exposureValueD = iter->second.exposureAmountD * price;
@@ -1308,7 +793,7 @@ void BinanceAccountItem::CalculateExposure() {
 
                         if (priceBaseAsset > MINDOUBLE) {
                             stringstream ss;
-                            ss << "accountId:" << customerId << " asset:" << asset << " priceU:" << priceU << " baseAsset:" << baseAsset << " priceBaseAsset:" << priceBaseAsset << " exposureAmountD:" << iter->second.exposureAmountD;
+                            ss << "accountId:" << accountId << " asset:" << asset << " priceU:" << priceU << " baseAsset:" << baseAsset << " priceBaseAsset:" << priceBaseAsset << " exposureAmountD:" << iter->second.exposureAmountD;
                             LOG_INFO("CalculateExposure: %s", ss.str().c_str());  
                             iter->second.exposureValueS = iter->second.exposureAmountS * priceU / priceBaseAsset;
                             iter->second.exposureValueD = iter->second.exposureAmountD * priceU / priceBaseAsset;
@@ -1325,7 +810,7 @@ void BinanceAccountItem::CalculateExposure() {
     }
 }
 
-void BinanceAccountItem::UpdateExposure(string positionType, igmonitor::Position& position) {
+void AccountItem::UpdateExposure(string positionType, igmonitor::Position& position) {
     string key = position.key;
     double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
     InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
@@ -1333,7 +818,7 @@ void BinanceAccountItem::UpdateExposure(string positionType, igmonitor::Position
     string quote = info.instRight;
 
     stringstream ss;
-    ss << "accountId:" << customerId << " key:" << key << " price:" << price << " netPositionD:" << position.netPositionD;
+    ss << "accountId:" << accountId << " key:" << key << " price:" << price << " netPositionD:" << position.netPositionD;
     LOG_INFO("UpdateExposure: %s", ss.str().c_str());  
 
     auto i = mExposure.find(base);
@@ -1405,9 +890,9 @@ void BinanceAccountItem::UpdateExposure(string positionType, igmonitor::Position
     }
 }
 
-void BinanceAccountItem::UpdateExposure(igmonitor::Asset& asset) {
+void AccountItem::UpdateExposure(igmonitor::Asset& asset) {
     stringstream ss;
-    ss << "accountId:" << customerId << " asset:" << asset.asset << " netAmountD:" << asset.netAmountD;
+    ss << "accountId:" << accountId << " asset:" << asset.asset << " netAmountD:" << asset.netAmountD;
     LOG_INFO("UpdateExposure: %s", ss.str().c_str());  
     auto iter = mExposure.find(asset.asset);
     if (iter != mExposure.end()) {
@@ -1424,7 +909,7 @@ void BinanceAccountItem::UpdateExposure(igmonitor::Asset& asset) {
     }
 }
 
-void BinanceAccountItem::UpdatePositionFundingRate(igmonitor::Position& position) {
+void AccountItem::UpdatePositionFundingRate(igmonitor::Position& position) {
     if (fabs(position.netPositionD) < MINDOUBLE) {
         return;
     }
@@ -1434,11 +919,11 @@ void BinanceAccountItem::UpdatePositionFundingRate(igmonitor::Position& position
     pfr.netPosition = position.netPositionD;
     pfr.flag = position.netPositionD > 0 ? true : false;
     pfr.value = BinanceMdMgr::GetInstance().GetFundingRate(position.key);
-    LOG_INFO("UpdatePositionFundingRate:  accountId: %d  key:%s  flag:%d  value:%f", customerId, position.key.c_str(), pfr.flag, pfr.value);
+    LOG_INFO("UpdatePositionFundingRate:  accountId: %d  key:%s  flag:%d  value:%f", accountId, position.key.c_str(), pfr.flag, pfr.value);
     mPositionFundingRate[position.key] = pfr;
 }
 
-double BinanceAccountItem::GetUnderwayOrderValue(string asset, double frozenAmount) {
+double AccountItem::GetUnderwayOrderValue(string asset, double frozenAmount) {
     double underwayOrderValue = 0.0;
     if (asset == baseAsset) {
         underwayOrderValue = frozenAmount;
@@ -1496,7 +981,7 @@ double BinanceAccountItem::GetUnderwayOrderValue(string asset, double frozenAmou
     return underwayOrderValue;
 }
 
-void BinanceAccountItem::CalculateRiskInfo() {
+void AccountItem::CalculateRiskInfo() {
     riskInfo.tsLocal = GetCurrentTimeUs();
     totalExposure = 0.0;
 
@@ -1677,12 +1162,12 @@ void BinanceAccountItem::CalculateRiskInfo() {
     }
 
     if (exchangeStr == "BYBIT") {
-        BybitAdapterItem* item = BybitAdapterMgr::GetInstance().GetAdapterItem(customerId);
+        BybitAdapterItem* item = BybitAdapterMgr::GetInstance().GetAdapterItem(accountId);
         if (item) {
             bybit::TotalAccountInfo& totalAccountInfo = item->GetTotalAccountInfo();
             double accountRate = totalAccountInfo.accountMMRate;
             double rate = totalPositionValue / totalMarginBalance;
-            LOG_INFO("BYBIT accountInfo: accountId:%d accountRate:%f  rate:%f", customerId, accountRate, rate);
+            LOG_INFO("BYBIT accountInfo: accountId:%d accountRate:%f  rate:%f", accountId, accountRate, rate);
         }
     }
 
@@ -1883,7 +1368,7 @@ void BinanceAccountItem::CalculateRiskInfo() {
         if (underwayOrderValue > underwayOrderValueD) {
             underwayOrderValueD = underwayOrderValue;
         }
-        LOG_INFO("underwayOrderValue: accountId: %d  underwayOrderValue: %f", customerId, underwayOrderValue); 
+        LOG_INFO("underwayOrderValue: accountId: %d  underwayOrderValue: %f", accountId, underwayOrderValue); 
     }
 
     for (auto iter = mCFutureOpenOrder.begin(); iter != mCFutureOpenOrder.end(); ++iter) {
@@ -1908,7 +1393,7 @@ void BinanceAccountItem::CalculateRiskInfo() {
         if (underwayOrderValue > underwayOrderValueD) {
             underwayOrderValueD = underwayOrderValue;
         }
-        LOG_INFO("underwayOrderValue: accountId: %d  underwayOrderValue: %f", customerId, underwayOrderValue); 
+        LOG_INFO("underwayOrderValue: accountId: %d  underwayOrderValue: %f", accountId, underwayOrderValue); 
     }
 
     for (auto iter = mDeliveryOpenOrder.begin(); iter != mDeliveryOpenOrder.end(); ++iter) {
@@ -1945,7 +1430,7 @@ void BinanceAccountItem::CalculateRiskInfo() {
         if (underwayOrderValue > underwayOrderValueD) {
             underwayOrderValueD = underwayOrderValue;
         }
-        LOG_INFO("underwayOrderValue: accountId: %d  underwayOrderValue: %f", customerId, underwayOrderValue); 
+        LOG_INFO("underwayOrderValue: accountId: %d  underwayOrderValue: %f", accountId, underwayOrderValue); 
     }
 
     for (auto iter = mPerpetualOpenOrder.begin(); iter != mPerpetualOpenOrder.end(); ++iter) {
@@ -1982,7 +1467,7 @@ void BinanceAccountItem::CalculateRiskInfo() {
         if (underwayOrderValue > underwayOrderValueD) {
             underwayOrderValueD = underwayOrderValue;
         }
-        LOG_INFO("underwayOrderValue: accountId: %d  underwayOrderValue: %f", customerId, underwayOrderValue); 
+        LOG_INFO("underwayOrderValue: accountId: %d  underwayOrderValue: %f", accountId, underwayOrderValue); 
     }
 
     riskInfo.underwayOrderValueD = underwayOrderValueD;
@@ -2007,55 +1492,55 @@ void BinanceAccountItem::CalculateRiskInfo() {
     LOG_INFO("riskInfo: %s", riskInfo.toString().c_str());  
 }
 
-string BinanceAccountItem::GetAccountType() {
+string AccountItem::GetAccountType() {
     return type;
 }
 
-int BinanceAccountItem::GetAccountId() {
-    return customerId;
+int AccountItem::GetAccountId() {
+    return accountId;
 }
 
-string BinanceAccountItem::GetExchangeStr() {
+string AccountItem::GetExchangeStr() {
     return exchangeStr;
 }
 
-igmonitor::RiskInfo& BinanceAccountItem::GetRiskInfo() {
+igmonitor::RiskInfo& AccountItem::GetRiskInfo() {
     return riskInfo;
 }
 
-unordered_map<string, igmonitor::Exposure>& BinanceAccountItem::GetExposure() {
+unordered_map<string, igmonitor::Exposure>& AccountItem::GetExposure() {
     return mExposure;
 }
 
-unordered_map<string, igmonitor::Asset>& BinanceAccountItem::GetSpotAsset() {
+unordered_map<string, igmonitor::Asset>& AccountItem::GetSpotAsset() {
     return mSpotAsset;
 }
 
-unordered_map<string, igmonitor::Asset>& BinanceAccountItem::GetUFutureAsset() {
+unordered_map<string, igmonitor::Asset>& AccountItem::GetUFutureAsset() {
     return mUFutureAsset;
 }
 
-unordered_map<string, igmonitor::Asset>& BinanceAccountItem::GetCFutureAsset() {
+unordered_map<string, igmonitor::Asset>& AccountItem::GetCFutureAsset() {
     return mCFutureAsset;
 }
 
-unordered_map<string, igmonitor::Asset>& BinanceAccountItem::GetTotalAsset() {
+unordered_map<string, igmonitor::Asset>& AccountItem::GetTotalAsset() {
     return mTotalAsset;
 }
 
-unordered_map<string, igmonitor::Position>& BinanceAccountItem::GetUFuturePosition() {
+unordered_map<string, igmonitor::Position>& AccountItem::GetUFuturePosition() {
     return mUFuturePosition;
 }
 
-unordered_map<string, igmonitor::Position>& BinanceAccountItem::GetCFuturePosition() {
+unordered_map<string, igmonitor::Position>& AccountItem::GetCFuturePosition() {
     return mCFuturePosition;
 }
 
-unordered_map<string, igmonitor::PositionFundingRate>& BinanceAccountItem::GetPositionFundingRate() {
+unordered_map<string, igmonitor::PositionFundingRate>& AccountItem::GetPositionFundingRate() {
     return mPositionFundingRate;
 }
 
-set<string> BinanceAccountItem::GetInstrumentList() {
+set<string> AccountItem::GetInstrumentList() {
     set<string> s;
 /*
     if (baseAsset != "USDT") {
@@ -2178,9 +1663,9 @@ set<string> BinanceAccountItem::GetInstrumentList() {
     return s;
 }
 
-web::json::value BinanceAccountItem::GetDetail() {
+web::json::value AccountItem::GetDetail() {
     web::json::value detailV;
-    detailV["customer_id"] = web::json::value::number(customerId);
+    detailV["customer_id"] = web::json::value::number(accountId);
     web::json::value totalAssetV;
 
     for (auto iter = mTotalAsset.begin(); iter != mTotalAsset.end(); ++iter) {
@@ -3531,7 +3016,7 @@ web::json::value BinanceAccountItem::GetDetail() {
     riskV.push_back(productNameV);
 
     web::json::value accountIdV;    
-    sprintf(data, "%d", customerId);
+    sprintf(data, "%d", accountId);
     accountIdV["key"] = web::json::value::string("AccountID");
     accountIdV["alert"] = web::json::value::boolean(false);
     accountIdV["enable"] = web::json::value::boolean(true);
@@ -3753,9 +3238,9 @@ web::json::value BinanceAccountItem::GetDetail() {
     return detailV;
 }
 
-web::json::value BinanceAccountItem::GetPreview() {
+web::json::value AccountItem::GetPreview() {
     web::json::value previewV;
-    previewV["AccountID"] = web::json::value::number(customerId);
+    previewV["AccountID"] = web::json::value::number(accountId);
     previewV["AccountName"] = web::json::value::string(name);
     previewV["Time"] = web::json::value::string(CovertToUtcStr(riskInfo.tsLocal));
     previewV["BaseAsset"] = web::json::value::string(baseAsset);
@@ -3787,7 +3272,7 @@ web::json::value BinanceAccountItem::GetPreview() {
     return previewV;
 }
 
-vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
+vector<MsgCard> AccountItem::GetAlarmMsg() {
     vector<MsgCard> v;
     int64_t currentTime = gettickcount();
 
@@ -3798,9 +3283,9 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
             errMsg += adapterQueryErrMsg[i] + "   ";
         }
 
-        string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+        string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
         MsgCard msgCard;
-        msgCard.accountId = customerId;
+        msgCard.accountId = accountId;
         msgCard.templateId = 1;
         msgCard.title = "QueryAccount";
         msgCard.object = "账户：" + accountName;
@@ -3809,7 +3294,7 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
         v.emplace_back(msgCard);
 
         stringstream ss;
-        ss << "accountId:" << customerId << " errMsg:" << errMsg;
+        ss << "accountId:" << accountId << " errMsg:" << errMsg;
         LOG_INFO("QueryAccount: %s", ss.str().c_str()); 
     } else {
         if (alarmInfo.leverageThreshold.warning > 0 && alarmInfo.leverageThreshold.alarm >= alarmInfo.leverageThreshold.warning) {
@@ -3828,9 +3313,9 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
                 string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
                 ss << "Leverage大于等于" <<  alarmInfo.leverageThreshold.alarm << " 当前leverage=" << riskInfo.maxRealLeverageD;
 
-                string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+                string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
                 MsgCard msgCard;
-                msgCard.accountId = customerId;
+                msgCard.accountId = accountId;
                 msgCard.templateId = 3;
                 msgCard.title = "Leverage";
                 msgCard.object = "账户：" + accountName;
@@ -3842,9 +3327,9 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
                 string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
                 ss << "Leverage大于等于" <<  alarmInfo.leverageThreshold.warning << " 当前leverage=" << riskInfo.maxRealLeverageD;
 
-                string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+                string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
                 MsgCard msgCard;
-                msgCard.accountId = customerId;
+                msgCard.accountId = accountId;
                 msgCard.templateId = 2;
                 msgCard.title = "Leverage";
                 msgCard.object = "账户：" + accountName;
@@ -3870,9 +3355,9 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
                 string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
                 ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.alarm << " 当前riskexposure=" << riskInfo.riskExposureD << " symbol:" << maxRiskExposureAssetD;
 
-                string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+                string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
                 MsgCard msgCard;
-                msgCard.accountId = customerId;
+                msgCard.accountId = accountId;
                 msgCard.templateId = 3;
                 msgCard.title = "RiskExposure";
                 msgCard.object = "账户：" + accountName;
@@ -3884,9 +3369,9 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
                 string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
                 ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.warning << " 当前riskexposure=" << riskInfo.riskExposureD << " symbol:" << maxRiskExposureAssetD;
 
-                string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+                string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
                 MsgCard msgCard;
-                msgCard.accountId = customerId;
+                msgCard.accountId = accountId;
                 msgCard.templateId = 2;
                 msgCard.title = "RiskExposure";
                 msgCard.object = "账户：" + accountName;
@@ -3926,9 +3411,9 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
                     string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
                     ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.ualarm << " 当前riskexposure(换成u)=" << exposureU << " symbol:" << maxRiskExposureAssetD;
 
-                    string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+                    string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
                     MsgCard msgCard;
-                    msgCard.accountId = customerId;
+                    msgCard.accountId = accountId;
                     msgCard.templateId = 3;
                     msgCard.title = "RiskExposure";
                     msgCard.object = "账户：" + accountName;
@@ -3940,9 +3425,9 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
                     string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
                     ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.uwarning << " 当前riskexposure(换成u)=" << exposureU << " symbol:" << maxRiskExposureAssetD;
 
-                    string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+                    string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
                     MsgCard msgCard;
-                    msgCard.accountId = customerId;
+                    msgCard.accountId = accountId;
                     msgCard.templateId = 2;
                     msgCard.title = "RiskExposure";
                     msgCard.object = "账户：" + accountName;
@@ -3969,9 +3454,9 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
                 string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
                 ss << "总的RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.totalExposureAlarm << " 当前总riskexposure=" << totalExposure;
 
-                string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+                string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
                 MsgCard msgCard;
-                msgCard.accountId = customerId;
+                msgCard.accountId = accountId;
                 msgCard.templateId = 3;
                 msgCard.title = "RiskExposure";
                 msgCard.object = "账户：" + accountName;
@@ -3983,9 +3468,9 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
                 string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
                 ss << "总的RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.totalExposureWarning << " 当前总riskexposure=" << totalExposure;
 
-                string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+                string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
                 MsgCard msgCard;
-                msgCard.accountId = customerId;
+                msgCard.accountId = accountId;
                 msgCard.templateId = 2;
                 msgCard.title = "RiskExposure";
                 msgCard.object = "账户：" + accountName;
@@ -4011,9 +3496,9 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
                 string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
                 ss << "UnderwayOrderValueThreshold大于等于" <<  alarmInfo.underwayOrderValueThreshold.alarm << " 当前underwayordervalue=" << riskInfo.underwayOrderValueD;
 
-                string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+                string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
                 MsgCard msgCard;
-                msgCard.accountId = customerId;
+                msgCard.accountId = accountId;
                 msgCard.templateId = 3;
                 msgCard.title = "UnderwayOrderValueThreshold";
                 msgCard.object = "账户：" + accountName;
@@ -4025,9 +3510,9 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
                 string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
                 ss << "UnderwayOrderValueThreshold大于等于" <<  alarmInfo.underwayOrderValueThreshold.warning << " 当前underwayordervalue=" << riskInfo.underwayOrderValueD;
 
-                string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+                string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
                 MsgCard msgCard;
-                msgCard.accountId = customerId;
+                msgCard.accountId = accountId;
                 msgCard.templateId = 2;
                 msgCard.title = "UnderwayOrderValueThreshold";
                 msgCard.object = "账户：" + accountName;
@@ -4057,9 +3542,9 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
                 string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
                 ss << "netValue小于等于" << maxValue << " 当前netValue(换成u)=" << netValueU;
 
-                string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+                string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
                 MsgCard msgCard;
-                msgCard.accountId = customerId;
+                msgCard.accountId = accountId;
                 msgCard.templateId = 3;
                 msgCard.title = "NetValue";
                 msgCard.object = "账户：" + accountName;
@@ -4087,9 +3572,9 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
                         string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
                         ss << "UnifyMaintenanceMarginRate小于等于" <<  alarmInfo.marginRateThreshold.unifyMaintenanceMarginRateAlarm << " 当前unifyMaintenanceMarginRate=" << unifyMaintenanceMarginRate;
 
-                        string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+                        string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
                         MsgCard msgCard;
-                        msgCard.accountId = customerId;
+                        msgCard.accountId = accountId;
                         msgCard.templateId = 3;
                         msgCard.title = "UnifyMaintenanceMarginRate";
                         msgCard.object = "账户：" + accountName;
@@ -4101,9 +3586,9 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
                         string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
                         ss << "UnifyMaintenanceMarginRate小于等于" <<  alarmInfo.marginRateThreshold.unifyMaintenanceMarginRateWarning << " 当前unifyMaintenanceMarginRate=" << unifyMaintenanceMarginRate;
 
-                        string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+                        string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
                         MsgCard msgCard;
-                        msgCard.accountId = customerId;
+                        msgCard.accountId = accountId;
                         msgCard.templateId = 2;
                         msgCard.title = "UnifyMaintenanceMarginRate";
                         msgCard.object = "账户：" + accountName;
@@ -4126,9 +3611,9 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
                         string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
                         ss << "InitialMarginRate小于等于" <<  alarmInfo.marginRateThreshold.initialMarginRateAlarm << " 当前initialMarginRate=" << initialMarginRate;
 
-                        string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+                        string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
                         MsgCard msgCard;
-                        msgCard.accountId = customerId;
+                        msgCard.accountId = accountId;
                         msgCard.templateId = 3;
                         msgCard.title = "InitialMarginRate";
                         msgCard.object = "账户：" + accountName;
@@ -4140,9 +3625,9 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
                         string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
                         ss << "InitialMarginRate小于等于" <<  alarmInfo.marginRateThreshold.initialMarginRateWarning << " 当前initialMarginRate=" << initialMarginRate;
 
-                        string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+                        string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
                         MsgCard msgCard;
-                        msgCard.accountId = customerId;
+                        msgCard.accountId = accountId;
                         msgCard.templateId = 2;
                         msgCard.title = "InitialMarginRate";
                         msgCard.object = "账户：" + accountName;
@@ -4158,13 +3643,13 @@ vector<MsgCard> BinanceAccountItem::GetAlarmMsg() {
     return v;
 }
 
-bool BinanceAccountItem::GetAdapterQueryStatus() {
+bool AccountItem::GetAdapterQueryStatus() {
     return adapterQuery;
 }
 
-vector<MsgCard> BinanceAccountItem::GetFundingRateAlarmMsg() {
+vector<MsgCard> AccountItem::GetFundingRateAlarmMsg() {
     int64_t currentTime = gettickcount();
-    string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+    string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
     string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
 
     vector<MsgCard> v;
@@ -4181,7 +3666,7 @@ vector<MsgCard> BinanceAccountItem::GetFundingRateAlarmMsg() {
 
     if (content.length() > 0) {
         MsgCard msgCard;
-        msgCard.accountId = customerId;
+        msgCard.accountId = accountId;
         msgCard.templateId = 2;
         msgCard.title = "FundingRate";
         msgCard.object = "账户：" + accountName;
@@ -4192,10 +3677,10 @@ vector<MsgCard> BinanceAccountItem::GetFundingRateAlarmMsg() {
     return v;
 }
 
-MsgCard BinanceAccountItem::GetLiquidationPriceAlarmMsg(igmonitor::Position& position) {
+MsgCard AccountItem::GetLiquidationPriceAlarmMsg(igmonitor::Position& position) {
     MsgCard msgCard;
     int64_t currentTime = gettickcount();
-    string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+    string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
     string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
 
     if (alarmInfo.liquidationPriceThreshold.warning > 0 && alarmInfo.liquidationPriceThreshold.alarm >= alarmInfo.liquidationPriceThreshold.warning) {        
@@ -4246,7 +3731,7 @@ MsgCard BinanceAccountItem::GetLiquidationPriceAlarmMsg(igmonitor::Position& pos
             string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
             ss << "持仓InstrumentKey:" << key << " 当前价格已接近强平价! 持仓价格:" << netAvgPriceD << " 持仓手数:" << netPositionD << " 强平价格:" << liquidationPrice << " 当前市场价格:" << price;
 
-            msgCard.accountId = customerId;
+            msgCard.accountId = accountId;
             msgCard.templateId = 3;
             msgCard.title = "LiquidationPrice";
             msgCard.object = "账户：" + accountName;
@@ -4257,7 +3742,7 @@ MsgCard BinanceAccountItem::GetLiquidationPriceAlarmMsg(igmonitor::Position& pos
             string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
             ss << "持仓InstrumentKey:" << key << " 当前价格已接近强平价! 持仓价格:" << netAvgPriceD << " 持仓手数:" << netPositionD << " 强平价格:" << liquidationPrice << " 当前市场价格:" << price;
 
-            msgCard.accountId = customerId;
+            msgCard.accountId = accountId;
             msgCard.templateId = 2;
             msgCard.title = "LiquidationPrice";
             msgCard.object = "账户：" + accountName;
@@ -4269,7 +3754,7 @@ MsgCard BinanceAccountItem::GetLiquidationPriceAlarmMsg(igmonitor::Position& pos
     return msgCard;
 }
 
-vector<MsgCard> BinanceAccountItem::GetPositionLiquidationPriceAlarmMsg() {
+vector<MsgCard> AccountItem::GetPositionLiquidationPriceAlarmMsg() {
     vector<MsgCard> v;
 
     for (auto iter = mUFuturePosition.begin(); iter != mUFuturePosition.end(); ++iter) {
@@ -4303,16 +3788,16 @@ vector<MsgCard> BinanceAccountItem::GetPositionLiquidationPriceAlarmMsg() {
     return v;
 }
 
-vector<MsgCard> BinanceAccountItem::GetOrderAlarmMsg() {
+vector<MsgCard> AccountItem::GetOrderAlarmMsg() {
     int64_t currentTime = gettickcount();
-    string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(customerId);
+    string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
     string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
 
     vector<MsgCard> v;
     if (orderAlarmMsg.length() > 0) {
         LOG_INFO("orderAlarmMsg: ", orderAlarmMsg.c_str());
         MsgCard msgCard;
-        msgCard.accountId = customerId;
+        msgCard.accountId = accountId;
         msgCard.templateId = 2;
         msgCard.title = "TWAP-ADL";
         msgCard.object = "账户：" + accountName;

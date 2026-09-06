@@ -3,19 +3,15 @@
 #include "BinanceMdMgr.h"
 
 
-GateioAdapterItem::GateioAdapterItem(AccountInfo info) {
+GateioAdapterItem::GateioAdapterItem(AccountInfo info, sm::SecurityManager* s) {
     accountInfo = info;
     gateioSpot = new GateioSpot(accountInfo);
-    gateioDelivery = new GateioDelivery(accountInfo);
     gateioPerpetual = new GateioPerpetual(accountInfo);
-    gateioCrossMargin = new GateioCrossMargin(accountInfo);
     gateioUnified = new GateioUnified(accountInfo);
     baseAsset = accountInfo.baseAsset;
     updateTime = 0;
     spotEnable = false;
-    deliveryEnable = false;
     perpetualEnable = false;
-    crossMarginEnable = false;
     unifiedEnable = false;
     string apiPermission = accountInfo.apiPermission;
     vector<string> v;
@@ -23,21 +19,17 @@ GateioAdapterItem::GateioAdapterItem(AccountInfo info) {
     for (size_t i = 0; i < v.size(); ++i) {  // 若是统一账户则无需设置现货的权限，合约的权限需要设置
         if (v[i] == "all") {
             spotEnable = true;
-            deliveryEnable = true;
             perpetualEnable = true;
-            crossMarginEnable = true;
         } else if (v[i] == "spot") {
             spotEnable = true;
-        } else if (v[i] == "delivery") {
-            deliveryEnable = true;
         } else if (v[i] == "perpetual") {
             perpetualEnable = true;
-        } else if (v[i] == "cross_margin") {
-            crossMarginEnable = true;
         } else if (v[i] == "unified") {
             unifiedEnable = true;
         }
     }
+
+    smc = s;
 }
 
 GateioAdapterItem::~GateioAdapterItem() {
@@ -45,17 +37,9 @@ GateioAdapterItem::~GateioAdapterItem() {
         delete gateioSpot;
         gateioSpot = nullptr;
     }
-    if (gateioDelivery) {
-        delete gateioDelivery;
-        gateioDelivery = nullptr;
-    }
     if (gateioPerpetual) {
         delete gateioPerpetual;
         gateioPerpetual = nullptr;
-    }
-    if (gateioCrossMargin) {
-        delete gateioCrossMargin;
-        gateioCrossMargin = nullptr;
     }
     if (gateioUnified) {
         delete gateioUnified;
@@ -63,11 +47,8 @@ GateioAdapterItem::~GateioAdapterItem() {
     }
 
     vSpotAsset.clear();
-    vDeliveryAsset.clear();
-    vDeliveryPosition.clear();
     vPerpetualAsset.clear();
     vPerpetualPosition.clear();
-    vCrossMarginAsset.clear();
 }
 
 void GateioAdapterItem::UpdateAccountInfo() {
@@ -83,29 +64,6 @@ void GateioAdapterItem::UpdateAccountInfo() {
             query = query && spotQueryAccount;
             vQueryErrMsg.insert(vQueryErrMsg.end(), vSpotErrMsg.begin(), vSpotErrMsg.end());
         }
-    }
-
-    if (deliveryEnable && gateioDelivery) {
-        vDeliveryAsset.clear();
-        vDeliveryPosition.clear();
-        vDeliveryOpenOrder.clear();
-
-        if (!unifiedEnable) {  // 若是统一账户，则账户信息查询只使用统一账户的查询接口
-            vector<string> vDeliveryAssetErrMsg;
-            bool deliveryQueryAccount = gateioDelivery->QueryAccount(vDeliveryAsset, vDeliveryAssetErrMsg);
-            query = query && deliveryQueryAccount;
-            vQueryErrMsg.insert(vQueryErrMsg.end(), vDeliveryAssetErrMsg.begin(), vDeliveryAssetErrMsg.end());
-        }
-
-        vector<string> vDeliveryPositionErrMsg;
-        bool deliveryQueryPosition = gateioDelivery->QueryPosition(vDeliveryPosition, vDeliveryPositionErrMsg);
-        query = query && deliveryQueryPosition;
-        vQueryErrMsg.insert(vQueryErrMsg.end(), vDeliveryPositionErrMsg.begin(), vDeliveryPositionErrMsg.end());
-
-        vector<string> vDeliveryOpenOrderErrMsg;
-        bool deliveryQueryOpenOrder = gateioDelivery->QueryOpenOrder(vDeliveryOpenOrder, vDeliveryOpenOrderErrMsg);
-        query = query && deliveryQueryOpenOrder;
-        vQueryErrMsg.insert(vQueryErrMsg.end(), vDeliveryOpenOrderErrMsg.begin(), vDeliveryOpenOrderErrMsg.end());
     }
 
 
@@ -137,15 +95,6 @@ void GateioAdapterItem::UpdateAccountInfo() {
         //vQueryErrMsg.insert(vQueryErrMsg.end(), vPerpetualOrderErrMsg.begin(), vPerpetualOrderErrMsg.end());
     }
 
-    if (crossMarginEnable && gateioCrossMargin) {
-        vCrossMarginAsset.clear();
-
-        vector<string> vCrossMarginAssetErrMsg;
-        bool crossMarginQueryAccount = gateioCrossMargin->QueryAccount(vCrossMarginAsset, crossMarginAccountTotal, vCrossMarginAssetErrMsg);
-        query = query && crossMarginQueryAccount;
-        vQueryErrMsg.insert(vQueryErrMsg.end(), vCrossMarginAssetErrMsg.begin(), vCrossMarginAssetErrMsg.end());
-
-    }
 
     if (unifiedEnable && gateioUnified) {
         vSpotAsset.clear();  // 统一账户暂时使用放到现货里
@@ -157,80 +106,71 @@ void GateioAdapterItem::UpdateAccountInfo() {
     updateTime = GetCurrentTimeUs();
 }
 
-set<string> GateioAdapterItem::GetInstrumentList() {
+std::unordered_map<std::stirng, md::InstrumentInfo> GateioAdapterItem::GetInstrumentList() {
+    mInst.clear();
+
     set<string> s;
     if (baseAsset != "USDT") {
-        string instrumentKey = "GATEIO|" + baseAsset + "_USDT" + "|SPOT";
-        s.insert(instrumentKey);
+        std::string originInstId = baseAsset + "_USDT";
+        md::InstrumentInfo info;
+        if (smc->get_instrument_info(GATEIO, SPOT, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(GATEIO, SPOT, info.instId);
+            mInst[key] = info;
+        }
     }
 
     for (size_t i = 0; i < vSpotAsset.size(); ++i) {
         string asset = vSpotAsset[i].currency;
         if (asset != baseAsset && asset != "USDT") {
-            string instrumentKey = "GATEIO|" + asset + "_" + baseAsset + "|SPOT";
-            s.insert(instrumentKey);
-            instrumentKey = "GATEIO|" + asset + "_USDT" + "|SPOT";
-            s.insert(instrumentKey);
-        }
-    }
+            std::string originInstId = asset + "_" + baseAsset;
+            md::InstrumentInfo info;
+            if (smc->get_instrument_info(GATEIO, SPOT, originInstId.c_str(), info)) {
+                std::string key = crypto::get_instrumentInfo_channel_key(GATEIO, SPOT, info.instId);
+                mInst[key] = info;
+            }
 
-    for (size_t i = 0; i < vDeliveryAsset.size(); ++i) {
-        string asset = vDeliveryAsset[i].currency;
-        if (asset != baseAsset && asset != "USDT") {
-            string instrumentKey = "GATEIO|" + asset + "_" + baseAsset + "|SPOT";
-            s.insert(instrumentKey);
-            instrumentKey = "GATEIO|" + asset + "_USDT" + "|SPOT";
-            s.insert(instrumentKey);
+            std::string originInstIdUsdt = asset + "_USDT";
+            md::InstrumentInfo infoUsdt;
+            if (smc->get_instrument_info(GATEIO, SPOT, originInstIdUsdt.c_str(), infoUsdt)) {
+                std::string key = crypto::get_instrumentInfo_channel_key(GATEIO, SPOT, infoUsdt.instId);
+                mInst[key] = infoUsdt;
+            }
         }
     }
     
     for (size_t i = 0; i < vPerpetualAsset.size(); ++i) {
         string asset = vPerpetualAsset[i].currency;
         if (asset != baseAsset && asset != "USDT") {
-            string instrumentKey = "GATEIO|" + asset + "_" + baseAsset + "|SPOT";
-            s.insert(instrumentKey);
-            instrumentKey = "GATEIO|" + asset + "_USDT" + "|SPOT";
-            s.insert(instrumentKey);
-        }
-    }
-    
-    for (size_t i = 0; i < vCrossMarginAsset.size(); ++i) {
-        string asset = vCrossMarginAsset[i].currency;
-        if (asset != baseAsset && asset != "USDT") {
-            string instrumentKey = "GATEIO|" + asset + "_" + baseAsset + "|SPOT";
-            s.insert(instrumentKey);
-            instrumentKey = "GATEIO|" + asset + "_USDT" + "|SPOT";
-            s.insert(instrumentKey);
-        }
-    }
+            std::string originInstId = asset + "_" + baseAsset;
+            md::InstrumentInfo info;
+            if (smc->get_instrument_info(GATEIO, SPOT, originInstId.c_str(), info)) {
+                std::string key = crypto::get_instrumentInfo_channel_key(GATEIO, SPOT, info.instId);
+                mInst[key] = info;
+            }
 
-    for (size_t i = 0; i < vDeliveryPosition.size(); ++i) {
-        string instrumentKey = "GATEIO|" + vDeliveryPosition[i].contract + "|FUTURES";
-        s.insert(instrumentKey);
+            std::string originInstIdUsdt = asset + "_USDT";
+            md::InstrumentInfo infoUsdt;
+            if (smc->get_instrument_info(GATEIO, SPOT, originInstIdUsdt.c_str(), infoUsdt)) {
+                std::string key = crypto::get_instrumentInfo_channel_key(GATEIO, SPOT, infoUsdt.instId);
+                mInst[key] = infoUsdt;
+            }
+        }
     }
 
     for (size_t i = 0; i < vPerpetualPosition.size(); ++i) {
-        string instrumentKey = "GATEIO|" + vPerpetualPosition[i].contract + "|FUTURES";
-        s.insert(instrumentKey);
+        std::string originInstId = vPerpetualPosition[i].contract;
+        md::InstrumentInfo info;
+        if (smc->get_instrument_info(GATEIO, USDT_SWAP, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(GATEIO, USDT_SWAP, info.instId);
+            mInst[key] = info;
+        }
     }
 
-    return s;
+    return mInst;
 }
 
 vector<gateio::SpotAsset>& GateioAdapterItem::GetSpotAsset() {
     return vSpotAsset;
-}
-
-vector<gateio::FutureAsset>& GateioAdapterItem::GetDeliveryAsset() {
-    return vDeliveryAsset;
-}
-
-vector<gateio::FuturePosition>& GateioAdapterItem::GetDeliveryPosition() {
-    return vDeliveryPosition;
-}
-
-vector<gateio::FutureOrder>& GateioAdapterItem::GetDeliveryOpenOrder() {
-    return vDeliveryOpenOrder;
 }
 
 vector<gateio::FutureAsset>& GateioAdapterItem::GetPerpetualAsset() {
@@ -247,69 +187,6 @@ vector<gateio::FutureOrder>& GateioAdapterItem::GetPerpetualOpenOrder() {
 
 vector<gateio::FutureOrder>& GateioAdapterItem::GetPerpetualOrder() {
     return vPerpetualOrder;
-}
-
-vector<gateio::CrossMarginAsset>& GateioAdapterItem::GetCrossMarginAsset() {
-    return vCrossMarginAsset;
-}
-
-gateio::CrossMarginAccountTotal& GateioAdapterItem::GetCrossMarginAccountTotal() {
-    return crossMarginAccountTotal;
-}
-
-double GateioAdapterItem::GetDeliveryPositionValue(string asset) {
-    double positionValue = 0.0;
-    for (size_t i = 0; i < vDeliveryPosition.size(); ++i) {
-        string instrumentKey = "GATEIO|" + vDeliveryPosition[i].contract + "|FUTURES";
-        string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instrumentKey);
-        double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
-        if (asset == info.margin && price > 0.0) {
-            if (info.instrumentType == "InstType_USDT_FUTURES" || info.calculateType == 0) {
-                positionValue += fabs(vDeliveryPosition[i].size * price * info.multiple);
-            } else if (info.instrumentType == "InstType_BTC_FUTURES" || info.calculateType == 1) {
-                positionValue += fabs(vDeliveryPosition[i].size / price * info.multipleVolume);
-            }
-        }
-    }
-    return positionValue;
-}
-
-double GateioAdapterItem::GetPerpetualPositionValue(string asset) {
-    double positionValue = 0.0;
-    for (size_t i = 0; i < vPerpetualPosition.size(); ++i) {
-        string instrumentKey = "GATEIO|" + vPerpetualPosition[i].contract + "|FUTURES";
-        string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instrumentKey);
-        double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
-        LOG_INFO("GetPerpetualPositionValue: asset:%s  info.margin:%s  price:%f", asset.c_str(), info.margin.c_str(), price);
-        if (asset == info.margin && price > 0.0) {
-            if (info.instrumentType == "InstType_USDT_SWAP" || info.calculateType == 0) {
-                positionValue += fabs(vPerpetualPosition[i].size * price * info.multiple);
-            } else if (info.instrumentType == "InstType_BTC_SWAP" || info.calculateType == 1) {
-                positionValue += fabs(vPerpetualPosition[i].size / price * info.multipleVolume);
-            }
-        }
-    }
-    return positionValue;
-}
-
-double GateioAdapterItem::GetDeliveryFloatAmount(string asset) {
-    double floatAmount = 0.0;
-    for (size_t i = 0; i < vDeliveryPosition.size(); ++i) {
-        string instrumentKey = "GATEIO|" + vDeliveryPosition[i].contract + "|FUTURES";
-        string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instrumentKey);
-        double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
-        if (asset == info.margin && price > 0.0 && vDeliveryPosition[i].entryPrice > 0.0) {
-            if (info.instrumentType == "InstType_USDT_FUTURES" || info.calculateType == 0) {
-                floatAmount += (price - vDeliveryPosition[i].entryPrice) * vDeliveryPosition[i].size * info.multiple;
-            } else if (info.instrumentType == "InstType_BTC_FUTURES" || info.calculateType == 1) {
-                floatAmount += (1 / vDeliveryPosition[i].entryPrice - 1 / price) * vDeliveryPosition[i].size * info.multipleVolume;
-            }
-        }
-    }
-    return floatAmount;
 }
 
 double GateioAdapterItem::GetPerpetualFloatAmount(string asset) {

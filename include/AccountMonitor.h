@@ -1,9 +1,6 @@
 #pragma once
 
-#include "AccountMonitorItem.h"
-
-using namespace std;
-
+#include "Utility.h"
 
 class AccountMonitor {
 public:

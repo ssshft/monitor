@@ -3,12 +3,14 @@
 #include "BinanceMdMgr.h"
 
 
-OkxAdapterItem::OkxAdapterItem(AccountInfo info) {
+OkxAdapterItem::OkxAdapterItem(AccountInfo info, sm::SecurityManager* s) {
     accountInfo = info;
     okxClient = new OkxClient(accountInfo);
     baseAsset = accountInfo.baseAsset;
     updateTime = 0;
-    string apiPermission = accountInfo.apiPermission;
+    std::string apiPermission = accountInfo.apiPermission;
+
+    smc = s;
 }
 
 OkxAdapterItem::~OkxAdapterItem() {
@@ -33,66 +35,91 @@ void OkxAdapterItem::UpdateAccountInfo() {
         vOpenOrder.clear();
         vOrder.clear();
 
-        vector<string> vAssetErrMsg;
+        std::vector<std::string> vAssetErrMsg;
         bool queryAccount = okxClient->QueryAccount(vAsset, vAssetErrMsg);
         query = query && queryAccount;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vAssetErrMsg.begin(), vAssetErrMsg.end());
 
-        vector<string> vPositionErrMsg;
+        std::vector<std::string> vPositionErrMsg;
         bool queryPosition = okxClient->QueryPosition(vPosition, vPositionErrMsg);
         query = query && queryPosition;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vPositionErrMsg.begin(), vPositionErrMsg.end());
 
-        vector<string> vOpenOrderErrMsg;
+        std::vector<std::string> vOpenOrderErrMsg;
         bool queryOpenOrder = okxClient->QueryOpenOrder(vOpenOrder, vOpenOrderErrMsg);
         query = query && queryOpenOrder;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vOpenOrderErrMsg.begin(), vOpenOrderErrMsg.end());
 
-        vector<string> vErr;
+        std::vector<std::string> vErr;
         okxClient->QueryOrder(vOrder, vErr);
     }
 
     updateTime = GetCurrentTimeUs();
 }
 
-set<string> OkxAdapterItem::GetInstrumentList() {
-    set<string> s;
+std::unordered_map<std::stirng, md::InstrumentInfo> OkxAdapterItem::GetInstrumentList() {
+    mInst.clear();
     if (baseAsset != "USDT") {
-        string instrumentKey = "OKX|" + baseAsset + "-USDT" + "|SPOT";
-        s.insert(instrumentKey);
+        std::string originInstId = baseAsset + "-USDT";
+        md::InstrumentInfo info;
+        if (smc->get_instrument_info(OKX, SPOT, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(OKX, SPOT, info.instId);
+            mInst[key] = info;
+        }
     }
 
     for (size_t i = 0; i < vAsset.size(); ++i) {
         string asset = vAsset[i].ccy;
         if (asset != baseAsset && asset != "USDT") {
-            string instrumentKey = "OKX|" + asset + "-" + baseAsset + "|SPOT";
-            s.insert(instrumentKey);
-            instrumentKey = "OKX|" + asset + "-USDT" + "|SPOT";
-            s.insert(instrumentKey);
+            std::string originInstId = asset + "-" + baseAsset;
+            md::InstrumentInfo info;
+            if (smc->get_instrument_info(OKX, SPOT, originInstId.c_str(), info)) {
+                std::string key = crypto::get_instrumentInfo_channel_key(OKX, SPOT, info.instId);
+                mInst[key] = info;
+            }
+
+            std::string originInstIdUsdt = asset + "-USDT";
+            md::InstrumentInfo infoUsdt;
+            if (smc->get_instrument_info(OKX, SPOT, originInstIdUsdt.c_str(), infoUsdt)) {
+                std::string key = crypto::get_instrumentInfo_channel_key(OKX, SPOT, infoUsdt.instId);
+                mInst[key] = infoUsdt;
+            }
         }
     }
 
     for (size_t i = 0; i < vPosition.size(); ++i) {
-        string instrumentKey = "OKX|" + vPosition[i].instId + "|FUTURES";
-        s.insert(instrumentKey);
+        std::string originInstId = vPosition[i].instId;
+        std::string instType = vPosition[i].instType;
+        md::InstrumentInfo info;
+
+        if (instType == "SWAP" || instType == "FUTURES") {
+            InstType u_swap = (instType == "SWAP") ? USDT_SWAP : USDT_FUTURES;
+            InstType c_swap = (instType == "SWAP") ? C_SWAP : C_FUTURES;
+
+            if (smc->get_instrument_info(OKX, u_swap, originInstId.c_str(), info)) { 
+                std::string key = crypto::get_instrumentInfo_channel_key(OKX, u_swap, info.instId);
+                mInst[key] = info;
+            }
+
+            if (smc->get_instrument_info(OKX, c_swap, originInstId.c_str(), info)) { 
+                std::string key = crypto::get_instrumentInfo_channel_key(OKX, c_swap, info.instId);
+                mInst[key] = info;
+            }
+        }
     }
-    return s;
+    return mInst;
 }
 
-vector<okx::OkxAsset>& OkxAdapterItem::GetAsset() {
+std::vector<okx::OkxAsset>& OkxAdapterItem::GetAsset() {
     return vAsset;
 }
 
-vector<okx::OkxPosition>& OkxAdapterItem::GetPosition() {
+std::vector<okx::OkxPosition>& OkxAdapterItem::GetPosition() {
     return vPosition;
 }
 
-vector<okx::OkxOrder>& OkxAdapterItem::GetOpenOrder() {
+std::vector<okx::OkxOrder>& OkxAdapterItem::GetOpenOrder() {
     return vOpenOrder;
-}
-
-vector<okx::OkxOrder>& OkxAdapterItem::GetOrder() {
-    return vOrder;
 }
 
 double OkxAdapterItem::GetPositionValue(string asset) {

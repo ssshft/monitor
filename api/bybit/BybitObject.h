@@ -53,6 +53,7 @@ namespace bybit {
     struct Position {
         string symbol{""};
         double size{0.0};
+        string category{""};
         string side{""};
         double leverage{0.0};
         double avgPrice{0.0};

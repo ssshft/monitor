@@ -11,7 +11,6 @@ using namespace std;
 using namespace std::chrono;
 
 extern std::mutex mut;
-extern std::mutex mutRiskParameter;
 
 
 enum AccountType {
@@ -495,8 +494,6 @@ struct LiquidationPriceThreshold {
 };
 
 struct MarginRateThreshold {
-	double initialMarginRateWarning{0.0};
-	double initialMarginRateAlarm{0.0};
 	double unifyMaintenanceMarginRateWarning{0.0};
 	double unifyMaintenanceMarginRateAlarm{0.0};
 };

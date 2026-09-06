@@ -253,6 +253,9 @@ bool Bybit::QueryPosition(vector<bybit::Position>& vPosition, vector<string>& vE
                         position.side = data[i]["side"].GetString();
                     }
 
+                    if (data[i].HasMember("category")) {
+                        position.category = data[i]["category"].GetString();
+                    }
 
                     if (data[i].HasMember("leverage")) {
                         position.leverage = std::stod(data[i]["leverage"].GetString());

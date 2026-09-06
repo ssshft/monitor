@@ -5,58 +5,56 @@
 #include "binance/BinanceUFuture.h"
 #include "binance/BinanceCFuture.h"
 #include "binance/BinanceUnify.h"
-#include <map>
+#include "securitymanager.h"
+#include <unordered_map>
 #include <set>
 
-using namespace std;
 
 class BinanceAdapterItem {
 public:
-    BinanceAdapterItem(AccountInfo info);
+    BinanceAdapterItem(AccountInfo info, sm::SecurityManager* s);
 	~BinanceAdapterItem();
     void UpdateAccountInfo();   
-    set<string> GetInstrumentList();
-    vector<binance::SpotAsset>& GetSpotAsset();
-    vector<binance::UFutureAsset>& GetUFutureAsset();
-    vector<binance::CFutureAsset>& GetCFutureAsset();
-    vector<binance::UFuturePosition>& GetUFuturePosition();
-    vector<binance::CFuturePosition>& GetCFuturePosition();
-    vector<binance::PositionRisk>& GetUPositionRisk();
-    vector<binance::PositionRisk>& GetCPositionRisk();
-    double GetUPositionLiquidationPrice(string symbol, string positionSide);
-    double GetCPositionLiquidationPrice(string symbol, string positionSide);
-    vector<binance::SpotOpenOrder>& GetSpotOpenOrder();
-    vector<binance::FutureOpenOrder>& GetUOpenOrder();
-    vector<binance::FutureOpenOrder>& GetCOpenOrder();
-    void GetULongShortFrozenPosition(string symbol, double& longFrozenPos, double& shortFrozenPos);
-    void GetCLongShortFrozenPosition(string symbol, double& longFrozenPos, double& shortFrozenPos);
-    double GetUAssetPositionValue(string asset);
-    double GetCAssetPositionValue(string asset);
-    double GetUFloatAmount(string asset);
-    double GetCFloatAmount(string asset);
-    vector<binance::SavingAsset>& GetSavingAsset();
-    vector<binance::MarginAsset>& GetMarginAsset();
-    vector<binance::LoanBorrow>& GetLoanBorrow();
-    binance::TotalMarginAsset& GetTotalMarginAsset();
+    std::unordered_map<std::stirng, md::InstrumentInfo> GetInstrumentList();
+    std::vector<binance::SpotAsset>& GetSpotAsset();
+    std::vector<binance::UFutureAsset>& GetUFutureAsset();
+    std::vector<binance::CFutureAsset>& GetCFutureAsset();
+    std::vector<binance::UFuturePosition>& GetUFuturePosition();
+    std::vector<binance::CFuturePosition>& GetCFuturePosition();
+    std::vector<binance::PositionRisk>& GetUPositionRisk();
+    std::vector<binance::PositionRisk>& GetCPositionRisk();
+    double GetUPositionLiquidationPrice(std::string symbol, std::string positionSide);
+    double GetCPositionLiquidationPrice(std::string symbol, std::string positionSide);
+    std::vector<binance::SpotOpenOrder>& GetSpotOpenOrder();
+    std::vector<binance::FutureOpenOrder>& GetUOpenOrder();
+    std::vector<binance::FutureOpenOrder>& GetCOpenOrder();
+    void GetULongShortFrozenPosition(std::string symbol, double& longFrozenPos, double& shortFrozenPos);
+    void GetCLongShortFrozenPosition(std::string symbol, double& longFrozenPos, double& shortFrozenPos);
+    double GetUAssetPositionValue(std::string asset);
+    double GetCAssetPositionValue(std::string asset);
+    double GetUFloatAmount(std::string asset);
+    double GetCFloatAmount(std::string asset);
     int64_t GetUpdateTime();
     bool GetQueryStatus();
-    vector<string>& GetQueryErrMsg();
+    std::vector<std::string>& GetQueryErrMsg();
     int isUnified();
 
     //unify
-    vector<binance::UnifyAsset>& GetUnifyAsset();
+    std::vector<binance::UnifyAsset>& GetUnifyAsset();
     binance::UnifyAccount& GetUnifyAccount();
-    vector<binance::UnifyPosition>& GetUmUnifyPosition();
-    vector<binance::UnifyPosition>& GetCmUnifyPosition();
-    vector<binance::UnifyOpenOrder>& GetUmUnifyOpenOrder();
-    vector<binance::UnifyOpenOrder>& GetCmUnifyOpenOrder();
-    double GetUnifyPositionValue(string asset);
-    double GetUnifyFloatAmount(string asset);
-    void GetUmUnifyLongShortFrozenPosition(string symbol, double& longFrozenPos, double& shortFrozenPos);
-    void GetCmUnifyLongShortFrozenPosition(string symbol, double& longFrozenPos, double& shortFrozenPos);
+    std::vector<binance::UnifyPosition>& GetUmUnifyPosition();
+    std::vector<binance::UnifyPosition>& GetCmUnifyPosition();
+    std::vector<binance::UnifyOpenOrder>& GetUmUnifyOpenOrder();
+    std::vector<binance::UnifyOpenOrder>& GetCmUnifyOpenOrder();
+    double GetUnifyPositionValue(std::string asset);
+    double GetUnifyFloatAmount(std::string asset);
+    void GetUmUnifyLongShortFrozenPosition(std::string symbol, double& longFrozenPos, double& shortFrozenPos);
+    void GetCmUnifyLongShortFrozenPosition(std::string symbol, double& longFrozenPos, double& shortFrozenPos);
 
 private:
     AccountInfo accountInfo;
+
+    std::unordered_map<std::stirng, md::InstrumentInfo> mInst;
 
     BinanceSpot* binanceSpot;
     BinanceUFuture* binanceUFuture;
@@ -67,31 +65,29 @@ private:
     bool cFutureEnable;
     bool unifyEnable;
 
-    vector<binance::SpotAsset> vSpotAsset;
-    vector<binance::UFutureAsset> vUFutureAsset;
-    vector<binance::CFutureAsset> vCFutureAsset;
-    vector<binance::UFuturePosition> vUFuturePosition;
-    vector<binance::CFuturePosition> vCFuturePosition;
-    vector<binance::PositionRisk> vUPositionRisk;
-    vector<binance::PositionRisk> vCPositionRisk;
-    vector<binance::SpotOpenOrder> vSpotOpenOrder;
-    vector<binance::FutureOpenOrder> vUOpenOrder;
-    vector<binance::FutureOpenOrder> vCOpenOrder;
-    vector<binance::SavingAsset> vSavingAsset;
-    vector<binance::MarginAsset> vMarginAsset;
-    vector<binance::LoanBorrow> vLoanBorrow;
-    binance::TotalMarginAsset totalMarginAsset;
+    std::vector<binance::SpotAsset> vSpotAsset;
+    std::vector<binance::UFutureAsset> vUFutureAsset;
+    std::vector<binance::CFutureAsset> vCFutureAsset;
+    std::vector<binance::UFuturePosition> vUFuturePosition;
+    std::vector<binance::CFuturePosition> vCFuturePosition;
+    std::vector<binance::PositionRisk> vUPositionRisk;
+    std::vector<binance::PositionRisk> vCPositionRisk;
+    std::vector<binance::SpotOpenOrder> vSpotOpenOrder;
+    std::vector<binance::FutureOpenOrder> vUOpenOrder;
+    std::vector<binance::FutureOpenOrder> vCOpenOrder;
 
     // unify
-    vector<binance::UnifyAsset> vUnifyAsset;
+    std::vector<binance::UnifyAsset> vUnifyAsset;
     binance::UnifyAccount unifyAccount;
-    vector<binance::UnifyPosition> vUmUnifyPosition;
-    vector<binance::UnifyPosition> vCmUnifyPosition;
-    vector<binance::UnifyOpenOrder> vUmUnifyOpenOrder;
-    vector<binance::UnifyOpenOrder> vCmUnifyOpenOrder;
+    std::vector<binance::UnifyPosition> vUmUnifyPosition;
+    std::vector<binance::UnifyPosition> vCmUnifyPosition;
+    std::vector<binance::UnifyOpenOrder> vUmUnifyOpenOrder;
+    std::vector<binance::UnifyOpenOrder> vCmUnifyOpenOrder;
 
-    string baseAsset;
+    std::string baseAsset;
     int64_t updateTime;
     bool query;
-    vector<string> vQueryErrMsg;
+    std::vector<std::string> vQueryErrMsg;
+
+    sm::SecurityManager* smc;
 };

@@ -3,7 +3,7 @@
 #include "BinanceMdMgr.h"
 
 
-BybitAdapterItem::BybitAdapterItem(AccountInfo info) {
+BybitAdapterItem::BybitAdapterItem(AccountInfo info, sm::SecurityManager* s) {
     accountInfo = info;
     byb = new Bybit(accountInfo);
     baseAsset = accountInfo.baseAsset;
@@ -18,6 +18,8 @@ BybitAdapterItem::BybitAdapterItem(AccountInfo info) {
             enable = true;
         }
     }
+
+    smc = s;
 }
 
 BybitAdapterItem::~BybitAdapterItem() {
@@ -41,17 +43,17 @@ void BybitAdapterItem::UpdateAccountInfo() {
         vPosition.clear();
         vOpenOrder.clear();
 
-        vector<string> vErrMsg;
+        std::vector<std::string> vErrMsg;
         bool queryAccount = byb->QueryAccount(totalAccountInfo, vAsset, vErrMsg);
         query = query && queryAccount;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vErrMsg.begin(), vErrMsg.end());
 
-        vector<string> vPositionErrMsg;
+        std::vector<std::string> vPositionErrMsg;
         bool queryPosition = byb->QueryPosition(vPosition, vPositionErrMsg);
         query = query && queryPosition;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vPositionErrMsg.begin(), vPositionErrMsg.end());
 
-        vector<string> vOpenOrderErrMsg;
+        std::vector<std::string> vOpenOrderErrMsg;
         bool queryOpenOrder = byb->QueryOpenOrder(vOpenOrder, vOpenOrderErrMsg);
         query = query && queryOpenOrder;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vOpenOrderErrMsg.begin(), vOpenOrderErrMsg.end());
@@ -60,52 +62,86 @@ void BybitAdapterItem::UpdateAccountInfo() {
     updateTime = GetCurrentTimeUs();
 }
 
-set<string> BybitAdapterItem::GetInstrumentList() {
-    set<string> s;
+std::unordered_map<std::stirng, md::InstrumentInfo> BybitAdapterItem::GetInstrumentList() {
+    mInst.clear();
+  
     if (baseAsset != "USDT") {
-        string instrumentKey = "BYBIT|" + baseAsset + "_USDT" + "|SPOT";
-        s.insert(instrumentKey);
+        std::string originInstId = baseAsset + "_USDT";
+        md::InstrumentInfo info;
+        if (smc->get_instrument_info(BYBIT, SPOT, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(BYBIT, SPOT, info.instId);
+            mInst[key] = info;
+        }
     }
 
     for (size_t i = 0; i < vAsset.size(); ++i) {
         string asset = vAsset[i].coin;
         if (asset != baseAsset && asset != "USDT") {
-            string instrumentKey = "BYBIT|" + asset + "_" + baseAsset + "|SPOT";
-            s.insert(instrumentKey);
-            instrumentKey = "BYBIT|" + asset + "_USDT" + "|SPOT";
-            s.insert(instrumentKey);
+            std::string originInstId = asset + "_" + baseAsset;
+            md::InstrumentInfo info;
+            if (smc->get_instrument_info(BYBIT, SPOT, originInstId.c_str(), info)) {
+                std::string key = crypto::get_instrumentInfo_channel_key(BYBIT, SPOT, info.instId);
+                mInst[key] = info;
+            }
+
+            std::string originInstIdUsdt = asset + "_USDT";
+            md::InstrumentInfo infoUsdt;
+            if (smc->get_instrument_info(BYBIT, SPOT, originInstIdUsdt.c_str(), infoUsdt)) {
+                std::string key = crypto::get_instrumentInfo_channel_key(BYBIT, SPOT, infoUsdt.instId);
+                mInst[key] = infoUsdt;
+            }
         }
     }
 
     for (size_t i = 0; i < vPosition.size(); ++i) {
-        string instrumentKey = "BYBIT|" + vPosition[i].symbol + "|FUTURES";
-        s.insert(instrumentKey);
+        std::string originInstId = vPosition[i].symbol;
+        std::string category = vPosition[i].category;
+        md::InstrumentInfo info;
+        if (category == "linear") {
+            if (smc->get_instrument_info(BYBIT, USDT_SWAP, originInstId.c_str(), info)) { 
+                std::string key = crypto::get_instrumentInfo_channel_key(BYBIT, USDT_SWAP, info.instId);
+                mInst[key] = info;
+            }
+            else if (smc->get_instrument_info(BYBIT, USDT_FUTURES, originInstId.c_str(), info)) { 
+                std::string key = crypto::get_instrumentInfo_channel_key(BYBIT, USDT_FUTURES, info.instId);
+                mInst[key] = info;
+            }
+        } else if (category == "inverse") {
+            if (smc->get_instrument_info(BYBIT, C_SWAP, originInstId.c_str(), info)) { 
+                std::string key = crypto::get_instrumentInfo_channel_key(BYBIT, C_SWAP, info.instId);
+                mInst[key] = info;
+            }
+            else if (smc->get_instrument_info(BYBIT, C_FUTURES, originInstId.c_str(), info)) { 
+                std::string key = crypto::get_instrumentInfo_channel_key(BYBIT, C_FUTURES, info.instId);
+                mInst[key] = info;
+            }
+        }
     }
 
-    return s;
+    return mInst;
 }
 
 bybit::TotalAccountInfo& BybitAdapterItem::GetTotalAccountInfo() {
     return totalAccountInfo;
 }
 
-vector<bybit::Asset>& BybitAdapterItem::GetAsset() {
+std::vector<bybit::Asset>& BybitAdapterItem::GetAsset() {
     return vAsset;
 }
 
-vector<bybit::Position>& BybitAdapterItem::GetPosition() {
+std::vector<bybit::Position>& BybitAdapterItem::GetPosition() {
     return vPosition;
 }
 
-vector<bybit::Order>& BybitAdapterItem::GetOpenOrder() {
+std::vector<bybit::Order>& BybitAdapterItem::GetOpenOrder() {
     return vOpenOrder;
 }
 
-double BybitAdapterItem::GetPositionValue(string asset) {
+double BybitAdapterItem::GetPositionValue(std::string asset) {
     double positionValue = 0.0;
     for (size_t i = 0; i < vPosition.size(); ++i) {
-        string instrumentKey = "BYBIT|" + vPosition[i].symbol + "|FUTURES";
-        string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instrumentKey);
+        std::string instrumentKey = "BYBIT|" + vPosition[i].symbol + "|FUTURES";
+        std::string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instrumentKey);
         double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
         InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
         if (asset == info.margin && price > 0.0) {

@@ -2,12 +2,7 @@
 
 
 OkxAdapterMgr::OkxAdapterMgr() {
-    unordered_map<int, AccountInfo>& mAccountInfo = MonitorConfig::GetInstance().GetAccountInfo();
-    for (auto iter = mAccountInfo.begin(); iter != mAccountInfo.end(); ++iter) {
-        if (iter->second.exchangeType == OKX) {
-            mOkxAdapterItem[iter->first] = new OkxAdapterItem(iter->second);
-        }
-    }
+
 }
 
 OkxAdapterMgr::~OkxAdapterMgr() {
@@ -23,19 +18,29 @@ OkxAdapterMgr& OkxAdapterMgr::GetInstance() {
 	return okxAdapterMgr;
 }
 
+void OkxAdapterMgr::Init(sm::SecurityManager* s) {
+    std::unordered_map<int, AccountInfo>& mAccountInfo = MonitorConfig::GetInstance().GetAccountInfo();
+    for (auto iter = mAccountInfo.begin(); iter != mAccountInfo.end(); ++iter) {
+        if (iter->second.exchangeType == OKX) {
+            mOkxAdapterItem[iter->first] = new OkxAdapterItem(iter->second, s);
+        }
+    }
+}
+
 void OkxAdapterMgr::UpdateAccountInfo() {
     for (auto iter = mOkxAdapterItem.begin(); iter != mOkxAdapterItem.end(); ++iter) {
 	    bool flag = MonitorConfig::GetInstance().IsAccountIdInProduct(iter->first);
 	    if (!flag) {
             iter->second->UpdateAccountInfo();
+            sleep(1);
 	    }
     }
 }
 
-set<string> OkxAdapterMgr::GetInstrumentList() {
-    set<string> s;
+std::set<std::string> OkxAdapterMgr::GetInstrumentList() {
+    std::set<std::string> s;
     for (auto iter = mOkxAdapterItem.begin(); iter != mOkxAdapterItem.end(); ++iter) {
-        set<string> sItem = iter->second->GetInstrumentList();
+        std::set<std::string> sItem = iter->second->GetInstrumentList();
         s.insert(sItem.begin(), sItem.end());
     }
     return s;

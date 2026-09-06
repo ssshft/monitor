@@ -5,17 +5,17 @@
 #include <unordered_map>
 #include <set>
 
-using namespace std;
 
 class BinanceAdapterMgr {
 public:
     static BinanceAdapterMgr& GetInstance();
 	~BinanceAdapterMgr();
+    void Init(sm::SecurityManager* s);
     void UpdateAccountInfo();   
-    set<string> GetInstrumentList();
+    std::set<std::string> GetInstrumentList();
     BinanceAdapterItem* GetAdapterItem(int accountId);
     
 private:
     BinanceAdapterMgr();
-    unordered_map<int, BinanceAdapterItem*> mBinanceAdapterItem;
+    std::unordered_map<int, BinanceAdapterItem*> mBinanceAdapterItem;
 };

@@ -2,12 +2,7 @@
 
 
 BinanceAdapterMgr::BinanceAdapterMgr() {
-    unordered_map<int, AccountInfo>& mAccountInfo = MonitorConfig::GetInstance().GetAccountInfo();
-    for (auto iter = mAccountInfo.begin(); iter != mAccountInfo.end(); ++iter) {
-        if (iter->second.exchangeType == BINANCE) {
-            mBinanceAdapterItem[iter->first] = new BinanceAdapterItem(iter->second);
-        }
-    }
+
 }
 
 BinanceAdapterMgr::~BinanceAdapterMgr() {
@@ -23,6 +18,15 @@ BinanceAdapterMgr& BinanceAdapterMgr::GetInstance() {
 	return binanceAdapterMgr;
 }
 
+void BinanceAdapterMgr::Init(sm::SecurityManager* s) {
+    std::unordered_map<int, AccountInfo>& mAccountInfo = MonitorConfig::GetInstance().GetAccountInfo();
+    for (auto iter = mAccountInfo.begin(); iter != mAccountInfo.end(); ++iter) {
+        if (iter->second.exchangeType == BINANCE) {
+            mBinanceAdapterItem[iter->first] = new BinanceAdapterItem(iter->second, s);
+        }
+    }
+}
+
 void BinanceAdapterMgr::UpdateAccountInfo() {
     for (auto iter = mBinanceAdapterItem.begin(); iter != mBinanceAdapterItem.end(); ++iter) {
 	bool flag = MonitorConfig::GetInstance().IsAccountIdInProduct(iter->first);
@@ -33,10 +37,10 @@ void BinanceAdapterMgr::UpdateAccountInfo() {
     }
 }
 
-set<string> BinanceAdapterMgr::GetInstrumentList() {
-    set<string> s;
+std::set<std::string> BinanceAdapterMgr::GetInstrumentList() {
+    std::set<std::string> s;
     for (auto iter = mBinanceAdapterItem.begin(); iter != mBinanceAdapterItem.end(); ++iter) {
-        set<string> sItem = iter->second->GetInstrumentList();
+        std::set<std::string> sItem = iter->second->GetInstrumentList();
         s.insert(sItem.begin(), sItem.end());
     }
     return s;

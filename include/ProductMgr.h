@@ -4,8 +4,6 @@
 #include <unordered_map>
 #include "ProductItem.h"
 
-using namespace std;
-
 
 class ProductMgr {
 public:
@@ -13,12 +11,12 @@ public:
 	~ProductMgr();
     void CalculateRiskInfo();
     void CalculateAccount();
-    vector<MsgCard> GetAlarmMsg();
-    vector<MsgCard> GetFundingRateAlarmMsg();
+    std::vector<MsgCard> GetAlarmMsg();
+    std::vector<MsgCard> GetFundingRateAlarmMsg();
     void UpdateAccountInfo();
-    vector<igmonitor::RiskInfo> GetRiskInfo();
+    std::vector<igmonitor::RiskInfo> GetRiskInfo();
 
 private:
 	ProductMgr();
-    unordered_map<string, ProductItem*> mProduct;
+    std::unordered_map<string, ProductItem*> mProduct;
 };

@@ -5,18 +5,18 @@
 #include <unordered_map>
 #include <set>
 
-using namespace std;
 
 
 class GateioAdapterMgr {
 public:
     static GateioAdapterMgr& GetInstance();
 	~GateioAdapterMgr();
+    void Init(sm::SecurityManager* s);
     void UpdateAccountInfo();   
-    set<string> GetInstrumentList();
+    std::set<std::string> GetInstrumentList();
     GateioAdapterItem* GetAdapterItem(int accountId);
     
 private:
     GateioAdapterMgr();
-    unordered_map<int, GateioAdapterItem*> mGateioAdapterItem;
+    std::unordered_map<int, GateioAdapterItem*> mGateioAdapterItem;
 };

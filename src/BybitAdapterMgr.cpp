@@ -2,12 +2,7 @@
 
 
 BybitAdapterMgr::BybitAdapterMgr() {
-    unordered_map<int, AccountInfo>& mAccountInfo = MonitorConfig::GetInstance().GetAccountInfo();
-    for (auto iter = mAccountInfo.begin(); iter != mAccountInfo.end(); ++iter) {
-        if (iter->second.exchangeType == BYBIT) {
-            mBybitAdapterItem[iter->first] = new BybitAdapterItem(iter->second);
-        }
-    }
+
 }
 
 BybitAdapterMgr::~BybitAdapterMgr() {
@@ -23,19 +18,29 @@ BybitAdapterMgr& BybitAdapterMgr::GetInstance() {
 	return bybitAdapterMgr;
 }
 
+void BybitAdapterMgr::Init(sm::SecurityManager* s) {
+    std::unordered_map<int, AccountInfo>& mAccountInfo = MonitorConfig::GetInstance().GetAccountInfo();
+    for (auto iter = mAccountInfo.begin(); iter != mAccountInfo.end(); ++iter) {
+        if (iter->second.exchangeType == BYBIT) {
+            mBybitAdapterItem[iter->first] = new BybitAdapterItem(iter->second, s);
+        }
+    }
+}
+
 void BybitAdapterMgr::UpdateAccountInfo() {
     for (auto iter = mBybitAdapterItem.begin(); iter != mBybitAdapterItem.end(); ++iter) {
 	    bool flag = MonitorConfig::GetInstance().IsAccountIdInProduct(iter->first);
 	    if (!flag) {
             iter->second->UpdateAccountInfo();
+            sleep(1);
 	    }
     }
 }
 
-set<string> BybitAdapterMgr::GetInstrumentList() {
-    set<string> s;
+std::set<std::string> BybitAdapterMgr::GetInstrumentList() {
+    std::set<std::string> s;
     for (auto iter = mBybitAdapterItem.begin(); iter != mBybitAdapterItem.end(); ++iter) {
-        set<string> sItem = iter->second->GetInstrumentList();
+        std::set<std::string> sItem = iter->second->GetInstrumentList();
         s.insert(sItem.begin(), sItem.end());
     }
     return s;

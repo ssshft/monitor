@@ -2,39 +2,41 @@
 
 #include "MonitorConfig.h"
 #include "okx/OkxClient.h"
+#include "securitymanager.h"
 #include <map>
 #include <set>
-
-using namespace std;
 
 
 class OkxAdapterItem {
 public:
-    OkxAdapterItem(AccountInfo info);
+    OkxAdapterItem(AccountInfo info, sm::SecurityManager* s);
 	~OkxAdapterItem();
     void UpdateAccountInfo();   
-    set<string> GetInstrumentList();
-    vector<okx::OkxAsset>& GetAsset();
-    vector<okx::OkxPosition>& GetPosition();
-    vector<okx::OkxOrder>& GetOpenOrder();
-    vector<okx::OkxOrder>& GetOrder();
-    double GetPositionValue(string asset);
-    double GetFloatAmount(string asset);
-    void GetLongShortFrozenPosition(string symbol, double longFrozenPos, double shortFrozenPos);
+    std::unordered_map<std::stirng, md::InstrumentInfo> GetInstrumentList();
+    std::vector<okx::OkxAsset>& GetAsset();
+    std::vector<okx::OkxPosition>& GetPosition();
+    std::vector<okx::OkxOrder>& GetOpenOrder();
+    double GetPositionValue(std::string asset);
+    double GetFloatAmount(std::string asset);
+    void GetLongShortFrozenPosition(std::string symbol, double longFrozenPos, double shortFrozenPos);
     int64_t GetUpdateTime();
     bool GetQueryStatus();
-    vector<string>& GetQueryErrMsg();
+    std::vector<std::string>& GetQueryErrMsg();
     int isUnified();
 
 private:
     AccountInfo accountInfo;
+    std::unordered_map<std::stirng, md::InstrumentInfo> mInst;
+
     OkxClient* okxClient;
-    vector<okx::OkxAsset> vAsset;
-    vector<okx::OkxPosition> vPosition;
-    vector<okx::OkxOrder> vOpenOrder;
-    vector<okx::OkxOrder> vOrder;
-    string baseAsset;
+    std::vector<okx::OkxAsset> vAsset;
+    std::vector<okx::OkxPosition> vPosition;
+    std::vector<okx::OkxOrder> vOpenOrder;
+    std::vector<okx::OkxOrder> vOrder;
+    std::string baseAsset;
     int64_t updateTime;
     bool query;
-    vector<string> vQueryErrMsg;
+    std::vector<std::string> vQueryErrMsg;
+
+    sm::SecurityManager* smc;
 };

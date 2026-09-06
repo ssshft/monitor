@@ -3,18 +3,17 @@
 #include <cpprest/json.h>
 #include <string>
 #include <unordered_map>
-#include "BinanceAccountItem.h"
+#include "AccountItem.h"
 
 using namespace std;
 
 
-class BinanceAccountMgr {
+class AccountMgr {
 public:
-	static BinanceAccountMgr& GetInstance();
-	~BinanceAccountMgr();
-    BinanceAccountItem* GetAccountItem(int accountId);
-    //void OnSubMessage(const web::json::value& content);
-    void UpdateBySystem();
+	static AccountMgr& GetInstance();
+	~AccountMgr();
+    void Init(sm::SecurityManager* s);
+    AccountItem* GetAccountItem(int accountId);
     void UpdateByAdapter();
     void ClearZero();
     void Clear();
@@ -25,8 +24,6 @@ public:
     void StatisticAccount();
     string GetPhysicalOverView();
     string GetPhysicalAccountStatus();
-    string GetStrategyAccountStatus();
-    string GetMarketRiskStatus();
     set<string> GetInstrumentList();
     vector<MsgCard> GetAlarmMsg();
     vector<MsgCard> GetFundingRateAlarmMsg();
@@ -36,8 +33,8 @@ public:
     vector<MsgCard> GetOrderAlarmMsg();
 
 private:
-	BinanceAccountMgr();
-    map<int, BinanceAccountItem*> mAccount;
+	AccountMgr();
+    map<int, AccountItem*> mAccount;
 
     unordered_map<string, igmonitor::Asset> mTotalAsset;
     unordered_map<string, igmonitor::Position> mTotalPosition;

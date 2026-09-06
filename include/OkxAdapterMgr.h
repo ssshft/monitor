@@ -5,18 +5,18 @@
 #include <unordered_map>
 #include <set>
 
-using namespace std;
 
 
 class OkxAdapterMgr {
 public:
     static OkxAdapterMgr& GetInstance();
 	~OkxAdapterMgr();
+    void Init(sm::SecurityManager* s);
     void UpdateAccountInfo();   
-    set<string> GetInstrumentList();
+    std::set<std::string> GetInstrumentList();
     OkxAdapterItem* GetAdapterItem(int accountId);
     
 private:
     OkxAdapterMgr();
-    unordered_map<int, OkxAdapterItem*> mOkxAdapterItem;
+    std::unordered_map<int, OkxAdapterItem*> mOkxAdapterItem;
 };

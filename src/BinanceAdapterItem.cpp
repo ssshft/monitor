@@ -2,7 +2,7 @@
 #include "BasicInfoMgr.h"
 #include "BinanceMdMgr.h"
 
-BinanceAdapterItem::BinanceAdapterItem(AccountInfo info) {
+BinanceAdapterItem::BinanceAdapterItem(AccountInfo info, sm::SecurityManager* s) {
     accountInfo = info;
     binanceSpot = new BinanceSpot(accountInfo);
     binanceUFuture = new BinanceUFuture(accountInfo);
@@ -15,12 +15,10 @@ BinanceAdapterItem::BinanceAdapterItem(AccountInfo info) {
     spotEnable = false;
     uFutureEnable = false;
     cFutureEnable = false;
-    savingEnable = false;
-    marginEnable = false;
-    loanEnable = false;
     unifyEnable = false;
-    string apiPermission = accountInfo.apiPermission;
-    vector<string> v;
+
+    std::string apiPermission = accountInfo.apiPermission;
+    std::vector<std::string> v;
     SplitString(apiPermission, ",", v);
 
     for (size_t i = 0; i < v.size(); ++i) {
@@ -28,21 +26,12 @@ BinanceAdapterItem::BinanceAdapterItem(AccountInfo info) {
             spotEnable = true;
             uFutureEnable = true;
             cFutureEnable = true;
-            savingEnable = true;
-            marginEnable = true;
-            loanEnable = true;
         } else if (v[i] == "spot") {
             spotEnable = true;
         } else if (v[i] == "ufuture") {
             uFutureEnable = true;
         } else if (v[i] == "cfuture") {
             cFutureEnable = true;
-        } else if (v[i] == "saving") {
-            savingEnable = true;
-        } else if (v[i] == "margin") {
-            marginEnable = true;
-        } else if (v[i] == "loan") {
-            loanEnable = true;
         }
     }
 
@@ -53,6 +42,8 @@ BinanceAdapterItem::BinanceAdapterItem(AccountInfo info) {
             unifyEnable = false;
         }
     }
+
+    smc = s;
 }
 
 BinanceAdapterItem::~BinanceAdapterItem() {
@@ -71,21 +62,6 @@ BinanceAdapterItem::~BinanceAdapterItem() {
         binanceCFuture = nullptr;
     }
 
-    if (binanceSaving) {
-        delete binanceSaving;
-        binanceSaving = nullptr;
-    }
-
-    if (binanceMargin) {
-        delete binanceMargin;
-        binanceMargin = nullptr;
-    }
-
-    if (binanceLoan) {
-        delete binanceLoan;
-        binanceLoan = nullptr;
-    }
-
     if (binanceUnify) {
         delete binanceUnify;
         binanceUnify = nullptr;
@@ -101,8 +77,6 @@ BinanceAdapterItem::~BinanceAdapterItem() {
     vSpotOpenOrder.clear();
     vUOpenOrder.clear();
     vCOpenOrder.clear();
-    vSavingAsset.clear();
-    vLoanBorrow.clear();
 
     // unify
     vUnifyAsset.clear();
@@ -117,17 +91,9 @@ void BinanceAdapterItem::UpdateAccountInfo() {
     query = true;
     vQueryErrMsg.clear();
 
-    if (savingEnable && binanceSaving) {
-        vSavingAsset.clear();
-        vector<string> vSavingErrMsg;
-        bool savingQueryAccount = binanceSaving->QueryAccount(vSavingAsset, vSavingErrMsg);
-        query = query && savingQueryAccount;
-        vQueryErrMsg.insert(vQueryErrMsg.end(), vSavingErrMsg.begin(), vSavingErrMsg.end());
-    }
-
     if (spotEnable && binanceSpot) {
         vSpotAsset.clear();
-        vector<string> vSpotErrMsg;
+        std::vector<std::string> vSpotErrMsg;
         bool spotQueryAccount = binanceSpot->QueryAccount(vSpotAsset, vSpotErrMsg);
         query = query && spotQueryAccount;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vSpotErrMsg.begin(), vSpotErrMsg.end());
@@ -138,17 +104,17 @@ void BinanceAdapterItem::UpdateAccountInfo() {
         vUFuturePosition.clear();
         vUPositionRisk.clear();
         vUOpenOrder.clear();
-        vector<string> vUFutureAccountErrMsg;
+        std::vector<std::string> vUFutureAccountErrMsg;
         bool uFutureQueryAccount = binanceUFuture->QueryAccount(vUFutureAsset, vUFuturePosition, vUFutureAccountErrMsg);
         query = query && uFutureQueryAccount;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vUFutureAccountErrMsg.begin(), vUFutureAccountErrMsg.end());
 
-        vector<string> vUFuturePositionRiskErrMsg;
+        std::vector<std::string> vUFuturePositionRiskErrMsg;
         bool uFutureQueryPositionRisk = binanceUFuture->QueryPositionRisk(vUPositionRisk, vUFuturePositionRiskErrMsg);
         query = query && uFutureQueryPositionRisk;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vUFuturePositionRiskErrMsg.begin(), vUFuturePositionRiskErrMsg.end());
 
-        vector<string> vUFutureOpenOrderErrMsg;
+        std::vector<std::string> vUFutureOpenOrderErrMsg;
         bool uFutureQueryOpenOrder = binanceUFuture->QueryOpenOrder(vUOpenOrder, vUFutureOpenOrderErrMsg);
         query = query && uFutureQueryOpenOrder;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vUFutureOpenOrderErrMsg.begin(), vUFutureOpenOrderErrMsg.end());
@@ -159,38 +125,20 @@ void BinanceAdapterItem::UpdateAccountInfo() {
         vCFuturePosition.clear();
         vCPositionRisk.clear();
         vCOpenOrder.clear();
-        vector<string> vCFutureErrMsg;
+        std::vector<std::string> vCFutureErrMsg;
         bool cFutureQueryAccount = binanceCFuture->QueryAccount(vCFutureAsset, vCFuturePosition, vCFutureErrMsg);
         query = query && cFutureQueryAccount;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vCFutureErrMsg.begin(), vCFutureErrMsg.end());
 
-        vector<string> vCFuturePositionRiskErrMsg;
+        std::vector<std::string> vCFuturePositionRiskErrMsg;
         bool cFutureQueryPositionRisk = binanceCFuture->QueryPositionRisk(vCPositionRisk, vCFuturePositionRiskErrMsg);
         query = query && cFutureQueryPositionRisk;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vCFuturePositionRiskErrMsg.begin(), vCFuturePositionRiskErrMsg.end());
 
-        vector<string> vCFutureOpenOrderErrMsg;
+        std::vector<std::string> vCFutureOpenOrderErrMsg;
         bool cFutureQueryOpenOrder = binanceCFuture->QueryOpenOrder(vCOpenOrder, vCFutureOpenOrderErrMsg);
         query = query && cFutureQueryOpenOrder;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vCFutureOpenOrderErrMsg.begin(), vCFutureOpenOrderErrMsg.end());
-    }
-
-    if (marginEnable && binanceMargin) {
-        vMarginAsset.clear();
-        vector<string> vMarginErrMsg;
-        bool marginQueryAccount = binanceMargin->QueryAccount(vMarginAsset, vMarginErrMsg);
-        query = query && marginQueryAccount;
-        vQueryErrMsg.insert(vQueryErrMsg.end(), vMarginErrMsg.begin(), vMarginErrMsg.end());
-
-        totalMarginAsset = binanceMargin->GetTotalAsset();
-    }
-
-    if (loanEnable && binanceLoan) {
-        vLoanBorrow.clear();
-        vector<string> vLoanErrMsg;
-        bool loanQuery = binanceLoan->QueryLoanBorrow(vLoanBorrow, vLoanErrMsg);
-        query = query && loanQuery;
-        vQueryErrMsg.insert(vQueryErrMsg.end(), vLoanErrMsg.begin(), vLoanErrMsg.end());
     }
 
     if (unifyEnable && binanceUnify) {
@@ -200,120 +148,160 @@ void BinanceAdapterItem::UpdateAccountInfo() {
         vUmUnifyOpenOrder.clear();
         vCmUnifyOpenOrder.clear();
 
-        vector<string> vBalanceErrMsg;
+        std::vector<std::string> vBalanceErrMsg;
         binanceUnify->QueryBalance(vUnifyAsset, vBalanceErrMsg);
         vQueryErrMsg.insert(vQueryErrMsg.end(), vBalanceErrMsg.begin(), vBalanceErrMsg.end());
 
-        vector<string> vAccountErrMsg;
+        std::vector<std::string> vAccountErrMsg;
         binanceUnify->QueryAccount(unifyAccount, vAccountErrMsg);
         vQueryErrMsg.insert(vQueryErrMsg.end(), vAccountErrMsg.begin(), vAccountErrMsg.end());
 
-        vector<string> vUmPositionErrMsg;
+        std::vector<std::string> vUmPositionErrMsg;
         binanceUnify->QueryUmPosition(vUmUnifyPosition, vUmPositionErrMsg);
         vQueryErrMsg.insert(vQueryErrMsg.end(), vUmPositionErrMsg.begin(), vUmPositionErrMsg.end());
 
-        vector<string> vCmPositionErrMsg;
+        std::vector<std::string> vCmPositionErrMsg;
         binanceUnify->QueryCmPosition(vCmUnifyPosition, vCmPositionErrMsg);
         vQueryErrMsg.insert(vQueryErrMsg.end(), vCmPositionErrMsg.begin(), vCmPositionErrMsg.end());
 
-        vector<string> vUmOpenOrderErrMsg;
+        std::vector<std::string> vUmOpenOrderErrMsg;
 	    binanceUnify->QueryUmOpenOrder(vUmUnifyOpenOrder, vUmOpenOrderErrMsg);
         vQueryErrMsg.insert(vQueryErrMsg.end(), vUmOpenOrderErrMsg.begin(), vUmOpenOrderErrMsg.end());
 
-        vector<string> vCmOpenOrderErrMsg;
+        std::vector<std::string> vCmOpenOrderErrMsg;
         binanceUnify->QueryCmOpenOrder(vCmUnifyOpenOrder, vCmOpenOrderErrMsg);
         vQueryErrMsg.insert(vQueryErrMsg.end(), vCmOpenOrderErrMsg.begin(), vCmOpenOrderErrMsg.end());
     }
 
-    updateTime = GetCurrentTimeUs();
+    updateTime = crypto::getCurrentTime();
 }
 
-set<string> BinanceAdapterItem::GetInstrumentList() {
-    set<string> s;
+std::unordered_map<std::stirng, md::InstrumentInfo> BinanceAdapterItem::GetInstrumentList() {
+    mInst.clear();
     if (baseAsset != "USDT") {
-        string instrumentKey = "BINANCE|" + baseAsset + "USDT" + "|SPOT";
-        s.insert(instrumentKey);
+        std::string originInstId = baseAsset + "USDT";
+        md::InstrumentInfo info;
+        if (smc->get_instrument_info(BINANCE, SPOT, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(BINANCE, SPOT, info.instId);
+            mInst[key] = info;
+        }
     }
 
     for (size_t i = 0; i < vSpotAsset.size(); ++i) {
         string asset = vSpotAsset[i].assetType;
         if (asset != baseAsset && asset != "USDT") {
-            string instrumentKey = "BINANCE|" + asset + baseAsset + "|SPOT";
-            s.insert(instrumentKey);
-            instrumentKey = "BINANCE|" + asset + "USDT" + "|SPOT";
-            s.insert(instrumentKey);
+            std::string originInstId = asset + baseAsset;
+            md::InstrumentInfo info;
+            if (smc->get_instrument_info(BINANCE, SPOT, originInstId.c_str(), info)) {
+                std::string key = crypto::get_instrumentInfo_channel_key(BINANCE, SPOT, info.instId);
+                mInst[key] = info;
+            }
+
+            std::string originInstIdUsdt = asset + "USDT";
+            md::InstrumentInfo infoUsdt;
+            if (smc->get_instrument_info(BINANCE, SPOT, originInstIdUsdt.c_str(), infoUsdt)) {
+                std::string key = crypto::get_instrumentInfo_channel_key(BINANCE, SPOT, infoUsdt.instId);
+                mInst[key] = infoUsdt;
+            }
         }
     }
 
     for (size_t i = 0; i < vUFutureAsset.size(); ++i) {
         string asset = vUFutureAsset[i].assetType;
         if (asset != baseAsset && asset != "USDT") {
-            string instrumentKey = "BINANCE|" + asset + baseAsset + "|SPOT";
-            s.insert(instrumentKey);
-            instrumentKey = "BINANCE|" + asset + "USDT" + "|SPOT";
-            s.insert(instrumentKey);
+            std::string originInstId = asset + baseAsset;
+            md::InstrumentInfo info;
+            if (smc->get_instrument_info(BINANCE, SPOT, originInstId.c_str(), info)) {
+                std::string key = crypto::get_instrumentInfo_channel_key(BINANCE, SPOT, info.instId);
+                mInst[key] = info;
+            }
+
+            std::string originInstIdUsdt = asset + "USDT";
+            md::InstrumentInfo infoUsdt;
+            if (smc->get_instrument_info(BINANCE, SPOT, originInstIdUsdt.c_str(), infoUsdt)) {
+                std::string key = crypto::get_instrumentInfo_channel_key(BINANCE, SPOT, infoUsdt.instId);
+                mInst[key] = infoUsdt;
+            }
         }
     }
     
     for (size_t i = 0; i < vCFutureAsset.size(); ++i) {
         string asset = vCFutureAsset[i].assetType;
         if (asset != baseAsset && asset != "USDT") {
-            string instrumentKey = "BINANCE|" + asset + baseAsset + "|SPOT";
-            s.insert(instrumentKey);
-            instrumentKey = "BINANCE|" + asset + "USDT" + "|SPOT";
-            s.insert(instrumentKey);
+            std::string originInstId = asset + baseAsset;
+            md::InstrumentInfo info;
+            if (smc->get_instrument_info(BINANCE, SPOT, originInstId.c_str(), info)) {
+                std::string key = crypto::get_instrumentInfo_channel_key(BINANCE, SPOT, info.instId);
+                mInst[key] = info;
+            }
+
+            std::string originInstIdUsdt = asset + "USDT";
+            md::InstrumentInfo infoUsdt;
+            if (smc->get_instrument_info(BINANCE, SPOT, originInstIdUsdt.c_str(), infoUsdt)) {
+                std::string key = crypto::get_instrumentInfo_channel_key(BINANCE, SPOT, infoUsdt.instId);
+                mInst[key] = infoUsdt;
+            }
         }
     }
 
     for (size_t i = 0; i < vUFuturePosition.size(); ++i) {
-        string instrumentKey = "BINANCE|" + vUFuturePosition[i].symbol + "|FUTURES";
-        s.insert(instrumentKey);
-
-        string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instrumentKey);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
-        instrumentKey = "BINANCE|" + info.instLeft + baseAsset + "|SPOT";
-        s.insert(instrumentKey);
-        instrumentKey = "BINANCE|" + info.instLeft + "USDT" + "|SPOT";
-        s.insert(instrumentKey);
+        std::string originInstId = vUFuturePosition[i].symbol;
+        md::InstrumentInfo info;
+        if (smc->get_instrument_info(BINANCE, USDT_SWAP, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(BINANCE, USDT_SWAP, info.instId);
+            mInst[key] = info;
+        }
+        else if (smc->get_instrument_info(BINANCE, USDT_FUTURES, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(BINANCE, USDT_FUTURES, info.instId);
+            mInst[key] = info;
+        }
     }
     
     for (size_t i = 0; i < vCFuturePosition.size(); ++i) {
-        string instrumentKey = "BINANCE|" + vCFuturePosition[i].symbol + "|FUTURES";
-        s.insert(instrumentKey);
+        std::string originInstId = vCFuturePosition[i].symbol;
+        md::InstrumentInfo info;
+        if (smc->get_instrument_info(BINANCE, C_SWAP, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(BINANCE, C_SWAP, info.instId);
+            mInst[key] = info;
+        }
+        else if (smc->get_instrument_info(BINANCE, C_FUTURES, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(BINANCE, C_FUTURES, info.instId);
+            mInst[key] = info;
+        }
     }
 
-    return s;
+    return mInst;
 }
 
-vector<binance::SpotAsset>& BinanceAdapterItem::GetSpotAsset() {
+std::vector<binance::SpotAsset>& BinanceAdapterItem::GetSpotAsset() {
     return vSpotAsset;
 }
 
-vector<binance::UFutureAsset>& BinanceAdapterItem::GetUFutureAsset() {
+std::vector<binance::UFutureAsset>& BinanceAdapterItem::GetUFutureAsset() {
     return vUFutureAsset;
 }
 
-vector<binance::CFutureAsset>& BinanceAdapterItem::GetCFutureAsset() {
+std::vector<binance::CFutureAsset>& BinanceAdapterItem::GetCFutureAsset() {
     return vCFutureAsset;
 }
 
-vector<binance::UFuturePosition>& BinanceAdapterItem::GetUFuturePosition() {
+std::vector<binance::UFuturePosition>& BinanceAdapterItem::GetUFuturePosition() {
     return vUFuturePosition;
 }
 
-vector<binance::CFuturePosition>& BinanceAdapterItem::GetCFuturePosition() {
+std::vector<binance::CFuturePosition>& BinanceAdapterItem::GetCFuturePosition() {
     return vCFuturePosition;
 }
 
-vector<binance::PositionRisk>& BinanceAdapterItem::GetUPositionRisk() {
+std::vector<binance::PositionRisk>& BinanceAdapterItem::GetUPositionRisk() {
     return vUPositionRisk;
 }
 
-vector<binance::PositionRisk>& BinanceAdapterItem::GetCPositionRisk() {
+std::vector<binance::PositionRisk>& BinanceAdapterItem::GetCPositionRisk() {
     return vCPositionRisk;
 }
 
-double BinanceAdapterItem::GetUPositionLiquidationPrice(string symbol, string positionSide) {
+double BinanceAdapterItem::GetUPositionLiquidationPrice(std::string symbol, std::string positionSide) {
     double liquidationPrice = 0.0;
     for (size_t i = 0; i < vUPositionRisk.size(); ++i) {
         if (vUPositionRisk[i].symbol == symbol && vUPositionRisk[i].positionSide == positionSide) {
@@ -323,7 +311,7 @@ double BinanceAdapterItem::GetUPositionLiquidationPrice(string symbol, string po
     return liquidationPrice;
 }
 
-double BinanceAdapterItem::GetCPositionLiquidationPrice(string symbol, string positionSide) {
+double BinanceAdapterItem::GetCPositionLiquidationPrice(std::string symbol, std::string positionSide) {
     double liquidationPrice = 0.0;
     for (size_t i = 0; i < vCPositionRisk.size(); ++i) {
         if (vCPositionRisk[i].symbol == symbol && vCPositionRisk[i].positionSide == positionSide) {
@@ -333,19 +321,19 @@ double BinanceAdapterItem::GetCPositionLiquidationPrice(string symbol, string po
     return liquidationPrice;
 }
 
-vector<binance::SpotOpenOrder>& BinanceAdapterItem::GetSpotOpenOrder() {
+std::vector<binance::SpotOpenOrder>& BinanceAdapterItem::GetSpotOpenOrder() {
     return vSpotOpenOrder;
 }
 
-vector<binance::FutureOpenOrder>& BinanceAdapterItem::GetUOpenOrder() {
+std::vector<binance::FutureOpenOrder>& BinanceAdapterItem::GetUOpenOrder() {
     return vUOpenOrder;
 }
 
-vector<binance::FutureOpenOrder>& BinanceAdapterItem::GetCOpenOrder() {
+std::vector<binance::FutureOpenOrder>& BinanceAdapterItem::GetCOpenOrder() {
     return vCOpenOrder;
 }
 
-void BinanceAdapterItem::GetULongShortFrozenPosition(string symbol, double& longFrozenPos, double& shortFrozenPos) {
+void BinanceAdapterItem::GetULongShortFrozenPosition(std::string symbol, double& longFrozenPos, double& shortFrozenPos) {
     for (size_t i = 0; i < vUOpenOrder.size(); ++i) {
         if (vUOpenOrder[i].symbol == symbol) {
             if (vUOpenOrder[i].side == "BUY") {
@@ -357,7 +345,7 @@ void BinanceAdapterItem::GetULongShortFrozenPosition(string symbol, double& long
     }
 }
 
-void BinanceAdapterItem::GetCLongShortFrozenPosition(string symbol, double& longFrozenPos, double& shortFrozenPos) {
+void BinanceAdapterItem::GetCLongShortFrozenPosition(std::string symbol, double& longFrozenPos, double& shortFrozenPos) {
     for (size_t i = 0; i < vCOpenOrder.size(); ++i) {
         if (vCOpenOrder[i].symbol == symbol) {
             if (vCOpenOrder[i].side == "BUY") {
@@ -369,19 +357,25 @@ void BinanceAdapterItem::GetCLongShortFrozenPosition(string symbol, double& long
     }
 }
 
-double BinanceAdapterItem::GetUAssetPositionValue(string asset) {
+double BinanceAdapterItem::GetUAssetPositionValue(std::string asset) {
     double positionValue = 0.0;
     for (size_t i = 0; i < vUFuturePosition.size(); ++i) {
-        string instrumentKey = "BINANCE|" + vUFuturePosition[i].symbol + "|FUTURES";
-        string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instrumentKey);
-        double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
+        double price = -1.0;
+        md::InstrumentInfo info;
+        if(smc->get_instrument_info("BINANCE", "USDT_SWAP", vUFuturePosition[i].symbol.c_str(), info)) {
+            std::string key = "BINANCE|" + vUFuturePosition[i].symbol + "USDT_SWAP";
+            price = MdMgr::GetInstance().GetMidPrice(key);
+        }
+        else if (smc->get_instrument_info("BINANCE", "USDT_FUTURES", vUFuturePosition[i].symbol.c_str(), info)) {
+            std::string key = "BINANCE|" + vUFuturePosition[i].symbol + "USDT_FUTURES";
+            price = MdMgr::GetInstance().GetMidPrice(key);
+        }
+
         if (asset == info.margin && price > 0.0) {
-            double posValue = vUFuturePosition[i].positionAmt * price * info.multiple;
+            double posValue = vUFuturePosition[i].positionAmt * price * info.value;
             positionValue += fabs(posValue);
-            LOG_INFO("GetUAssetPositionValue: accountId:%d instrumentKey:%s asset:%s positionValueD:%f", accountInfo.accountId, instrumentKey.c_str(), asset.c_str(), posValue); 
         } else {
-            LOG_INFO("GetUAssetPositionValue positionValue=0: accountId:%d instrumentKey:%s asset:%s price:%f key:%s info.margin:%s", accountInfo.accountId, instrumentKey.c_str(), asset.c_str(), price, key.c_str(), info.margin.c_str()); 
+
         }
     }
     return positionValue;
@@ -435,22 +429,6 @@ double BinanceAdapterItem::GetCFloatAmount(string asset) {
         }
     }
     return floatAmount;
-}
-
-vector<binance::SavingAsset>& BinanceAdapterItem::GetSavingAsset() {
-    return vSavingAsset;
-}
-
-vector<binance::MarginAsset>& BinanceAdapterItem::GetMarginAsset() {
-    return vMarginAsset;
-}
-
-vector<binance::LoanBorrow>& BinanceAdapterItem::GetLoanBorrow() {
-    return vLoanBorrow;
-}
-
-binance::TotalMarginAsset& BinanceAdapterItem::GetTotalMarginAsset() {
-    return totalMarginAsset;
 }
 
 int64_t BinanceAdapterItem::GetUpdateTime() {

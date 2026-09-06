@@ -4,7 +4,6 @@ MonitorConfig::MonitorConfig() {
     mAccountInfo.clear();
     vStrategyAccount.clear();
     vMdSubChannel.clear();
-    larkChannel = 1;
 }
 
 MonitorConfig::~MonitorConfig() {
@@ -38,27 +37,7 @@ void MonitorConfig::LoadConfig() {
     logPath = itemSummary.get<string>("logpath");
     int accountCount = itemSummary.get<int>("accountcount");
     int productCount = itemSummary.get<int>("productcount");
-    int tradeCount = itemSummary.get<int>("tradecount");
     alarmPath = itemSummary.get<string>("alarmpath");
-    mdPath = itemSummary.get<string>("mdpath", "");
-    coinbaseMdPath = itemSummary.get<string>("coinbasemdpath", "");
-    assetRatePath = itemSummary.get<string>("assetratepath", "");
-
-    auto itemStrategyAccount = properties.get_child("STRATEGYACCOUNT");
-    string strategyAccount = itemStrategyAccount.get<string>("accountid", "");
-    vector<string> v;
-    SplitString(strategyAccount, ",", v);
-    for (size_t i = 0; i < v.size(); ++i) {
-        int accountId = atoi(v[i].c_str());
-        vStrategyAccount.push_back(accountId);
-    }
-
-	auto itemMd = properties.get_child("MD");
-    mdAddr = itemMd.get<string>("addr");
-    mdPort = itemMd.get<int>("port");
-    mdPassword = itemMd.get<string>("password");
-    string mdSubChannels = itemMd.get<string>("subchannels");
-    SplitString(mdSubChannels, ",", vMdSubChannel);
             
     auto itemDb = properties.get_child("DB");
     dbAddr = itemDb.get<string>("addr");
@@ -86,13 +65,6 @@ void MonitorConfig::LoadConfig() {
     mysqlOrdDetailName = itemMysql.get<string>("dborderdetail");
     mysqlRiskInfoName = itemMysql.get<string>("dbriskinfo", "");
 
-    auto itemMarketMysql = properties.get_child("MARKETMYSQL");
-    marketMysqlAddr = itemMarketMysql.get<string>("addr");
-    marketMysqlPort = itemMarketMysql.get<int>("port");
-    marketMysqlUser = itemMarketMysql.get<string>("user");
-    marketMysqlPassowrd = itemMarketMysql.get<string>("password");
-    marketMysqlDbVolume = itemMarketMysql.get<string>("dbvolume");
-    marketMysqlDbOpenInterest = itemMarketMysql.get<string>("dbopeninterest");
 
     for (int i = 1; i <= accountCount; ++i) {
         AccountInfo accountInfo;
@@ -129,23 +101,9 @@ void MonitorConfig::LoadConfig() {
             productInfo.vAccountId.push_back(acountId);
         }
         mProductInfo[productInfo.productName] = productInfo;
-    }
-
-    for (int i = 1; i <= tradeCount; ++i) {
-        AccountMonitorInfo accountMonitorInfo;
-        string tag = "TRADE" + to_string(i);
-        auto itemTrade = properties.get_child(tag);
-        accountMonitorInfo.addr = itemTrade.get<string>("addr");
-        accountMonitorInfo.port = itemTrade.get<int>("port");
-        accountMonitorInfo.password = itemTrade.get<string>("password");
-        accountMonitorInfo.channels = itemTrade.get<string>("subchannels");
-        vAccountMonitorInfo.push_back(accountMonitorInfo);
-    }    
+    } 
 
     LoadAlarmConfig();
-    LoadMdConfig();
-    LoadCoinbaseMdConfig();
-    LoadAssetRateConfig();
 }
 
 void MonitorConfig::LoadAlarmConfig() {
@@ -156,14 +114,8 @@ void MonitorConfig::LoadAlarmConfig() {
         auto itemSummary = properties.get_child("SUMMARY");
         int accountCount = itemSummary.get<int>("accountcount");
         int productCount = itemSummary.get<int>("productcount");
-        int reciveCount = itemSummary.get<int>("receivecount");
-        int mdPriceCount = itemSummary.get<int>("mdpricecount", 0);
         voiceCallInterval = itemSummary.get<int>("voicecallinterval", 60);
         larkUrl = itemSummary.get<string>("larkurl");
-        larkAuthorization = itemSummary.get<string>("larkauthorization");
-        larkChannel = itemSummary.get<int>("larkchannel", 1);
-        //larkEnable = itemSummary.get<int>("larkenable");
-        triggerInterval = itemSummary.get<int>("trigger");
 
         accountLarkUrl = itemSummary.get<string>("accountlarkurl", "");
         systemLarkUrl = itemSummary.get<string>("systemlarkurl", "");
@@ -174,26 +126,9 @@ void MonitorConfig::LoadAlarmConfig() {
             string tag = "ACCOUNT" + to_string(i);
             auto itemAccount = properties.get_child(tag);
             int accountId = itemAccount.get<int>("accountid");
-            string groupId = itemAccount.get<string>("voicecallgroupid", "");
-            string userId = itemAccount.get<string>("voicecalluserid", "");
-            string userIdNetValue = itemAccount.get<string>("voicecalluseridnetvalue", "");
-            string userIdLiquidationPrice = itemAccount.get<string>("voicecalluseridliquidationprice", "");
 
             mAlarmInfo[accountId] = alarmInfo;
             vAccountId.push_back(accountId);
-
-            AccountVoiceCall accountVoiceCall;
-            accountVoiceCall.groupId = groupId;
-            vector<string> v;
-            SplitString(userId, ",", v);
-            vector<string> vNetValue;
-            SplitString(userIdNetValue, ",", vNetValue);
-            vector<string> vLiquidationPrice;
-            SplitString(userIdLiquidationPrice, ",", vLiquidationPrice);
-            accountVoiceCall.vUserId = v;
-            accountVoiceCall.vUserIdNetValue = vNetValue;
-            accountVoiceCall.vUserIdLiquidationPrice = vLiquidationPrice;
-            mAccountVoiceCall[accountId] = accountVoiceCall;
         }
         
         for (int i = 1; i <= accountCount; ++i) {
@@ -270,8 +205,6 @@ void MonitorConfig::LoadAlarmConfig() {
             MarginRateThreshold marginRateThreshold;
             string tag = "MARGINRATE" + to_string(i);
             auto itemMarginRate = properties.get_child(tag);
-            marginRateThreshold.initialMarginRateWarning = itemMarginRate.get<double>("initmarginratewarning", 0);
-            marginRateThreshold.initialMarginRateAlarm = itemMarginRate.get<double>("initmarginratealarm", 0);
             marginRateThreshold.unifyMaintenanceMarginRateWarning = itemMarginRate.get<double>("unifymaintenancemarginratewarning", 0);
             marginRateThreshold.unifyMaintenanceMarginRateAlarm = itemMarginRate.get<double>("unifymaintenancemarginratealarm", 0);
             int accountId = vAccountId[i - 1];
@@ -285,19 +218,6 @@ void MonitorConfig::LoadAlarmConfig() {
             string productName = itemProduct.get<string>("productname");
             mProductAlarmInfo[productName] = alarmInfo;
             vProduct.push_back(productName);
-
-            string groupId = itemProduct.get<string>("voicecallgroupid", "");
-            string userId = itemProduct.get<string>("voicecalluserid", "");
-            string userIdNetValue = itemProduct.get<string>("voicecalluseridnetvalue", "");
-            AccountVoiceCall accountVoiceCall;
-            accountVoiceCall.groupId = groupId;
-            vector<string> v;
-            SplitString(userId, ",", v);
-            vector<string> vNetValue;
-            SplitString(userIdNetValue, ",", vNetValue);
-            accountVoiceCall.vUserId = v;
-            accountVoiceCall.vUserIdNetValue = vNetValue;
-            mProductVoiceCall[productName] = accountVoiceCall;
         }
 
         for (int i = 1; i <= productCount; ++i) {
@@ -352,156 +272,7 @@ void MonitorConfig::LoadAlarmConfig() {
 
         auto itemSystem = properties.get_child("SYSTEM");
         systemAlarmTime = itemSystem.get<double>("time");
-
-        auto itemMd = properties.get_child("MD");
-        mdAlarm = itemMd.get<double>("alarm");
-        mdKlineAlarm = itemMd.get<double>("klinealarm", 0);
-        mdTradeAlarm = itemMd.get<double>("tradealarm", 0);
-
-
-        string binanceDisconnectSpot = itemMd.get<string>("binancedisconnectspot", "");
-        vector<string> vBinanceSpot;
-        SplitString(binanceDisconnectSpot, ",", vBinanceSpot);
-        for (size_t i = 0; i < vBinanceSpot.size(); ++i) {
-            sBinanceDisconnectSpot.insert(vBinanceSpot[i]);
-        }
-
-        string binanceDisconnectUfuture = itemMd.get<string>("binancedisconnectufuture", "");
-        vector<string> vBinanceUfuture;
-        SplitString(binanceDisconnectUfuture, ",", vBinanceUfuture);
-        for (size_t i = 0; i < vBinanceUfuture.size(); ++i) {
-            sBinanceDisconnectUfuture.insert(vBinanceUfuture[i]);
-        }
-
-        string binanceDisconnectCfuture = itemMd.get<string>("binancedisconnectcfuture", "");
-        vector<string> vBinanceCfuture;
-        SplitString(binanceDisconnectCfuture, ",", vBinanceCfuture);
-        for (size_t i = 0; i < vBinanceCfuture.size(); ++i) {
-            sBinanceDisconnectCfuture.insert(vBinanceCfuture[i]);
-        }
-
-        string gateioDisconnectSpot = itemMd.get<string>("gateiodisconnectspot", "");
-        vector<string> vGateioSpot;
-        SplitString(gateioDisconnectSpot, ",", vGateioSpot);
-        for (size_t i = 0; i < vGateioSpot.size(); ++i) {
-            sGateioDisconnectSpot.insert(vGateioSpot[i]);
-        }
-
-        string gateioDisconnectSwap = itemMd.get<string>("gateiodisconnectswap", "");
-        vector<string> vGateioSwap;
-        SplitString(gateioDisconnectSwap, ",", vGateioSwap);
-        for (size_t i = 0; i < vGateioSwap.size(); ++i) {
-            sGateioDisconnectSwap.insert(vGateioSwap[i]);
-        }
-
-        mdVoiceCallGroupId = itemMd.get<string>("voicegroupid", "");
-
-        auto itemOrder = properties.get_child("ORDER");
-        int accCount = itemOrder.get<int>("accountcount");
-        orderValueThresholdTotal.orderNetValuePercent = itemOrder.get<double>("netvaluepercent", -1.0);
-        orderValueThresholdTotal.orderUsdtValueDown = itemOrder.get<double>("usdtvaluedown", -1.0);
-        orderValueThresholdTotal.orderUsdtValueUp = itemOrder.get<double>("usdtvalueup", -1.0);
-
-        auto itemMarketInfo = properties.get_child("MARKETINFO");
-        openInterestAlarm = itemMarketInfo.get<double>("openinterestalarm", -1);
-
-        for (int i = 1; i <= accCount; ++i) {
-            OrderValueThreshold orderValueThreshold;
-            string accountIdChan = string("accountid") + to_string(i);
-            int accountId = itemOrder.get<int>(accountIdChan);
-
-            string netValueChan = string("netvaluepercent") + to_string(i);
-            orderValueThreshold.orderNetValuePercent = itemOrder.get<double>(netValueChan, -1.0);
-
-            string usdtValueDownChan = string("usdtvaluedown") + to_string(i);
-            orderValueThreshold.orderUsdtValueDown = itemOrder.get<double>(usdtValueDownChan, -1.0);
-
-            string usdtValueUpChan = string("usdtvalueup") + to_string(i);
-            orderValueThreshold.orderUsdtValueUp = itemOrder.get<double>(usdtValueUpChan, -1.0);
-
-            mOrderValueThreshold[accountId] = orderValueThreshold;
-        }
-
-        for (int i = 1; i <= reciveCount; ++i) {
-            ReceiveGroupInfo receiveGroupInfo;
-            string tag = "RECEIVE" + to_string(i);
-            auto itemReceive = properties.get_child(tag);
-            receiveGroupInfo.code = itemReceive.get<string>("code");
-            receiveGroupInfo.importance = itemReceive.get<string>("importance");
-            mReceiveGroupInfo[receiveGroupInfo.code] = receiveGroupInfo;
-        }
-
-        for (int i = 1; i <= mdPriceCount; ++i) {
-            MdPriceVoiceCall mdPriceVoiceCall;
-            string tag = "MDPRICE" + to_string(i);
-            auto itemMdPrice = properties.get_child(tag);
-            mdPriceVoiceCall.symbol = itemMdPrice.get<string>("symbol");
-            mdPriceVoiceCall.price = itemMdPrice.get<double>("price");
-            mdPriceVoiceCall.mode = itemMdPrice.get<int>("mode");
-            string userId = itemMdPrice.get<string>("voicecalluserid");
-            vector<string> v;
-            SplitString(userId, ",", v);
-            mdPriceVoiceCall.vUserId = v;
-            vMdPriceVoiceCall.push_back(mdPriceVoiceCall);
-        }
     }
-}
-
-void MonitorConfig::LoadMdConfig() {
-    if (mdPath.size() > 0) {
-        boost::property_tree::ptree properties;
-	    boost::property_tree::ini_parser::read_ini(mdPath, properties);
-    
-        auto itemSummary = properties.get_child("SUMMARY");
-        int channelCount = itemSummary.get<int>("channelcount");
-
-        for (int i = 1; i <= channelCount; ++i) {
-            string channel = string("channel") + to_string(i);
-            string value = itemSummary.get<string>(channel);
-            vMdChannels.push_back(value);
-        }
-    }
-}
-
-void MonitorConfig::LoadCoinbaseMdConfig() {
-    if (coinbaseMdPath.size() > 0) {
-        boost::property_tree::ptree properties;
-	    boost::property_tree::ini_parser::read_ini(coinbaseMdPath, properties);
-    
-        auto itemSummary = properties.get_child("SUMMARY");
-        int symbolCount = itemSummary.get<int>("symbolcount");
-
-        for (int i = 1; i <= symbolCount; ++i) {
-            string symbol = string("symbol") + to_string(i);
-            string value = itemSummary.get<string>(symbol);
-            vCoinbaseMdSymbol.push_back(value);
-        }
-    }
-}
-
-void MonitorConfig::LoadAssetRateConfig() {
-    if (assetRatePath.size() > 0) {
-        boost::property_tree::ptree properties;
-	    boost::property_tree::ini_parser::read_ini(assetRatePath, properties);
-    
-        auto itemSummary = properties.get_child("SUMMARY");
-        int assetRateCount = itemSummary.get<int>("assetratecount");
-
-        for (int i = 1; i <= assetRateCount; ++i) {
-            string channel = string("assetrate") + to_string(i);
-            string value = itemSummary.get<string>(channel);
-            vector<string> v;
-            SplitString(value, ",", v);
-            if (v.size() >= 2) {
-                string asset = v[0];
-                double rate = stod(v[1]);
-                mAssetRate[asset] = rate;
-            }
-        }
-    }
-}
-
-void MonitorConfig::LoadConfigFromSqlite() {
 }
 
 string MonitorConfig::GetLogTag() {
@@ -514,22 +285,6 @@ int MonitorConfig::GetLogLevel() {
 
 string MonitorConfig::GetLogPath() {
     return logPath;
-}
-
-string MonitorConfig::GetMdAddr() {
-    return mdAddr;
-}
-
-int MonitorConfig::GetMdPort() {
-    return mdPort;
-}
-
-string MonitorConfig::GetMdPassword() {
-    return mdPassword;
-}
-
-vector<string>& MonitorConfig::GetMdSubChannels() {
-    return vMdSubChannel;
 }
 
 string MonitorConfig::GetDbAddr() {
@@ -560,24 +315,8 @@ string MonitorConfig::GetPhysicalPubChannel() {
     return physicalPubChannel;
 }
 
-string MonitorConfig::GetStrategyPubChannel() {
-    return strategyPubChannel;
-}
-
 string MonitorConfig::GetOverviewPubChannel() {
     return overviewPubChannel;
-}
-
-string MonitorConfig::GetMdPubChannel() {
-    return mdPubChannel;
-}
-
-string MonitorConfig::GetMdStatusPubChannel() {
-    return mdStatusPubChannel;
-}
-
-string MonitorConfig::GetParaChannel() {
-    return paraChannel;
 }
 
 unordered_map<int, AccountInfo>& MonitorConfig::GetAccountInfo() {
@@ -586,10 +325,6 @@ unordered_map<int, AccountInfo>& MonitorConfig::GetAccountInfo() {
 
 unordered_map<string, ProductInfo>& MonitorConfig::GetProductInfo() {
     return mProductInfo;
-}
-
-vector<AccountMonitorInfo>& MonitorConfig::GetAccountMonitorInfo() {
-    return vAccountMonitorInfo;
 }
 
 string MonitorConfig::GetBaseAssetById(int customerId) {
@@ -619,40 +354,12 @@ int MonitorConfig::GetProductId(string name) {
     return productId;
 }
 
-vector<int>& MonitorConfig::GetStrategyAccount() {
-    return vStrategyAccount;
-}
-
 string MonitorConfig::GetLarkUrl() {
     return larkUrl;
 }
 
-string MonitorConfig::GetLarkAuthorization() {
-    return larkAuthorization;
-}
-
-int MonitorConfig::GetLarkChannel() {
-    return larkChannel;
-}
-
-int MonitorConfig::GetTriggerInterval() {
-    return triggerInterval;
-}
-
 double MonitorConfig::GetSystemAlarmTime() {
     return systemAlarmTime;
-}
-
-double MonitorConfig::GetMdAlarm() {
-    return mdAlarm;
-}
-
-double MonitorConfig::GetMdKlineAlarm() {
-    return mdKlineAlarm;
-}
-
-double MonitorConfig::GetMdTradeAlarm() {
-    return mdTradeAlarm;
 }
 
 AlarmInfo& MonitorConfig::GetAlarmInfoById(int customerId) {
@@ -661,22 +368,6 @@ AlarmInfo& MonitorConfig::GetAlarmInfoById(int customerId) {
 
 AlarmInfo& MonitorConfig::GetProductAlarmInfo(string name) {
     return mProductAlarmInfo[name];
-}
-
-vector<ReceiveInfo>& MonitorConfig::GetReceiveInfo() {
-    return vReceiveInfo;
-}
-
-unordered_map<string, ReceiveGroupInfo>& MonitorConfig::GetReceiveGroupInfo() {
-    return mReceiveGroupInfo;
-}
-
-vector<string>& MonitorConfig::GetMdChannels() {
-    return vMdChannels;
-}
-
-vector<string>& MonitorConfig::GetCoinbaseMdSymbol() {
-    return vCoinbaseMdSymbol;
 }
 
 string MonitorConfig::GetAccountNameByAccountId(int id) {
@@ -703,53 +394,6 @@ string MonitorConfig::GetAccountNameByAccountId(int id) {
     return name;
 }
 
-double MonitorConfig::GetOrderNetValuePercent() {
-    return orderNetValuePercent;
-}
-
-double MonitorConfig::GetOrderUsdtValueDown() {
-    return orderUsdtValueDown;
-}
-
-double MonitorConfig::GetOrderUsdtValueUp() {
-    return orderUsdtValueUp;
-}
-
-OrderValueThreshold& MonitorConfig::GetOrderValueThresholdTotal() {
-    return orderValueThresholdTotal;
-}
-
-unordered_map<int, OrderValueThreshold>& MonitorConfig::GetOrderValueThreshold() {
-    return mOrderValueThreshold;
-}
-
-unordered_map<int, AccountVoiceCall>& MonitorConfig::GetAccountVoiceCall() {
-    return mAccountVoiceCall;
-}
-
-unordered_map<string, AccountVoiceCall>& MonitorConfig::GetProductVoiceCall() {
-    return mProductVoiceCall;
-}
-
-vector<MdPriceVoiceCall>& MonitorConfig::GetMdPriceVoiceCall() {
-    return vMdPriceVoiceCall;
-}
-
-void MonitorConfig::SetMdPriceVoiceCall(vector<MdPriceVoiceCall> v) {
-    for (size_t i = 0; i < vMdPriceVoiceCall.size(); ++i) {
-        for (size_t j = 0; j < v.size(); ++j) {
-            if (vMdPriceVoiceCall[i].symbol == v[j].symbol) {
-                vMdPriceVoiceCall[i].price = v[j].price;
-                vMdPriceVoiceCall[i].mode = v[j].mode;
-            }
-        }
-    }
-}
-
-double MonitorConfig::GetVoiceCallInterval() {
-    return voiceCallInterval;
-}
-
 bool MonitorConfig::IsAccountIdInProduct(int id) {
     bool exist = false;
     for (auto iter = mProductInfo.begin(); iter != mProductInfo.end(); ++iter) {
@@ -764,10 +408,6 @@ bool MonitorConfig::IsAccountIdInProduct(int id) {
 	}
     }
     return exist;
-}
-
-double MonitorConfig::GetOpenInterestAlarm() {
-    return openInterestAlarm;
 }
 
 string MonitorConfig::GetMysqlAddr() {
@@ -790,77 +430,10 @@ string MonitorConfig::GetMysqlDbName() {
     return mysqlDbName;
 }
 
-string MonitorConfig::GetMysqlOrdTableName() {
-    return mysqlOrdName;
-}
-
-string MonitorConfig::GetMysqlOrdDetailTableName() {
-    return mysqlOrdDetailName;
-}
-
 string MonitorConfig::GetMysqlRiskInfoTableName() {
     return mysqlRiskInfoName;
 }
-
-string MonitorConfig::GetMarketMysqlAddr() {
-    return marketMysqlAddr;
-}
-
-int MonitorConfig::GetMarketMysqlPort() {
-    return marketMysqlPort;
-}
-
-string MonitorConfig::GetMarketMysqlUser() {
-    return marketMysqlUser;
-}
     
-string MonitorConfig::GetMarketMysqlPassword() {
-    return marketMysqlPassowrd;
-}
-
-string MonitorConfig::GetMarketMysqlDbVolumeName() {
-    return marketMysqlDbVolume;
-}
-
-string MonitorConfig::GetMarketMysqlDbOpenInterestName() {
-    return marketMysqlDbOpenInterest;
-}
-
-set<string> MonitorConfig::GetBinanceDisconnectSpot() {
-    return sBinanceDisconnectSpot;
-}
-
-set<string> MonitorConfig::GetBinanceDisconnectUfuture() {
-    return sBinanceDisconnectUfuture;
-}
-
-set<string> MonitorConfig::GetBinanceDisconnectCfuture() {
-    return sBinanceDisconnectCfuture;
-}
-
-set<string> MonitorConfig::GetGateioDisconnectSpot() {
-    return sGateioDisconnectSpot;
-}
-    
-set<string> MonitorConfig::GetGateioDisconnectSwap() {
-    return sGateioDisconnectSwap;
-}
-
-string MonitorConfig::GetMdVoiceCallGroupId() {
-    return mdVoiceCallGroupId;
-}
-
-double MonitorConfig::GetAssetRate(string exchangeStr, string asset) {
-    double rate = 0.0;
-    string key = exchangeStr + "." + asset;
-    auto iter = mAssetRate.find(key);
-    if (iter != mAssetRate.end()) {
-        rate = iter->second;
-    }
-
-    return rate;
-}
-
 string MonitorConfig::GetAccountLarkUrl() {
     return accountLarkUrl;
 }

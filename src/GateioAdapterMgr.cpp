@@ -2,12 +2,7 @@
 
 
 GateioAdapterMgr::GateioAdapterMgr() {
-    unordered_map<int, AccountInfo>& mAccountInfo = MonitorConfig::GetInstance().GetAccountInfo();
-    for (auto iter = mAccountInfo.begin(); iter != mAccountInfo.end(); ++iter) {
-        if (iter->second.exchangeType == GATEIO) {
-            mGateioAdapterItem[iter->first] = new GateioAdapterItem(iter->second);
-        }
-    }
+
 }
 
 GateioAdapterMgr::~GateioAdapterMgr() {
@@ -23,19 +18,29 @@ GateioAdapterMgr& GateioAdapterMgr::GetInstance() {
 	return gateioAdapterMgr;
 }
 
+void GateioAdapterMgr::Init(sm::SecurityManager* s) {
+    std::unordered_map<int, AccountInfo>& mAccountInfo = MonitorConfig::GetInstance().GetAccountInfo();
+    for (auto iter = mAccountInfo.begin(); iter != mAccountInfo.end(); ++iter) {
+        if (iter->second.exchangeType == GATEIO) {
+            mGateioAdapterItem[iter->first] = new GateioAdapterItem(iter->second, s);
+        }
+    }
+}
+
 void GateioAdapterMgr::UpdateAccountInfo() {
     for (auto iter = mGateioAdapterItem.begin(); iter != mGateioAdapterItem.end(); ++iter) {
 	bool flag = MonitorConfig::GetInstance().IsAccountIdInProduct(iter->first);
 	if (!flag) {
             iter->second->UpdateAccountInfo();
+            sleep(1);
 	}
     }
 }
 
-set<string> GateioAdapterMgr::GetInstrumentList() {
-    set<string> s;
+std::set<std::string> GateioAdapterMgr::GetInstrumentList() {
+    std::set<std::string> s;
     for (auto iter = mGateioAdapterItem.begin(); iter != mGateioAdapterItem.end(); ++iter) {
-        set<string> sItem = iter->second->GetInstrumentList();
+        std::set<std::string> sItem = iter->second->GetInstrumentList();
         s.insert(sItem.begin(), sItem.end());
     }
     return s;

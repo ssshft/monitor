@@ -5,18 +5,17 @@
 #include <unordered_map>
 #include <set>
 
-using namespace std;
-
 
 class BybitAdapterMgr {
 public:
     static BybitAdapterMgr& GetInstance();
 	~BybitAdapterMgr();
+    void Init(sm::SecurityManager* s);
     void UpdateAccountInfo();   
-    set<string> GetInstrumentList();
+    std::set<std::string> GetInstrumentList();
     BybitAdapterItem* GetAdapterItem(int accountId);
     
 private:
     BybitAdapterMgr();
-    unordered_map<int, BybitAdapterItem*> mBybitAdapterItem;
+    std::unordered_map<int, BybitAdapterItem*> mBybitAdapterItem;
 };

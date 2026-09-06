@@ -2,7 +2,7 @@
 #include "MonitorConfig.h"
 
 ProductMgr::ProductMgr() {
-    unordered_map<string, ProductInfo>& mProductInfo = MonitorConfig::GetInstance().GetProductInfo();
+    std::unordered_map<std::string, ProductInfo>& mProductInfo = MonitorConfig::GetInstance().GetProductInfo();
     for (auto iter = mProductInfo.begin(); iter != mProductInfo.end(); ++iter) {
         mProduct[iter->first] = new ProductItem(iter->second.productName, iter->second.vAccountId);
     }
@@ -31,19 +31,19 @@ void ProductMgr::CalculateAccount() {
     CalculateRiskInfo();
 }
 
-vector<MsgCard> ProductMgr::GetAlarmMsg() {
-    vector<MsgCard> v;
+std::vector<MsgCard> ProductMgr::GetAlarmMsg() {
+    std::vector<MsgCard> v;
     for (auto iter = mProduct.begin(); iter != mProduct.end(); ++iter) {
-        vector<MsgCard> vAlarmMsg = iter->second->GetAlarmMsg();
+        std::vector<MsgCard> vAlarmMsg = iter->second->GetAlarmMsg();
         v.insert(v.end(), vAlarmMsg.begin(), vAlarmMsg.end());
     }
     return v;
 }
 
-vector<MsgCard> ProductMgr::GetFundingRateAlarmMsg() {
-    vector<MsgCard> v;
+std::vector<MsgCard> ProductMgr::GetFundingRateAlarmMsg() {
+    std::vector<MsgCard> v;
     for (auto iter = mProduct.begin(); iter != mProduct.end(); ++iter) {
-        vector<MsgCard> vAlarmMsg = iter->second->GetFundingRateAlarmMsg();
+        std::vector<MsgCard> vAlarmMsg = iter->second->GetFundingRateAlarmMsg();
         v.insert(v.end(), vAlarmMsg.begin(), vAlarmMsg.end());
     }
     return v;
@@ -56,8 +56,8 @@ void ProductMgr::UpdateAccountInfo() {
     sleep(10);
 }
 
-vector<igmonitor::RiskInfo> ProductMgr::GetRiskInfo() {
-    vector<igmonitor::RiskInfo> v;
+std::vector<igmonitor::RiskInfo> ProductMgr::GetRiskInfo() {
+    std::vector<igmonitor::RiskInfo> v;
     for (auto iter = mProduct.begin(); iter != mProduct.end(); ++iter) {
         bool query = iter->second->GetAdapterQueryStatus();
         if (query) {
