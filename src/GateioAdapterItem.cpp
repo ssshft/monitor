@@ -106,7 +106,7 @@ void GateioAdapterItem::UpdateAccountInfo() {
     updateTime = GetCurrentTimeUs();
 }
 
-std::unordered_map<std::stirng, md::InstrumentInfo> GateioAdapterItem::GetInstrumentList() {
+std::unordered_map<std::string, md::InstrumentInfo> GateioAdapterItem::GetInstrumentList() {
     mInst.clear();
 
     set<string> s;
@@ -192,20 +192,17 @@ vector<gateio::FutureOrder>& GateioAdapterItem::GetPerpetualOrder() {
 double GateioAdapterItem::GetPerpetualFloatAmount(string asset) {
     double floatAmount = 0.0;
     for (size_t i = 0; i < vPerpetualPosition.size(); ++i) {
-        string instrumentKey = "GATEIO|" + vPerpetualPosition[i].contract + "|FUTURES";
-        string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instrumentKey);
-        double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
+        std::string originInstId = vPerpetualPosition[i].contract;
+        double price = -1.0;
+        md::InstrumentInfo info;
+        if (smc->get_instrument_info(GATEIO, USDT_SWAP, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(GATEIO, USDT_SWAP, info.instId);
+            price = MdMgr::GetInstance().GetMidPrice(key);
+        }
+
         if (asset == info.margin && price > 0.0 && vPerpetualPosition[i].entryPrice > 0.0) {
-            if (info.instrumentType == "InstType_USDT_SWAP" || info.calculateType == 0) {
-                double f = (price - vPerpetualPosition[i].entryPrice) * vPerpetualPosition[i].size * info.multiple;
-                floatAmount += f;
-                stringstream ss;
-                ss << "accountId:" << accountInfo.accountId << " instrumentKey:" << instrumentKey << " price:" << price << " entryPrice:" << vPerpetualPosition[i].entryPrice << " size:" << vPerpetualPosition[i].size << " multiple:" << info.multiple << " floatAmount:" << f;
-                LOG_INFO("GetPerpetualFloatAmount: %s", ss.str().c_str()); 
-            } else if (info.instrumentType == "InstType_BTC_SWAP" || info.calculateType == 1) {
-                floatAmount += (1 / vPerpetualPosition[i].entryPrice - 1 / price) * vPerpetualPosition[i].size * info.multipleVolume;
-            }
+            double f = (price - vPerpetualPosition[i].entryPrice) * vPerpetualPosition[i].size * info.value;
+            floatAmount += f;
         }
     }
     return floatAmount;
@@ -220,18 +217,6 @@ double GateioAdapterItem::GetPerpetualAssetTotal(string asset) {
         }
     }
     return total;
-}
-
-void GateioAdapterItem::GetDeliveryLongShortFrozenPosition(string symbol, double longFrozenPos, double shortFrozenPos) {
-    for (size_t i = 0; i < vDeliveryOpenOrder.size(); ++i) {
-        if (vDeliveryOpenOrder[i].contract == symbol) {
-            if (vDeliveryOpenOrder[i].size > 0) {
-                longFrozenPos += vDeliveryOpenOrder[i].left;
-            } else {
-                shortFrozenPos += vDeliveryOpenOrder[i].left;
-            }
-        }
-    }
 }
 
 void GateioAdapterItem::GetPerpetualLongShortFrozenPosition(string symbol, double longFrozenPos, double shortFrozenPos) {

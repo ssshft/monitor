@@ -6,6 +6,7 @@
 #include <set>
 #include <boost/algorithm/string/case_conv.hpp>
 #include "log_engine.h"
+#include "data_struct.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -102,9 +103,9 @@ struct SubData {
 };
 
 struct Depth {
-	string exchangeType{""};
-	string instrumentType{""};
-	string marketType{""};
+	ExchangeType xchangeType{""};
+	InstType instrumentType{""};
+	md::MarketType marketType{""};
 	string instrumentId{""};
 	vector<double> askP;
 	vector<double> askV;
@@ -652,172 +653,6 @@ inline string& ReplaceAll(string& src, const string& oldValue, const string& new
 
 inline size_t strlcpy(char* d, size_t n, char const* s) {
 	return snprintf(d, n, "%s", s);
-}
-
-// binance
-inline string encryptWithHMAC(string key, string data) {
-    unsigned char *result;
-    static char res_hexstring[64];
-    int result_len = 32;
-    string signature;
-
-    result = HMAC(EVP_sha256(), key.c_str(),key.length(), const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(data.c_str())), data.length(), NULL, NULL);
-  	for (int i = 0; i < result_len; i++) {
-    	sprintf(&(res_hexstring[i * 2]), "%02x", result[i]);
-  	}
-
-  	for (int i = 0; i < 64; i++) {
-  		signature += res_hexstring[i];
-  	}
-
-  	return signature;
-}
-
-inline string getSignature(string query, string apiSecret) {
-	return encryptWithHMAC(apiSecret.c_str(), query.c_str());
-}
-
-// coinbase
-static std::string const base64_chars =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        "abcdefghijklmnopqrstuvwxyz"
-        "0123456789+/";
-
-inline std::string base64_encode(unsigned char const * input, size_t len) {
-    std::string ret;
-    int i = 0;
-    int j = 0;
-    unsigned char char_array_3[3];
-    unsigned char char_array_4[4];
-
-    while (len--) {
-        char_array_3[i++] = *(input++);
-        if (i == 3) {
-            char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
-            char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
-            char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
-            char_array_4[3] = char_array_3[2] & 0x3f;
-
-            for(i = 0; (i <4) ; i++) {
-                ret += base64_chars[char_array_4[i]];
-            }
-            i = 0;
-        }
-    }
-
-    if (i) {
-        for(j = i; j < 3; j++) {
-            char_array_3[j] = '\0';
-        }
-
-        char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
-        char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
-        char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
-        char_array_4[3] = char_array_3[2] & 0x3f;
-
-        for (j = 0; (j < i + 1); j++) {
-            ret += base64_chars[char_array_4[j]];
-        }
-
-        while((i++ < 3)) {
-            ret += '=';
-        }
-    }
-
-    return ret;
-}
-
-inline string base64_encode(string input) {
-    return base64_encode(
-            reinterpret_cast<const unsigned char *>(input.data()),
-            input.size()
-    );
-}
-
-inline int HmacEncode(const char * algo,
-               const char * key, unsigned int key_length,
-               const char * input, unsigned int input_length,
-               unsigned char * &output, unsigned int &output_length) {
-    const EVP_MD * engine = NULL;
-    if(strcasecmp("sha512", algo) == 0) {
-        engine = EVP_sha512();
-    }
-    else if(strcasecmp("sha256", algo) == 0) {
-        engine = EVP_sha256();
-    }
-    else if(strcasecmp("sha1", algo) == 0) {
-        engine = EVP_sha1();
-    }
-    else if(strcasecmp("md5", algo) == 0) {
-        engine = EVP_md5();
-    }
-    else if(strcasecmp("sha224", algo) == 0) {
-        engine = EVP_sha224();
-    }
-    else if(strcasecmp("sha384", algo) == 0) {
-        engine = EVP_sha384();
-    }
-    else if(strcasecmp("sha", algo) == 0) {
-        //engine = EVP_sha();
-        assert(0);
-    }
-    else {
-        cout << "Algorithm " << algo << " is not supported by this program!" << endl;
-        return -1;
-    }
-
-    output = (unsigned char*)malloc(EVP_MAX_MD_SIZE);
-
-/*
-    //HMAC_CTX *ctx = HMAC_CTX_new();
-    HMAC_CTX ctx;
-    HMAC_CTX_init(&ctx);
-    HMAC_Init_ex(&ctx, key, strlen(key), engine, NULL);
-    HMAC_Update(&ctx, (unsigned char*)input, strlen(input));        // input is OK; &input is WRONG !!!
-
-    HMAC_Final(&ctx, output, &output_length);
-    //HMAC_CTX_free(ctx);
-*/
-    return 0;
-}
-
-inline string getSignatureNew(string query, string apiSecret) {  // coinbase
-    unsigned char * mac = NULL;
-    unsigned int mac_length = 0;
-    int ret = HmacEncode("sha256", apiSecret.c_str(), apiSecret.length(), query.c_str(), query.length(), mac, mac_length);
-    string signature = base64_encode(mac, mac_length);
-    return signature;
-}
-
-
-// gateio
-inline string encryptWithHMACGate(string key, string data) {
-    unsigned char* digest = HMAC(EVP_sha512(), key.c_str(), key.length(), const_cast<unsigned char *>(reinterpret_cast<const unsigned char*>(data.c_str())), data.length(), NULL, NULL);
-    char mdString[256];
-    for(int i = 0; i < 64; ++i)
-        sprintf(&mdString[i*2], "%02x", (unsigned int)digest[i]);
-
-    string signature = mdString;
-    return signature;
-}
-
-
-inline string getSignatureGate(string query, string apiSecret) {
-	return encryptWithHMACGate(apiSecret.c_str(), query.c_str());
-}
-
-inline string sha512(string data) {
-    unsigned char result[SHA512_DIGEST_LENGTH] = {0};
-    EVP_Digest(data.c_str(), data.length(), result, NULL, EVP_sha512(), NULL);
-
-    char c[20];
-    stringstream ss;
-    for (int i = 0; i < SHA512_DIGEST_LENGTH; i++){
-        sprintf(c, "%02x", result[i]);
-        ss << c;
-    }
-
-    return ss.str();
 }
 
 inline string GetDeliveryContractSymbol(string symbol, string contractType, tm curDate) {

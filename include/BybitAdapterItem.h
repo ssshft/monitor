@@ -12,7 +12,7 @@ public:
     BybitAdapterItem(AccountInfo info, sm::SecurityManager* s);
 	~BybitAdapterItem();
     void UpdateAccountInfo();   
-    std::unordered_map<std::stirng, md::InstrumentInfo> GetInstrumentList();
+    std::unordered_map<std::string, md::InstrumentInfo> GetInstrumentList();
     bybit::TotalAccountInfo& GetTotalAccountInfo();
     std::vector<bybit::Asset>& GetAsset();
     std::vector<bybit::Position>& GetPosition();

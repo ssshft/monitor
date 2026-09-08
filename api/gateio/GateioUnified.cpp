@@ -19,7 +19,7 @@ bool GateioUnified::QueryAccount(gateio::UnifyTotalAccount& unifyTotalAccount, s
     std::vector<std::pair<std::string, std::string>> headers = {{"KEY", accountInfo.apiKey}, {"Timestamp", time_str}, {"SIGN", sign}};
 
     try {
-        if (!Net::Instance().syncGet(crypto::host_of(accountInfo.restUrl), accountUrl, {}, headers, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(accountInfo.restUrl), accountUrl, {}, headers, body, status)) {
             std::string errMsg = "GateioUnified QueryAccount syncGet return false";
             LOG_INFO("QueryAccount AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);

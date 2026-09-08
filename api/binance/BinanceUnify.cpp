@@ -25,7 +25,7 @@ bool BinanceUnify::QueryBalance(vector<binance::UnifyAsset>& vUnifyAsset, vector
     std::string fullPath = fmt::format("{}?{}&signature=", balanceUrl, qs, sig);
 
     try {
-        if (!Net::Instance().syncGet(crypto::host_of(accountInfo.restUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(accountInfo.restUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
             std::string errMsg = "BinanceUnify QueryBalance syncGet return false";
             LOG_INFO("QueryBalance AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
@@ -125,7 +125,7 @@ bool BinanceUnify::QueryAccount(binance::UnifyAccount& unifyAccount, vector<stri
     std::string fullPath = fmt::format("{}?{}&signature=", accountUrl, qs, sig);
 
     try {
-        if (!Net::Instance().syncGet(crypto::host_of(accountInfo.restUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(accountInfo.restUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
             std::string errMsg = "BinanceUnify QueryAccount syncGet return false";
             LOG_INFO("QueryAccount AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
@@ -205,7 +205,7 @@ bool BinanceUnify::QueryUmPosition(vector<binance::UnifyPosition>& vUnifyPositio
     std::string fullPath = fmt::format("{}?{}&signature=", umPositionUrl, qs, sig);
 
     try {
-        if (!Net::Instance().syncGet(crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
             std::string errMsg = "BinanceUnify QueryUmPosition syncGet return false";
             LOG_INFO("QueryUmPosition AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
@@ -297,7 +297,7 @@ bool BinanceUnify::QueryCmPosition(vector<binance::UnifyPosition>& vUnifyPositio
     std::string fullPath = fmt::format("{}?{}&signature=", cmPositionUrl, qs, sig);
 
     try {
-        if (!Net::Instance().syncGet(crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
             std::string errMsg = "BinanceUnify QueryCmPosition syncGet return false";
             LOG_INFO("QueryCmPosition AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
@@ -389,7 +389,7 @@ bool BinanceUnify::QueryUmOpenOrder(vector<binance::UnifyOpenOrder>& vOpenOrder,
     std::string fullPath = fmt::format("{}?{}&signature=", umOpenOrderUrl, qs, sig);
 
     try {
-        if (!Net::Instance().syncGet(crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
             std::string errMsg = "BinanceUnify QueryUmOpenOrder syncGet return false";
             LOG_INFO("QueryUmOpenOrder AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
@@ -480,7 +480,7 @@ bool BinanceUnify::QueryCmOpenOrder(vector<binance::UnifyOpenOrder>& vOpenOrder,
     std::string fullPath = fmt::format("{}?{}&signature=", cmOpenOrderUrl, qs, sig);
 
     try {
-        if (!Net::Instance().syncGet(crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
             std::string errMsg = "BinanceUnify QueryCmOpenOrder syncGet return false";
             LOG_INFO("QueryCmOpenOrder AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);

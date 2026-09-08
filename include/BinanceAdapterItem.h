@@ -15,7 +15,7 @@ public:
     BinanceAdapterItem(AccountInfo info, sm::SecurityManager* s);
 	~BinanceAdapterItem();
     void UpdateAccountInfo();   
-    std::unordered_map<std::stirng, md::InstrumentInfo> GetInstrumentList();
+    std::unordered_map<std::string, md::InstrumentInfo> GetInstrumentList();
     std::vector<binance::SpotAsset>& GetSpotAsset();
     std::vector<binance::UFutureAsset>& GetUFutureAsset();
     std::vector<binance::CFutureAsset>& GetCFutureAsset();

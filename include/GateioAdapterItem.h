@@ -17,7 +17,7 @@ public:
     GateioAdapterItem(AccountInfo info, sm::SecurityManager* s);
 	~GateioAdapterItem();
     void UpdateAccountInfo();   
-    std::unordered_map<std::stirng, md::InstrumentInfo> GetInstrumentList();
+    std::unordered_map<std::string, md::InstrumentInfo> GetInstrumentList();
     std::vector<gateio::SpotAsset>& GetSpotAsset();
     std::vector<gateio::FutureAsset>& GetPerpetualAsset();
     std::vector<gateio::FuturePosition>& GetPerpetualPosition();

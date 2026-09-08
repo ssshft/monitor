@@ -24,7 +24,7 @@ bool Bybit::QueryAccount(bybit::TotalAccountInfo& totalAccountInfo, std::vector<
     std::vector<std::pair<std::string, std::string>> headers = {{"X-BAPI-API-KEY", accountInfo.apiKey}, {"X-BAPI-TIMESTAMP", ts}, {"X-BAPI-RECV-WINDOW", "5000"}, {"X-BAPI-SIGN", sign}};
 
     try {
-        if (!Net::Instance().syncGet(crypto::host_of(accountInfo.restUrl), fullPath, {}, headers, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(accountInfo.restUrl), fullPath, {}, headers, body, status)) {
             std::string errMsg = "Bybit QueryAccount syncGet return false";
             LOG_INFO("QueryAccount AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
@@ -219,7 +219,7 @@ bool Bybit::QueryPosition(vector<bybit::Position>& vPosition, vector<string>& vE
     std::vector<std::pair<std::string, std::string>> headers = {{"X-BAPI-API-KEY", accountInfo.apiKey}, {"X-BAPI-TIMESTAMP", ts}, {"X-BAPI-RECV-WINDOW", "5000"}, {"X-BAPI-SIGN", sign}};
 
     try {
-        if (!Net::Instance().syncGet(crypto::host_of(accountInfo.restUrl), fullPath, {}, headers, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(accountInfo.restUrl), fullPath, {}, headers, body, status)) {
             std::string errMsg = "Bybit QueryPosition syncGet return false";
             LOG_INFO("QueryPosition AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
@@ -340,7 +340,7 @@ bool Bybit::QueryOpenOrder(vector<bybit::Order>& vOpenOrder, vector<string>& vEr
     std::vector<std::pair<std::string, std::string>> headers = {{"X-BAPI-API-KEY", accountInfo.apiKey}, {"X-BAPI-TIMESTAMP", ts}, {"X-BAPI-RECV-WINDOW", "5000"}, {"X-BAPI-SIGN", sign}};
 
     try {
-        if (!Net::Instance().syncGet(crypto::host_of(accountInfo.restUrl), fullPath, {}, headers, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(accountInfo.restUrl), fullPath, {}, headers, body, status)) {
             std::string errMsg = "Bybit QueryOpenOrder syncGet return false";
             LOG_INFO("QueryOpenOrder AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);

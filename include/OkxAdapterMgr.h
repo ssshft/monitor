@@ -13,7 +13,7 @@ public:
 	~OkxAdapterMgr();
     void Init(sm::SecurityManager* s);
     void UpdateAccountInfo();   
-    std::set<std::string> GetInstrumentList();
+    std::unordered_map<std::string, md::InstrumentInfo> GetInstrumentList();
     OkxAdapterItem* GetAdapterItem(int accountId);
     
 private:

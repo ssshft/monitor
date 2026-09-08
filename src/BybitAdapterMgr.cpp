@@ -37,13 +37,15 @@ void BybitAdapterMgr::UpdateAccountInfo() {
     }
 }
 
-std::set<std::string> BybitAdapterMgr::GetInstrumentList() {
-    std::set<std::string> s;
+std::unordered_map<std::string, md::InstrumentInfo> BybitAdapterMgr::GetInstrumentList() {
+    std::unordered_map<std::string, md::InstrumentInfo> m;
     for (auto iter = mBybitAdapterItem.begin(); iter != mBybitAdapterItem.end(); ++iter) {
-        std::set<std::string> sItem = iter->second->GetInstrumentList();
-        s.insert(sItem.begin(), sItem.end());
+        std::unordered_map<std::string, md::InstrumentInfo> mItem = iter->second->GetInstrumentList();
+        for (auto& [key, value] : mItem) {
+            m[key] = value;
+        }
     }
-    return s;
+    return m;
 }
 
 BybitAdapterItem* BybitAdapterMgr::GetAdapterItem(int accountId) {

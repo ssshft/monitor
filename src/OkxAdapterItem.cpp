@@ -57,7 +57,7 @@ void OkxAdapterItem::UpdateAccountInfo() {
     updateTime = GetCurrentTimeUs();
 }
 
-std::unordered_map<std::stirng, md::InstrumentInfo> OkxAdapterItem::GetInstrumentList() {
+std::unordered_map<std::string, md::InstrumentInfo> OkxAdapterItem::GetInstrumentList() {
     mInst.clear();
     if (baseAsset != "USDT") {
         std::string originInstId = baseAsset + "-USDT";
@@ -125,15 +125,31 @@ std::vector<okx::OkxOrder>& OkxAdapterItem::GetOpenOrder() {
 double OkxAdapterItem::GetPositionValue(string asset) {
     double positionValue = 0.0;
     for (size_t i = 0; i < vPosition.size(); ++i) {
-        string instrumentKey = "OKX|" + vPosition[i].instId + "|FUTURES";
-        string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instrumentKey);
-        double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
+        std::string originInstId = vPosition[i].instId;
+        std::string instType = vPosition[i].instType;
+        double price = -1.0;
+        md::InstrumentInfo info;
+        if (instType == "SWAP" || instType == "FUTURES") {
+            InstType u_swap = (instType == "SWAP") ? USDT_SWAP : USDT_FUTURES;
+            InstType c_swap = (instType == "SWAP") ? C_SWAP : C_FUTURES;
+
+            if (smc->get_instrument_info(OKX, u_swap, originInstId.c_str(), info)) { 
+                std::string key = crypto::get_instrumentInfo_channel_key(OKX, u_swap, info.instId);
+                price = MdMgr::GetInstance().GetMidPrice(key);
+            }
+
+            if (smc->get_instrument_info(OKX, c_swap, originInstId.c_str(), info)) { 
+                std::string key = crypto::get_instrumentInfo_channel_key(OKX, c_swap, info.instId);
+                price = MdMgr::GetInstance().GetMidPrice(key);
+            }
+        }
+
         if (asset == info.margin && price > 0.0) {
-            if (info.instrumentType == "InstType_USDT_FUTURES" || info.instrumentType == "InstType_USDT_SWAP" || info.calculateType == 0) {
-                positionValue += fabs(vPosition[i].pos * price * info.multiple);
-            } else if (info.instrumentType == "InstType_C_FUTURES" || info.instrumentType == "InstType_C_SWAP" || info.calculateType == 1) {
-                positionValue += fabs(vPosition[i].pos / price * info.multiple);
+            if (info.instTypeEnum == USDT_SWAP || info.instTypeEnum == USDT_FUTURES) {
+                positionValue += fabs(vPosition[i].pos * price * info.value);
+            } 
+            else if (info.instTypeEnum == C_SWAP || info.instTypeEnum == C_FUTURES) {
+                positionValue += fabs(vPosition[i].pos / price * info.value);
             }
         }
     }
@@ -143,15 +159,31 @@ double OkxAdapterItem::GetPositionValue(string asset) {
 double OkxAdapterItem::GetFloatAmount(string asset) {
     double floatAmount = 0.0;
     for (size_t i = 0; i < vPosition.size(); ++i) {
-        string instrumentKey = "OKX|" + vPosition[i].instId + "|FUTURES";
-        string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instrumentKey);
-        double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
+        std::string originInstId = vPosition[i].instId;
+        std::string instType = vPosition[i].instType;
+        double price = -1.0;
+        md::InstrumentInfo info;
+        if (instType == "SWAP" || instType == "FUTURES") {
+            InstType u_swap = (instType == "SWAP") ? USDT_SWAP : USDT_FUTURES;
+            InstType c_swap = (instType == "SWAP") ? C_SWAP : C_FUTURES;
+
+            if (smc->get_instrument_info(OKX, u_swap, originInstId.c_str(), info)) { 
+                std::string key = crypto::get_instrumentInfo_channel_key(OKX, u_swap, info.instId);
+                price = MdMgr::GetInstance().GetMidPrice(key);
+            }
+
+            if (smc->get_instrument_info(OKX, c_swap, originInstId.c_str(), info)) { 
+                std::string key = crypto::get_instrumentInfo_channel_key(OKX, c_swap, info.instId);
+                price = MdMgr::GetInstance().GetMidPrice(key);
+            }
+        }
+
         if (asset == info.margin && price > 0.0 && vPosition[i].avgPx > 0.0) {
-            if (info.instrumentType == "InstType_USDT_FUTURES" || info.instrumentType == "InstType_USDT_SWAP" || info.calculateType == 0) {
-                floatAmount += (price - vPosition[i].avgPx) * vPosition[i].pos * info.multiple;
-            } else if (info.instrumentType == "InstType_C_FUTURES" || info.instrumentType == "InstType_C_SWAP" || info.calculateType == 1) {
-                floatAmount += (1 / vPosition[i].avgPx - 1 / price) * vPosition[i].pos * info.multiple;
+            if (info.instTypeEnum == USDT_SWAP || info.instTypeEnum == USDT_FUTURES) {
+                floatAmount += (price - vPosition[i].avgPx) * vPosition[i].pos * info.value;
+            } 
+            else if (info.instTypeEnum == C_SWAP || info.instTypeEnum == C_FUTURES) {
+                floatAmount += (1 / vPosition[i].avgPx - 1 / price) * vPosition[i].pos * info.value;
             }
         }
     }

@@ -1,41 +1,33 @@
 #pragma once
-
-#include <cpprest/ws_client.h>
-#include <cpprest/http_client.h>
-#include <cpprest/http_msg.h>
 #include "Utility.h"
 
-using namespace web;
-using namespace web::websockets::client;
-using namespace web::http;
-using namespace web::http::client;
 
 class ExchangeRestMd {
 public:
     static ExchangeRestMd& GetInstance();
 	~ExchangeRestMd();
 
-    Depth GetDepth(string instId, string instType, string exchangeType);
+    Depth GetDepth(ExchangeType exchType, InstType instType, std::string originInstId);
     Depth GetBinanceSpotDepth(string originInstId);
     Depth GetBinanceUFutureDepth(string originInstId);
     Depth GetBinanceCFutureDepth(string originInstId);
     Depth GetGateioSpotDepth(string originInstId);
     Depth GetGateioSwapDepth(string originInstId);
     Depth GetGateioDeliveryDepth(string originInstId);
-    Depth GetByBitDepth(string originInstId, string instType);
-    Depth GetOkxDepth(string originInstId, string instType);
+    Depth GetByBitDepth(InstType instType, string originInstId);
+    Depth GetOkxDepth(InstType instType, string originInstId);
 private:
     ExchangeRestMd();
 
-    web::uri binanceSpotDepthUrl;
-    web::uri binanceUFutureDepthUrl;
-    web::uri binanceCFutureDepthUrl;
+    std::string binanceSpotDepthUrl;
+    std::string binanceUFutureDepthUrl;
+    std::string binanceCFutureDepthUrl;
 
-    web::uri gateioSpotDepthUrl;
-    web::uri gateioSwapDepthUrl;
-    web::uri gateioDeliveryDepthUrl;
+    std::string gateioSpotDepthUrl;
+    std::string gateioSwapDepthUrl;
+    std::string gateioDeliveryDepthUrl;
 
-    web::uri bybitDepthUrl;
+    std::string bybitDepthUrl;
 
-    web::uri okxDepthUrl;
+    std::string okxDepthUrl;
 };

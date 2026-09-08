@@ -22,7 +22,7 @@ bool BinanceUFuture::QueryAccount(vector<binance::UFutureAsset>& vUFutureAsset, 
     std::string fullPath = fmt::format("{}?{}&signature=", accountUrl, qs, sig);
 
     try {
-        if (!Net::Instance().syncGet(crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
             std::string errMsg = "BinanceUFuture QueryAccount syncGet return false";
             LOG_INFO("QueryAccount AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
@@ -194,7 +194,7 @@ bool BinanceUFuture::QueryPositionRisk(std::vector<binance::PositionRisk>& vPosi
     std::string fullPath = fmt::format("{}?{}&signature=", positionRiskUrl, qs, sig);
 
     try {
-        if (!Net::Instance().syncGet(crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
             std::string errMsg = "BinanceUFuture QueryPositionRisk syncGet return false";
             LOG_INFO("QueryPositionRisk AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
@@ -261,7 +261,7 @@ bool BinanceUFuture::QueryOpenOrder(vector<binance::FutureOpenOrder>& vOpenOrder
     std::string fullPath = fmt::format("{}?{}&signature=", openOrderUrl, qs, sig);
 
     try {
-        if (!Net::Instance().syncGet(crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
             std::string errMsg = "BinanceUFuture QueryOpenOrder syncGet return false";
             LOG_INFO("QueryOpenOrder AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);

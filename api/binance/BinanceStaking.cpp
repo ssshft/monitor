@@ -19,7 +19,7 @@ bool BinanceStaking::QueryPosition(std::vector<binance::StakingPosition> vStakin
     std::string fullPath = fmt::format("{}?{}&signature=", positionUrl, qs, sig);
 
     try {
-        if (!Net::Instance().syncGet(crypto::host_of(accountInfo.restUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(accountInfo.restUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
             std::string errMsg = "BinanceStaking QueryPosition syncGet return false";
             LOG_INFO("QueryPosition AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);

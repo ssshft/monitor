@@ -12,7 +12,7 @@ public:
     OkxAdapterItem(AccountInfo info, sm::SecurityManager* s);
 	~OkxAdapterItem();
     void UpdateAccountInfo();   
-    std::unordered_map<std::stirng, md::InstrumentInfo> GetInstrumentList();
+    std::unordered_map<std::string, md::InstrumentInfo> GetInstrumentList();
     std::vector<okx::OkxAsset>& GetAsset();
     std::vector<okx::OkxPosition>& GetPosition();
     std::vector<okx::OkxOrder>& GetOpenOrder();

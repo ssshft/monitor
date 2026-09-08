@@ -37,13 +37,15 @@ void OkxAdapterMgr::UpdateAccountInfo() {
     }
 }
 
-std::set<std::string> OkxAdapterMgr::GetInstrumentList() {
-    std::set<std::string> s;
+std::unordered_map<std::string, md::InstrumentInfo> OkxAdapterMgr::GetInstrumentList() {
+    std::unordered_map<std::string, md::InstrumentInfo> m;
     for (auto iter = mOkxAdapterItem.begin(); iter != mOkxAdapterItem.end(); ++iter) {
-        std::set<std::string> sItem = iter->second->GetInstrumentList();
-        s.insert(sItem.begin(), sItem.end());
+        std::unordered_map<std::string, md::InstrumentInfo> mItem = iter->second->GetInstrumentList();
+        for (auto& [key, value] : mItem) {
+            m[key] = value;
+        }
     }
-    return s;
+    return m;
 }
 
 OkxAdapterItem* OkxAdapterMgr::GetAdapterItem(int accountId) {

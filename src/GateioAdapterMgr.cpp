@@ -37,13 +37,15 @@ void GateioAdapterMgr::UpdateAccountInfo() {
     }
 }
 
-std::set<std::string> GateioAdapterMgr::GetInstrumentList() {
-    std::set<std::string> s;
+std::unordered_map<std::string, md::InstrumentInfo> GateioAdapterMgr::GetInstrumentList() {
+    std::unordered_map<std::string, md::InstrumentInfo> m;
     for (auto iter = mGateioAdapterItem.begin(); iter != mGateioAdapterItem.end(); ++iter) {
-        std::set<std::string> sItem = iter->second->GetInstrumentList();
-        s.insert(sItem.begin(), sItem.end());
+        std::unordered_map<std::string, md::InstrumentInfo> mItem = iter->second->GetInstrumentList();
+        for (auto& [key, value] : mItem) {
+            m[key] = value;
+        }
     }
-    return s;
+    return m;
 }
 
 GateioAdapterItem* GateioAdapterMgr::GetAdapterItem(int accountId) {

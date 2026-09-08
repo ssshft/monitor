@@ -13,7 +13,7 @@ public:
 	~GateioAdapterMgr();
     void Init(sm::SecurityManager* s);
     void UpdateAccountInfo();   
-    std::set<std::string> GetInstrumentList();
+    std::unordered_map<std::string, md::InstrumentInfo>  GetInstrumentList();
     GateioAdapterItem* GetAdapterItem(int accountId);
     
 private:

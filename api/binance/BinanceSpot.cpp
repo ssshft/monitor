@@ -21,7 +21,7 @@ bool BinanceSpot::QueryAccount(std::vector<binance::SpotAsset>& vSpotAsset, std:
     std::string fullPath = fmt::format("{}?{}&signature=", accountUrl, qs, sig);
 
     try {
-        if (!Net::Instance().syncGet(crypto::host_of(accountInfo.restUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(accountInfo.restUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
             std::string errMsg = "BinanceSpot QueryAccount syncGet return false";
             LOG_INFO("QueryAccount AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
@@ -94,7 +94,7 @@ bool BinanceSpot::QueryOpenOrder(std::vector<binance::SpotOpenOrder> vSpotOpenOr
     std::string fullPath = fmt::format("{}?{}&signature=", openOrderUrl, qs, sig);
 
     try {
-        if (!Net::Instance().syncGet(crypto::host_of(accountInfo.restUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(accountInfo.restUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
             std::string errMsg = "BinanceSpot QueryAccount syncGet return false";
             LOG_INFO("QueryAccount AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);

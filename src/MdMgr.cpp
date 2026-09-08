@@ -4,7 +4,7 @@
 #include "ExchangeRestMd.h"
 
 MdMgr::MdMgr() {
-	depthLen = 10;
+
 }
 
 MdMgr::~MdMgr() {
@@ -17,65 +17,54 @@ MdMgr& MdMgr::GetInstance() {
 }
 
 void MdMgr::UpdateFromRest() {
-    std::set<std::string> sInstrumentBinanceAdapter = BinanceAdapterMgr::GetInstance().GetInstrumentList();
-    std::set<std::string> sInstrumentGateioAdapter = GateioAdapterMgr::GetInstance().GetInstrumentList();
-    std::set<std::string> sInstrumentBybitAdapter = BybitAdapterMgr::GetInstance().GetInstrumentList();
-    std::set<std::string> sInstrumentOkxAdapter = OkxAdapterMgr::GetInstance().GetInstrumentList();
+    std::unordered_map<std::string, md::InstrumentInfo> mInstrumentBinanceAdapter = BinanceAdapterMgr::GetInstance().GetInstrumentList();
+    std::unordered_map<std::string, md::InstrumentInfo> mInstrumentGateioAdapter = GateioAdapterMgr::GetInstance().GetInstrumentList();
+    std::unordered_map<std::string, md::InstrumentInfo> mInstrumentBybitAdapter = BybitAdapterMgr::GetInstance().GetInstrumentList();
+    std::unordered_map<std::string, md::InstrumentInfo> mInstrumentOkxAdapter = OkxAdapterMgr::GetInstance().GetInstrumentList();
 
-	std::set<std::string> s;
-	s.insert(sInstrumentBinanceAdapter.begin(), sInstrumentBinanceAdapter.end());
-    s.insert(sInstrumentGateioAdapter.begin(), sInstrumentGateioAdapter.end());
-    s.insert(sInstrumentBybitAdapter.begin(), sInstrumentBybitAdapter.end());
-    s.insert(sInstrumentOkxAdapter.begin(), sInstrumentOkxAdapter.end());
+	std::unordered_map<std::string, md::InstrumentInfo> m;
+	for (auto& [key, value] : mInstrumentBinanceAdapter) {
+		m[key] = value;
+	}
+	for (auto& [key, value] : mInstrumentGateioAdapter) {
+		m[key] = value;
+	}
+	for (auto& [key, value] : mInstrumentBybitAdapter) {
+		m[key] = value;
+	}
+	for (auto& [key, value] : mInstrumentOkxAdapter) {
+		m[key] = value;
+	}
 
-
-	for (auto it = s.begin(); it != s.end(); ++it) {
-		std::string channel = *it;
-		std::vector<std::string> v;
-        SplitString(channel, ".", v);
-		std::string exchangeType = v[0];
-		std::string instType = v[1];
-		std::string instId = v[3];
-		
-		Depth depth = ExchangeRestMd::GetInstance().GetDepth(instId, instType, exchangeType);
-
+	for (auto iter = m.begin(); iter != m.end(); ++iter) {
+		std::string key = iter->first;
+		const Depth& depth = ExchangeRestMd::GetInstance().GetDepth(iter->second.exchangeTypeEnum, iter->second.instTypeEnum, iter->second.originInstId);
 		if (depth.ts > 0) {
-			string key = depth.exchangeType + "|" +  depth.instrumentId + "|" + depth.instrumentType;
-			auto iter = mDepth.find(key);
-			if (iter != mDepth.end()) {
-				iter->second.Add(depth);
-			} else {
-				DataArray<Depth> dataArr(depthLen);
-				dataArr.Add(depth);
-				mDepth[key] = dataArr;
-			}
+			mDepth[key] = depth;
 		}
-
 		usleep(100000);
 	}
 }
 
-Depth MdMgr::GetLastDepth(string key) {
+Depth MdMgr::GetLastDepth(const std::string& key) {
 	Depth lastDepth;
 	auto iter = mDepth.find(key);
 	if (iter != mDepth.end()) {
-		if (!iter->second.IsEmpty()) {
-			lastDepth = iter->second.GetEndValue();
-		}
+		lastDepth = iter->second;
 	}
 	return lastDepth;
 }
 
-double MdMgr::GetMidPrice(string key) {
+double MdMgr::GetMidPrice(const std::string&  key) {
 	double price = 0.0;
-	Depth lastDepth = GetLastDepth(key);
+	const Depth& lastDepth = GetLastDepth(key);
 	if (lastDepth.askP.size() > 0 && lastDepth.bidP.size() > 0) {
 		price = (lastDepth.askP[0] + lastDepth.bidP[0]) / 2;
 	}
 	return price;
 }
 
-double MdMgr::GetAssetPrice(string asset, string exchangeStr) {
+double MdMgr::GetAssetPrice(const std::string&  asset, const std::string&  exchangeStr) {
 	string key = exchangeStr + "|" + asset + "-" + "USDT" + "|SPOT";
 	double price = GetMidPrice(key);
 	if (price <= 0.0) {

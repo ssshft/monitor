@@ -24,545 +24,462 @@ ExchangeRestMd& ExchangeRestMd::GetInstance() {
 	return exchangeRestMd;
 }
 
-Depth ExchangeRestMd::GetDepth(string instId, string instType, string exchangeType) {
+Depth ExchangeRestMd::GetDepth(ExchangeType exchType, InstType instType, std::string originInstId) {
     Depth depth;
-    string key = exchangeType + "|" + instId + "|" + instType;
-    InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
-    string originInstId = info.originInstrumentId;
-    if (exchangeType == "BINANCE") {
-        if (instType == "SPOT" || instType == "InstType_SPOT") {
+
+    if (exchType == BINANCE) {
+        if (instType == SPOT) {
             depth = GetBinanceSpotDepth(originInstId);
-        } else if (instType == "InstType_USDT_SWAP" || instType == "InstType_USDT_FUTURES" || info.calculateType == 0) {
+        }
+        else if (instType == USDT_SWAP || instType == USDT_FUTURES) {
             depth = GetBinanceUFutureDepth(originInstId);
-        } else if (instType == "InstType_C_SWAP" || instType == "InstType_C_FUTURES" || info.calculateType == 1) {
+        }
+        else if (instType == C_SWAP || instType == C_FUTURES) {
             depth = GetBinanceCFutureDepth(originInstId);
         }
-    } else if (exchangeType == "GATEIO") {
-        if (instType == "SPOT" || instType == "InstType_SPOT") {
+    }
+    else if (exchType == GATEIO) {
+        if (instType == SPOT) {
             depth = GetGateioSpotDepth(originInstId); 
-        } else if (instType == "SWAP" || instType == "InstType_USDT_SWAP" || instType == "InstType_C_SWAP") {
+        }
+        else if (instType == USDT_SWAP || instType == C_SWAP) {
             depth = GetGateioSwapDepth(originInstId);
-        } else if (instType == "FUTURES" || instType == "InstType_USDT_FUTURES" || instType == "InstType_C_FUTURES") {
+        }
+        else if (instType == USDT_FUTURES || instType == C_FUTURES) {
             depth = GetGateioDeliveryDepth(originInstId);
         }
-    } else if (exchangeType == "BYBIT") {
-        depth = GetByBitDepth(originInstId, instType);
-    } else if (exchangeType == "OKX") {
-        depth = GetOkxDepth(originInstId, instType);
     }
-    depth.instrumentId = instId;
+    else if (exchType == BYBIT) {
+        depth = GetByBitDepth(instType, originInstId);
+    }
+    else if (exchType == OKX) {
+        depth = GetOkxDepth(instType, originInstId);
+    }
+
+    depth.instrumentId = originInstId;
     depth.instrumentType = instType;
-    depth.exchangeType = exchangeType;
-    depth.marketType = "DEPTH1";
+    depth.exchangeType = instType;
+    depth.marketType = md::DEPTH1;
     return depth;
 }
 
 Depth ExchangeRestMd::GetBinanceSpotDepth(string originInstId) {
     Depth depth;
+
+    int status = 0;
+    std::string body;
+    std::string path = binanceSpotDepthUrl + "?symbol=" + originInstId;
     try {
-        http_client_config config;
-        config.set_timeout(utility::seconds(5));
-        http_client client(BINANCE_SPOT_REST, config);
-        http_request request(methods::GET);
-        uri_builder builder(binanceSpotDepthUrl);
-        builder.append_query("symbol", originInstId);    
+        if (!Net::Instance().syncGet("BINANCE", crypto::host_of(BINANCE_SPOT_REST), path, {}, {}, body, status)) {
+            LOG_ERROR("BINANCE GetBinanceSpotDepth syncGet return false");
+            return depth;
+        }
+        if (status != 200) {
+            LOG_INFO("BINANCE GetBinanceSpotDepth status: {}", status);
+            return depth;
+        }
 
-        request.set_request_uri(builder.to_string());
-        client.request(request)
-        .then([&](http_response response) -> pplx::task<json::value> {  // if the status is OK extract the body of the response into a JSON value
-            auto code = response.status_code();
-            if (code == status_codes::OK) {
-                return response.extract_json();
-            } else if (code >= status_codes::BadRequest && code < status_codes::InternalError) {
-                auto content_type = response.headers().content_type();
-                if (content_type.find("application/json") >= 0) {
-                    return response.extract_json();
-                }
-            }
+        rapidjson::Document d;
+        rapidjson::Value &res = d.Parse<rapidjson::kParseNumbersAsStringsFlag>(body.c_str());
 
-            LOG_INFO("GetBinanceSpotDepth response: '%s' ", response.to_string().c_str());
-            // throw IGException(response.to_string().c_str(), code);
-            throw exception();
-            return pplx::task_from_result(json::value());  // return an empty JSON value
-        })
-        .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
-            json::value const& content = previousTask.get();
+        double bidPrice = 0.0;
+        double bidVolume = 0.0;
+        double askPrice = 0.0;
+        double askVolume = 0.0;
 
-            double bidPrice = 0.0;
-            double bidVolume = 0.0;
-            double askPrice = 0.0;
-            double askVolume = 0.0;
-            if (content.has_field("bidPrice")) {
-                bidPrice = stod(content.at("bidPrice").as_string());
-            }
-            if (content.has_field("bidQty")) {
-                bidVolume = stod(content.at("bidQty").as_string());
-            }
-            if (content.has_field("askPrice")) {
-                askPrice = stod(content.at("askPrice").as_string());
-            }
-            if (content.has_field("askQty")) {
-                askVolume = stod(content.at("askQty").as_string());
-            }
+        if (res.HasMember("bidPrice")) {
+            bidPrice = std::stod(res["bidPrice"].GetString());
+        }
 
-            depth.bidP.push_back(bidPrice);
-            depth.bidV.push_back(bidVolume);
-            depth.askP.push_back(bidPrice);
-            depth.askV.push_back(bidVolume);
-            depth.ts = GetCurrentTimeUs();
-            LOG_INFO("GetBinanceSpotDepth symbol:%s bidPrice:%f bidVolume:%f askPrice:%f askVolume:%f", originInstId.c_str(), bidPrice, bidVolume, askPrice, askVolume);
-        })
-        .wait();
+        if (res.HasMember("bidQty")) {
+            bidVolume = std::stod(res["bidQty"].GetString());
+        }
+
+        if (res.HasMember("askPrice")) {
+            askPrice = std::stod(res["askPrice"].GetString());
+        }
+        if (res.HasMember("askQty")) {
+            askVolume = std::stod(res["askQty"].GetString());
+        }
+
+        depth.bidP.push_back(bidPrice);
+        depth.bidV.push_back(bidVolume);
+        depth.askP.push_back(bidPrice);
+        depth.askV.push_back(bidVolume);
+        depth.ts = crypto::getCurrentTime();
     }
     catch(exception& e) {
-        LOG_INFO("GetBinanceSpotDepth Error: '%s' ", e.what());
+        LOG_INFO("GetBinanceSpotDepth Error: {}", e.what());
     }
+
     return depth;
 }
 
 Depth ExchangeRestMd::GetBinanceUFutureDepth(string originInstId) {
     Depth depth;
+
+    int status = 0;
+    std::string body;
+    std::string path = binanceUFutureDepthUrl + "?symbol=" + originInstId;
     try {
-        http_client_config config;
-        config.set_timeout(utility::seconds(5));
-        http_client client(BINANCE_UFUTURE_REST, config);
-        http_request request(methods::GET);
-        uri_builder builder(binanceUFutureDepthUrl);
-        builder.append_query("symbol", originInstId);    
+        if (!Net::Instance().syncGet("BINANCE", crypto::host_of(BINANCE_UFUTURE_REST), path, {}, {}, body, status)) {
+            LOG_ERROR("BINANCE GetBinanceUFutureDepth syncGet return false");
+            return depth;
+        }
+        if (status != 200) {
+            LOG_INFO("BINANCE GetBinanceUFutureDepth status: {}", status);
+            return depth;
+        }
 
-        request.set_request_uri(builder.to_string());
-        client.request(request)
-        .then([&](http_response response) -> pplx::task<json::value> {  // if the status is OK extract the body of the response into a JSON value
-            auto code = response.status_code();
-            if (code == status_codes::OK) {
-                return response.extract_json();
-            } else if (code >= status_codes::BadRequest && code < status_codes::InternalError) {
-                auto content_type = response.headers().content_type();
-                if (content_type.find("application/json") >= 0) {
-                    return response.extract_json();
-                }
-            }
+        rapidjson::Document d;
+        rapidjson::Value &res = d.Parse<rapidjson::kParseNumbersAsStringsFlag>(body.c_str());
 
-            LOG_INFO("GetBinanceUFutureDepth response: '%s' ", response.to_string().c_str());
-            // throw IGException(response.to_string().c_str(), code);
-            throw exception();
-            return pplx::task_from_result(json::value());  // return an empty JSON value
-        })
-        .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
-            json::value const& content = previousTask.get();
+        double bidPrice = 0.0;
+        double bidVolume = 0.0;
+        double askPrice = 0.0;
+        double askVolume = 0.0;
 
-            double bidPrice = 0.0;
-            double bidVolume = 0.0;
-            double askPrice = 0.0;
-            double askVolume = 0.0;
-            if (content.has_field("bidPrice")) {
-                bidPrice = stod(content.at("bidPrice").as_string());
-            }
-            if (content.has_field("bidQty")) {
-                bidVolume = stod(content.at("bidQty").as_string());
-            }
-            if (content.has_field("askPrice")) {
-                askPrice = stod(content.at("askPrice").as_string());
-            }
-            if (content.has_field("askQty")) {
-                askVolume = stod(content.at("askQty").as_string());
-            }
+        if (res.HasMember("bidPrice")) {
+            bidPrice = std::stod(res["bidPrice"].GetString());
+        }
 
-            depth.bidP.push_back(bidPrice);
-            depth.bidV.push_back(bidVolume);
-            depth.askP.push_back(bidPrice);
-            depth.askV.push_back(bidVolume);
-            depth.ts = GetCurrentTimeUs();
-            LOG_INFO("GetBinanceUFutureDepth symbol:%s bidPrice:%f bidVolume:%f askPrice:%f askVolume:%f", originInstId.c_str(), bidPrice, bidVolume, askPrice, askVolume);
-        })
-        .wait();
+        if (res.HasMember("bidQty")) {
+            bidVolume = std::stod(res["bidQty"].GetString());
+        }
+
+        if (res.HasMember("askPrice")) {
+            askPrice = std::stod(res["askPrice"].GetString());
+        }
+        if (res.HasMember("askQty")) {
+            askVolume = std::stod(res["askQty"].GetString());
+        }
+
+        depth.bidP.push_back(bidPrice);
+        depth.bidV.push_back(bidVolume);
+        depth.askP.push_back(bidPrice);
+        depth.askV.push_back(bidVolume);
+        depth.ts = crypto::getCurrentTime();
     }
     catch(exception& e) {
-        LOG_INFO("GetBinanceUFutureDepth Error: '%s' ", e.what());
+        LOG_INFO("GetBinanceUFutureDepth Error: {}", e.what());
     }
+
     return depth;
 }
 
 Depth ExchangeRestMd::GetBinanceCFutureDepth(string originInstId) {
     Depth depth;
+
+    int status = 0;
+    std::string body;
+    std::string path = binanceCFutureDepthUrl + "?symbol=" + originInstId;
     try {
-        http_client_config config;
-        config.set_timeout(utility::seconds(5));
-        http_client client(BINANCE_CFUTURE_REST, config);
-        http_request request(methods::GET);
-        uri_builder builder(binanceCFutureDepthUrl);
-        builder.append_query("symbol", originInstId);    
+        if (!Net::Instance().syncGet("BINANCE", crypto::host_of(BINANCE_CFUTURE_REST), path, {}, {}, body, status)) {
+            LOG_ERROR("BINANCE GetBinanceCFutureDepth syncGet return false");
+            return depth;
+        }
+        if (status != 200) {
+            LOG_INFO("BINANCE GetBinanceCFutureDepth status: {}", status);
+            return depth;
+        }
 
-        request.set_request_uri(builder.to_string());
-        client.request(request)
-        .then([&](http_response response) -> pplx::task<json::value> {  // if the status is OK extract the body of the response into a JSON value
-            auto code = response.status_code();
-            if (code == status_codes::OK) {
-                return response.extract_json();
-            } else if (code >= status_codes::BadRequest && code < status_codes::InternalError) {
-                auto content_type = response.headers().content_type();
-                if (content_type.find("application/json") >= 0) {
-                    return response.extract_json();
-                }
-            }
+        rapidjson::Document d;
+        rapidjson::Value &res = d.Parse<rapidjson::kParseNumbersAsStringsFlag>(body.c_str());
 
-            LOG_INFO("GetBinanceCFutureDepth response: '%s' ", response.to_string().c_str());
-            // throw IGException(response.to_string().c_str(), code);
-            throw exception();
-            return pplx::task_from_result(json::value());  // return an empty JSON value
-        })
-        .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
-            json::value const& content = previousTask.get();
+        double bidPrice = 0.0;
+        double bidVolume = 0.0;
+        double askPrice = 0.0;
+        double askVolume = 0.0;
 
-            double bidPrice = 0.0;
-            double bidVolume = 0.0;
-            double askPrice = 0.0;
-            double askVolume = 0.0;
-            if (content.has_field("bidPrice")) {
-                bidPrice = stod(content.at("bidPrice").as_string());
-            }
-            if (content.has_field("bidQty")) {
-                bidVolume = stod(content.at("bidQty").as_string());
-            }
-            if (content.has_field("askPrice")) {
-                askPrice = stod(content.at("askPrice").as_string());
-            }
-            if (content.has_field("askQty")) {
-                askVolume = stod(content.at("askQty").as_string());
-            }
+        if (res.HasMember("bidPrice")) {
+            bidPrice = std::stod(res["bidPrice"].GetString());
+        }
 
-            depth.bidP.push_back(bidPrice);
-            depth.bidV.push_back(bidVolume);
-            depth.askP.push_back(bidPrice);
-            depth.askV.push_back(bidVolume);
-            depth.ts = GetCurrentTimeUs();
-            LOG_INFO("GetBinanceCFutureDepth symbol:%s bidPrice:%f bidVolume:%f askPrice:%f askVolume:%f", originInstId.c_str(), bidPrice, bidVolume, askPrice, askVolume);
-        })
-        .wait();
+        if (res.HasMember("bidQty")) {
+            bidVolume = std::stod(res["bidQty"].GetString());
+        }
+
+        if (res.HasMember("askPrice")) {
+            askPrice = std::stod(res["askPrice"].GetString());
+        }
+        if (res.HasMember("askQty")) {
+            askVolume = std::stod(res["askQty"].GetString());
+        }
+
+        depth.bidP.push_back(bidPrice);
+        depth.bidV.push_back(bidVolume);
+        depth.askP.push_back(bidPrice);
+        depth.askV.push_back(bidVolume);
+        depth.ts = crypto::getCurrentTime();
     }
     catch(exception& e) {
-        LOG_INFO("GetBinanceCFutureDepth Error: '%s' ", e.what());
+        LOG_INFO("GetBinanceCFutureDepth Error: {}", e.what());
     }
+
     return depth;
 }
 
 Depth ExchangeRestMd::GetGateioSpotDepth(string originInstId) {
     Depth depth;
+    int status = 0;
+    std::string body;
+    std::string path = gateioSpotDepthUrl + "?currency_pair=" + originInstId;
     try {
-        http_client_config config;
-        config.set_timeout(utility::seconds(5));
-        http_client client(GATEIO_REST, config);
-        http_request request(methods::GET);
-        uri_builder builder(gateioSpotDepthUrl);
-        builder.append_query("currency_pair", originInstId);    
+        if (!Net::Instance().syncGet("GATEIO", crypto::host_of(GATEIO_REST), path, {}, {}, body, status)) {
+            LOG_ERROR("GATEIO GetGateioSpotDepth syncGet return false");
+            return depth;
+        }
+        if (status != 200) {
+            LOG_ERROR("GATEIO GetGateioSpotDepth status: {}", status);
+            return depth;
+        }
 
-        request.set_request_uri(builder.to_string());
-        client.request(request)
-        .then([&](http_response response) -> pplx::task<json::value> {  // if the status is OK extract the body of the response into a JSON value
-            auto code = response.status_code();
-            if (code == status_codes::OK) {
-                return response.extract_json();
-            } else if (code >= status_codes::BadRequest && code < status_codes::InternalError) {
-                auto content_type = response.headers().content_type();
-                if (content_type.find("application/json") >= 0) {
-                    return response.extract_json();
+        rapidjson::Document d;
+        rapidjson::Value &res = d.Parse<rapidjson::kParseNumbersAsStringsFlag>(body.c_str());
+
+        double bidPrice = 0.0;
+        double bidVolume = 0.0;
+        double askPrice = 0.0;
+        double askVolume = 0.0;
+
+        if (res.IsArray()) {
+            for (rapidjson::SizeType i = 0; i < res.Size(); ++i) {
+                if (res[i].HasMember("lowest_bid")) {
+                    bidPrice = std::stod(res[i]["lowest_bid"].GetString());
+                }
+
+                if (res[i].HasMember("lowest_ask")) {
+                    askPrice = std::stod(res[i]["lowest_ask"].GetString());
                 }
             }
+        }
 
-            LOG_INFO("GetGateioSpotDepth response: '%s' ", response.to_string().c_str());
-            throw exception();
-            return pplx::task_from_result(json::value());  // return an empty JSON value
-        })
-        .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
-            json::value const& content = previousTask.get();
-            auto contractArray = content.as_array();
-            double bidPrice = 0.0;
-            double bidVolume = 0.0;
-            double askPrice = 0.0;
-            double askVolume = 0.0;
-            for (auto& contract : contractArray) {
-                if (contract.has_field("lowest_ask")) {
-                    bidPrice = stod(contract.at("lowest_ask").as_string());
-                }
-                if (contract.has_field("lowest_ask")) {
-                    askPrice = stod(contract.at("lowest_ask").as_string());
-                }
-            }
-
-            depth.bidP.push_back(bidPrice);
-            depth.bidV.push_back(bidVolume);
-            depth.askP.push_back(bidPrice);
-            depth.askV.push_back(bidVolume);
-            depth.ts = GetCurrentTimeUs();
-            LOG_INFO("GetGateioSpotDepth symbol:%s bidPrice:%f bidVolume:%f askPrice:%f askVolume:%f", originInstId.c_str(), bidPrice, bidVolume, askPrice, askVolume);
-        })
-        .wait();
+        depth.bidP.push_back(bidPrice);
+        depth.bidV.push_back(bidVolume);
+        depth.askP.push_back(bidPrice);
+        depth.askV.push_back(bidVolume);
+        depth.ts = crypto::getCurrentTime();
     }
     catch(exception& e) {
-        LOG_INFO("GetGateioSpotDepth Error: '%s' ", e.what());
+        LOG_INFO("GetGateioSpotDepth Error: {}", e.what());
     }
+
     return depth;
 }
 
 Depth ExchangeRestMd::GetGateioSwapDepth(string originInstId) {
     Depth depth;
+
+    int status = 0;
+    std::string body;
+    std::string path = gateioSwapDepthUrl + "?contract=" + originInstId;
     try {
-        http_client_config config;
-        config.set_timeout(utility::seconds(5));
-        http_client client(GATEIO_REST, config);
-        http_request request(methods::GET);
-        uri_builder builder(gateioSwapDepthUrl);
-        builder.append_query("contract", originInstId);    
+        if (!Net::Instance().syncGet("GATEIO", crypto::host_of(GATEIO_REST), path, {}, {}, body, status)) {
+            LOG_ERROR("GATEIO GetGateioSwapDepth syncGet return false");
+            return depth;
+        }
+        if (status != 200) {
+            LOG_ERROR("GATEIO GetGateioSwapDepth status: {}", status);
+            return depth;
+        }
 
-        request.set_request_uri(builder.to_string());
-        client.request(request)
-        .then([&](http_response response) -> pplx::task<json::value> {  // if the status is OK extract the body of the response into a JSON value
-            auto code = response.status_code();
-            if (code == status_codes::OK) {
-                return response.extract_json();
-            } else if (code >= status_codes::BadRequest && code < status_codes::InternalError) {
-                auto content_type = response.headers().content_type();
-                if (content_type.find("application/json") >= 0) {
-                    return response.extract_json();
-                }
-            }
+        rapidjson::Document d;
+        rapidjson::Value &res = d.Parse<rapidjson::kParseNumbersAsStringsFlag>(body.c_str());
 
-            LOG_INFO("GetGateioSwapDepth response: '%s' ", response.to_string().c_str());
-            throw exception();
-            return pplx::task_from_result(json::value());  // return an empty JSON value
-        })
-        .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
-            json::value const& content = previousTask.get();
-            auto contractArray = content.as_array();
-            double bidPrice = 0.0;
-            double bidVolume = 0.0;
-            double askPrice = 0.0;
-            double askVolume = 0.0;
-            for (auto& contract : contractArray) {
-                if (contract.has_field("last")) {
-                    bidPrice = stod(contract.at("last").as_string());
+        double bidPrice = 0.0;
+        double bidVolume = 0.0;
+        double askPrice = 0.0;
+        double askVolume = 0.0;
+
+        if (res.IsArray()) {
+            for (rapidjson::SizeType i = 0; i < res.Size(); ++i) {
+                if (res[i].HasMember("last")) {
+                    bidPrice = std::stod(res[i]["last"].GetString());
                     askPrice = bidPrice;
                 }
             }
+        }
 
-            depth.bidP.push_back(bidPrice);
-            depth.bidV.push_back(bidVolume);
-            depth.askP.push_back(bidPrice);
-            depth.askV.push_back(bidVolume);
-            depth.ts = GetCurrentTimeUs();
-            LOG_INFO("GetGateioSwapDepth symbol:%s bidPrice:%f bidVolume:%f askPrice:%f askVolume:%f", originInstId.c_str(), bidPrice, bidVolume, askPrice, askVolume);
-        })
-        .wait();
+        depth.bidP.push_back(bidPrice);
+        depth.bidV.push_back(bidVolume);
+        depth.askP.push_back(bidPrice);
+        depth.askV.push_back(bidVolume);
+        depth.ts = crypto::getCurrentTime();
     }
     catch(exception& e) {
-        LOG_INFO("GetGateioSwapDepth Error: '%s' ", e.what());
+        LOG_INFO("GetGateioSwapDepth Error: {}", e.what());
     }
+
     return depth;
 }
 
 Depth ExchangeRestMd::GetGateioDeliveryDepth(string originInstId) {
     Depth depth;
+
+    int status = 0;
+    std::string body;
+    std::string path = gateioDeliveryDepthUrl + "?contract=" + originInstId;
     try {
-        http_client_config config;
-        config.set_timeout(utility::seconds(5));
-        http_client client(GATEIO_REST, config);
-        http_request request(methods::GET);
-        uri_builder builder(gateioDeliveryDepthUrl);
-        builder.append_query("contract", originInstId);    
+        if (!Net::Instance().syncGet("GATEIO", crypto::host_of(GATEIO_REST), path, {}, {}, body, status)) {
+            LOG_ERROR("GATEIO GetGateioDeliveryDepth syncGet return false");
+            return depth;
+        }
+        if (status != 200) {
+            LOG_ERROR("GATEIO GetGateioDeliveryDepth status: {}", status);
+            return depth;
+        }
 
-        request.set_request_uri(builder.to_string());
-        client.request(request)
-        .then([&](http_response response) -> pplx::task<json::value> {  // if the status is OK extract the body of the response into a JSON value
-            auto code = response.status_code();
-            if (code == status_codes::OK) {
-                return response.extract_json();
-            } else if (code >= status_codes::BadRequest && code < status_codes::InternalError) {
-                auto content_type = response.headers().content_type();
-                if (content_type.find("application/json") >= 0) {
-                    return response.extract_json();
-                }
-            }
+        rapidjson::Document d;
+        rapidjson::Value &res = d.Parse<rapidjson::kParseNumbersAsStringsFlag>(body.c_str());
 
-            LOG_INFO("GetGateioDeliveryDepth response: '%s' ", response.to_string().c_str());
-            throw exception();
-            return pplx::task_from_result(json::value());  // return an empty JSON value
-        })
-        .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
-            json::value const& content = previousTask.get();
-            auto contractArray = content.as_array();
-            double bidPrice = 0.0;
-            double bidVolume = 0.0;
-            double askPrice = 0.0;
-            double askVolume = 0.0;
-            for (auto& contract : contractArray) {
-                if (contract.has_field("last")) {
-                    bidPrice = stod(contract.at("last").as_string());
+        double bidPrice = 0.0;
+        double bidVolume = 0.0;
+        double askPrice = 0.0;
+        double askVolume = 0.0;
+
+        if (res.IsArray()) {
+            for (rapidjson::SizeType i = 0; i < res.Size(); ++i) {
+                if (res[i].HasMember("last")) {
+                    bidPrice = std::stod(res[i]["last"].GetString());
                     askPrice = bidPrice;
                 }
             }
-
-            depth.bidP.push_back(bidPrice);
-            depth.bidV.push_back(bidVolume);
-            depth.askP.push_back(bidPrice);
-            depth.askV.push_back(bidVolume);
-            depth.ts = GetCurrentTimeUs();
-            LOG_INFO("GetGateioDeliveryDepth symbol:%s bidPrice:%f bidVolume:%f askPrice:%f askVolume:%f", originInstId.c_str(), bidPrice, bidVolume, askPrice, askVolume);
-        })
-        .wait();
-    }
-    catch(exception& e) {
-        LOG_INFO("GetGateioDeliveryDepth Error: '%s' ", e.what());
-    }
-    return depth;
-}
-
-Depth ExchangeRestMd::GetByBitDepth(string originInstId, string instType) {
-    Depth depth;
-    try {
-        http_client_config config;
-        config.set_timeout(utility::seconds(5));
-        http_client client(BYBIT_REST, config);
-        http_request request(methods::GET);
-        uri_builder builder(bybitDepthUrl);
-        builder.append_query("symbol", originInstId);
-
-        string category = "spot";
-        if (instType == "SPOT" || instType == "InstType_SPOT") {
-            category = "spot";
-        } else {
-            category = "linear";
         }
-        builder.append_query("category", category);
 
-        request.set_request_uri(builder.to_string());
-        client.request(request)
-        .then([&](http_response response) -> pplx::task<json::value> {  // if the status is OK extract the body of the response into a JSON value
-            auto code = response.status_code();
-            if (code == status_codes::OK) {
-                return response.extract_json();
-            } else if (code >= status_codes::BadRequest && code < status_codes::InternalError) {
-                auto content_type = response.headers().content_type();
-                if (content_type.find("application/json") >= 0) {
-                    return response.extract_json();
-                }
-            }
-
-            LOG_INFO("GetByBitDepth response: '%s' ", response.to_string().c_str());
-            throw exception();
-            return pplx::task_from_result(json::value());  // return an empty JSON value
-        })
-        .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
-            double bidPrice = 0.0;
-            double bidVolume = 0.0;
-            double askPrice = 0.0;
-            double askVolume = 0.0;
-
-            json::value const& content = previousTask.get();
-            if (content.has_field("result")) {
-                auto& res = content.at("result");
-                if (res.has_field("list")) {
-                    auto& li = res.at("list");
-                    if (li.is_array()) {
-                        auto& liArray = li.as_array();
-                        for (auto& arr: liArray) {
-                            if (arr.has_field("bid1Price")) {
-                                bidPrice = stod(arr.at("bid1Price").as_string());
-                            }
-                            if (arr.has_field("bid1Size")) {
-                                bidVolume = stod(arr.at("bid1Size").as_string());
-                            }
-                            if (arr.has_field("ask1Price")) {
-                                askPrice = stod(arr.at("ask1Price").as_string());
-                            }
-                            if (arr.has_field("ask1Size")) {
-                                askVolume = stod(arr.at("ask1Size").as_string());
-                            }
-                        }
-                    }
-                }
-            }
-
-            depth.bidP.push_back(bidPrice);
-            depth.bidV.push_back(bidVolume);
-            depth.askP.push_back(bidPrice);
-            depth.askV.push_back(bidVolume);
-            depth.ts = GetCurrentTimeUs();
-            LOG_INFO("GetByBitDepth symbol:%s bidPrice:%f bidVolume:%f askPrice:%f askVolume:%f", originInstId.c_str(), bidPrice, bidVolume, askPrice, askVolume);
-        })
-        .wait();
+        depth.bidP.push_back(bidPrice);
+        depth.bidV.push_back(bidVolume);
+        depth.askP.push_back(bidPrice);
+        depth.askV.push_back(bidVolume);
+        depth.ts = crypto::getCurrentTime();
     }
     catch(exception& e) {
-        LOG_INFO("GetByBitDepth Error: '%s' ", e.what());
+        LOG_INFO("GetGateioDeliveryDepth Error: {}", e.what());
     }
+
     return depth;
 }
 
-Depth ExchangeRestMd::GetOkxDepth(string originInstId, string instType) {
+Depth ExchangeRestMd::GetByBitDepth(InstType instType, string originInstId) {
     Depth depth;
-    try {
-        http_client_config config;
-        config.set_timeout(utility::seconds(5));
-        http_client client(OKX_REST, config);
-        http_request request(methods::GET);
-        uri_builder builder(okxDepthUrl);
-        builder.append_query("instId", originInstId);
 
-        request.set_request_uri(builder.to_string());
-        client.request(request)
-        .then([&](http_response response) -> pplx::task<json::value> {  // if the status is OK extract the body of the response into a JSON value
-            auto code = response.status_code();
-            if (code == status_codes::OK) {
-                return response.extract_json();
-            } else if (code >= status_codes::BadRequest && code < status_codes::InternalError) {
-                auto content_type = response.headers().content_type();
-                if (content_type.find("application/json") >= 0) {
-                    return response.extract_json();
+    int status = 0;
+    std::string body;
+
+    string category = "spot";
+    if (instType == SPOT) {
+        category = "spot";
+    } else {
+        category = "linear";
+    }
+    std::string path = bybitDepthUrl + "?symbol=" + originInstId + "&category=" + category;
+    try {
+        if (!Net::Instance().syncGet("BYBIT", crypto::host_of(BYBIT_REST), path, {}, {}, body, status)) {
+            LOG_ERROR("BYBIT GetByBitDepth syncGet return false");
+            return depth;
+        }
+        if (status != 200) {
+            LOG_ERROR("BYBIT GetByBitDepth status: {}", status);
+            return depth;
+        }
+
+        rapidjson::Document d;
+        rapidjson::Value &res = d.Parse<rapidjson::kParseNumbersAsStringsFlag>(body.c_str());
+
+        double bidPrice = 0.0;
+        double bidVolume = 0.0;
+        double askPrice = 0.0;
+        double askVolume = 0.0;
+
+        if (res.HasMember("result")) {
+            if (res["result"].HasMember("list")) {
+                const rapidjson::Value& list = res["result"]["list"];
+                for (rapidjson::SizeType i = 0; i < list.Size(); ++i) {
+                    if (list[i].HasMember("bid1Price")) {
+                        bidPrice = std::stod(list[i]["bid1Price"].GetString());
+                    }
+
+                    if (list[i].HasMember("bid1Size")) {
+                        bidVolume = std::stod(list[i]["bid1Size"].GetString());
+                    }
+
+                    if (list[i].HasMember("ask1Price")) {
+                        askPrice = std::stod(list[i]["ask1Price"].GetString());
+                    }
+
+                    if (list[i].HasMember("ask1Size")) {
+                        askVolume = std::stod(list[i]["ask1Size"].GetString());
+                    }
                 }
             }
+        }
 
-            LOG_INFO("GetOkxDepth response: '%s' ", response.to_string().c_str());
-            throw exception();
-            return pplx::task_from_result(json::value());  // return an empty JSON value
-        })
-        .then([&](pplx::task<json::value> previousTask) {  // get the JSON value from the task and display content from it
-            double bidPrice = 0.0;
-            double bidVolume = 0.0;
-            double askPrice = 0.0;
-            double askVolume = 0.0;
-
-            json::value const& content = previousTask.get();
-            if (content.has_field("data")) {
-                auto& li = content.at("data");
-                if (li.is_array()) {
-                    auto& liArray = li.as_array();
-                    for (auto& arr: liArray) {
-                        if (arr.has_field("bidPx")) {
-                            bidPrice = stod(arr.at("bidPx").as_string());
-                        }
-                        if (arr.has_field("bidSz")) {
-                            bidVolume = stod(arr.at("bidSz").as_string());
-                        }
-                        if (arr.has_field("askPx")) {
-                            askPrice = stod(arr.at("askPx").as_string());
-                        }
-                        if (arr.has_field("askSz")) {
-                            askVolume = stod(arr.at("askSz").as_string());
-                        }
-                    }
-                }  
-            }
-
-            depth.bidP.push_back(bidPrice);
-            depth.bidV.push_back(bidVolume);
-            depth.askP.push_back(bidPrice);
-            depth.askV.push_back(bidVolume);
-            depth.ts = GetCurrentTimeUs();
-            LOG_INFO("GetOkxDepth symbol:%s bidPrice:%f bidVolume:%f askPrice:%f askVolume:%f", originInstId.c_str(), bidPrice, bidVolume, askPrice, askVolume);
-        })
-        .wait();
+        depth.bidP.push_back(bidPrice);
+        depth.bidV.push_back(bidVolume);
+        depth.askP.push_back(bidPrice);
+        depth.askV.push_back(bidVolume);
+        depth.ts = crypto::getCurrentTime();
     }
     catch(exception& e) {
-        LOG_INFO("GetOkxDepth Error: '%s' ", e.what());
+        LOG_INFO("GetByBitDepth Error: {}", e.what());
     }
+
+    return depth;
+}
+
+Depth ExchangeRestMd::GetOkxDepth(InstType instType, string originInstId) {
+    Depth depth;
+
+    int status = 0;
+    std::string body;
+    std::string path = okxDepthUrl + "?instId=" + originInstId;
+    try {
+        if (!Net::Instance().syncGet("OKX", crypto::host_of(OKX_REST), path, {}, {}, body, status)) {
+            LOG_ERROR("OKX GetOkxDepth syncGet return false");
+            return depth;
+        }
+        if (status != 200) {
+            LOG_ERROR("OKX GetOkxDepth status: {}", status);
+            return depth;
+        }
+
+        rapidjson::Document d;
+        rapidjson::Value &res = d.Parse<rapidjson::kParseNumbersAsStringsFlag>(body.c_str());
+
+        double bidPrice = 0.0;
+        double bidVolume = 0.0;
+        double askPrice = 0.0;
+        double askVolume = 0.0;
+
+        if (res.HasMember("data")) {
+            const rapidjson::Value& data = res["data"];
+            for (rapidjson::SizeType i = 0; i < list.Size(); ++i) {
+                if (data[i].HasMember("bidPx")) {
+                    bidPrice = std::stod(data[i]["bidPx"].GetString());
+                }
+
+                if (data[i].HasMember("bidSz")) {
+                    bidVolume = std::stod(data[i]["bidSz"].GetString());
+                }
+
+                if (data[i].HasMember("askPx")) {
+                    askPrice = std::stod(data[i]["askPx"].GetString());
+                }
+
+                if (data[i].HasMember("askSz")) {
+                    askVolume = std::stod(data[i]["askSz"].GetString());
+                }
+            }
+        }
+
+        depth.bidP.push_back(bidPrice);
+        depth.bidV.push_back(bidVolume);
+        depth.askP.push_back(bidPrice);
+        depth.askV.push_back(bidVolume);
+        depth.ts = crypto::getCurrentTime();
+    }
+    catch(exception& e) {
+        LOG_INFO("GetOkxDepth Error: {}", e.what());
+    }
+
     return depth;
 }

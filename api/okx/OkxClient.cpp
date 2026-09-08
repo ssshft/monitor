@@ -22,7 +22,7 @@ bool OkxClient::QueryAccount(std::vector<okx::OkxAsset>& vAsset, std::vector<std
     std::vector<std::pair<std::string, std::string>> headers = {{"OK-ACCESS-KEY", accountInfo.apiKey}, {"OK-ACCESS-TIMESTAMP", ts}, {"OK-ACCESS-SIGN", sign}, {"OK-ACCESS-PASSPHRASE", accountInfo.passphrase}};
 
     try {
-        if (!Net::Instance().syncGet(crypto::host_of(accountInfo.restUrl), accountUrl, {}, headers, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(accountInfo.restUrl), accountUrl, {}, headers, body, status)) {
             std::string errMsg = "Okx QueryAccount syncGet return false";
             LOG_INFO("QueryAccount AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
@@ -125,7 +125,7 @@ bool OkxClient::QueryPosition(std::vector<okx::OkxPosition>& vPosition, std::vec
     std::vector<std::pair<std::string, std::string>> headers = {{"OK-ACCESS-KEY", accountInfo.apiKey}, {"OK-ACCESS-TIMESTAMP", ts}, {"OK-ACCESS-SIGN", sign}, {"OK-ACCESS-PASSPHRASE", accountInfo.passphrase}};
 
     try {
-        if (!Net::Instance().syncGet(crypto::host_of(accountInfo.restUrl), positionUrl, {}, headers, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(accountInfo.restUrl), positionUrl, {}, headers, body, status)) {
             std::string errMsg = "Okx QueryPosition syncGet return false";
             LOG_INFO("QueryPosition AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
@@ -224,7 +224,7 @@ bool OkxClient::QueryOpenOrder(vector<okx::OkxOrder>& vOpenOrder, vector<string>
     std::vector<std::pair<std::string, std::string>> headers = {{"OK-ACCESS-KEY", accountInfo.apiKey}, {"OK-ACCESS-TIMESTAMP", ts}, {"OK-ACCESS-SIGN", sign}, {"OK-ACCESS-PASSPHRASE", accountInfo.passphrase}};
 
     try {
-        if (!Net::Instance().syncGet(crypto::host_of(accountInfo.restUrl), openOrderUrl, {}, headers, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(accountInfo.restUrl), openOrderUrl, {}, headers, body, status)) {
             std::string errMsg = "Okx QueryOpenOrder syncGet return false";
             LOG_INFO("QueryOpenOrder AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);

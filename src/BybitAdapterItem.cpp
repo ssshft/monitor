@@ -62,7 +62,7 @@ void BybitAdapterItem::UpdateAccountInfo() {
     updateTime = GetCurrentTimeUs();
 }
 
-std::unordered_map<std::stirng, md::InstrumentInfo> BybitAdapterItem::GetInstrumentList() {
+std::unordered_map<std::string, md::InstrumentInfo> BybitAdapterItem::GetInstrumentList() {
     mInst.clear();
   
     if (baseAsset != "USDT") {
@@ -140,15 +140,37 @@ std::vector<bybit::Order>& BybitAdapterItem::GetOpenOrder() {
 double BybitAdapterItem::GetPositionValue(std::string asset) {
     double positionValue = 0.0;
     for (size_t i = 0; i < vPosition.size(); ++i) {
-        std::string instrumentKey = "BYBIT|" + vPosition[i].symbol + "|FUTURES";
-        std::string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instrumentKey);
-        double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
+        std::string originInstId = vPosition[i].symbol;
+        std::string category = vPosition[i].category;
+        double price = -1.0;
+        md::InstrumentInfo info;
+        if (category == "linear") {
+            if (smc->get_instrument_info(BYBIT, USDT_SWAP, originInstId.c_str(), info)) { 
+                std::string key = crypto::get_instrumentInfo_channel_key(BYBIT, USDT_SWAP, info.instId);
+                price = MdMgr::GetInstance().GetMidPrice(key);
+            }
+            else if (smc->get_instrument_info(BYBIT, USDT_FUTURES, originInstId.c_str(), info)) { 
+                std::string key = crypto::get_instrumentInfo_channel_key(BYBIT, USDT_FUTURES, info.instId);
+                price = MdMgr::GetInstance().GetMidPrice(key);
+            }
+        } 
+        else if (category == "inverse") {
+            if (smc->get_instrument_info(BYBIT, C_SWAP, originInstId.c_str(), info)) { 
+                std::string key = crypto::get_instrumentInfo_channel_key(BYBIT, C_SWAP, info.instId);
+                price = MdMgr::GetInstance().GetMidPrice(key);
+            }
+            else if (smc->get_instrument_info(BYBIT, C_FUTURES, originInstId.c_str(), info)) { 
+                std::string key = crypto::get_instrumentInfo_channel_key(BYBIT, C_FUTURES, info.instId);
+                price = MdMgr::GetInstance().GetMidPrice(key);
+            }
+        }
+
         if (asset == info.margin && price > 0.0) {
-            if (info.instrumentType == "InstType_USDT_FUTURES" || info.instrumentType == "InstType_USDT_SWAP" || info.calculateType == 0) {
-                positionValue += fabs(vPosition[i].size * price * info.multiple);
-            } else if (info.instrumentType == "InstType_C_FUTURES" || info.instrumentType == "InstType_C_SWAP" || info.calculateType == 1) {
-                positionValue += fabs(vPosition[i].size / price * info.multiple);
+            if (info.instTypeEnum == USDT_SWAP || info.instTypeEnum == USDT_FUTURES) {
+                positionValue += fabs(vPosition[i].size * price * info.value);
+            } 
+            else if (info.instTypeEnum == C_SWAP || info.instTypeEnum == C_FUTURES) {
+                positionValue += fabs(vPosition[i].size / price * info.value);
             }
         }
     }
@@ -158,15 +180,37 @@ double BybitAdapterItem::GetPositionValue(std::string asset) {
 double BybitAdapterItem::GetFloatAmount(string asset) {
     double floatAmount = 0.0;
     for (size_t i = 0; i < vPosition.size(); ++i) {
-        string instrumentKey = "BYBIT|" + vPosition[i].symbol + "|FUTURES";
-        string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instrumentKey);
-        double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
+        std::string originInstId = vPosition[i].symbol;
+        std::string category = vPosition[i].category;
+        double price = -1.0;
+        md::InstrumentInfo info;
+        if (category == "linear") {
+            if (smc->get_instrument_info(BYBIT, USDT_SWAP, originInstId.c_str(), info)) { 
+                std::string key = crypto::get_instrumentInfo_channel_key(BYBIT, USDT_SWAP, info.instId);
+                price = MdMgr::GetInstance().GetMidPrice(key);
+            }
+            else if (smc->get_instrument_info(BYBIT, USDT_FUTURES, originInstId.c_str(), info)) { 
+                std::string key = crypto::get_instrumentInfo_channel_key(BYBIT, USDT_FUTURES, info.instId);
+                price = MdMgr::GetInstance().GetMidPrice(key);
+            }
+        } 
+        else if (category == "inverse") {
+            if (smc->get_instrument_info(BYBIT, C_SWAP, originInstId.c_str(), info)) { 
+                std::string key = crypto::get_instrumentInfo_channel_key(BYBIT, C_SWAP, info.instId);
+                price = MdMgr::GetInstance().GetMidPrice(key);
+            }
+            else if (smc->get_instrument_info(BYBIT, C_FUTURES, originInstId.c_str(), info)) { 
+                std::string key = crypto::get_instrumentInfo_channel_key(BYBIT, C_FUTURES, info.instId);
+                price = MdMgr::GetInstance().GetMidPrice(key);
+            }
+        }
+
         if (asset == info.margin && price > 0.0 && vPosition[i].avgPrice > 0.0) {
-            if (info.instrumentType == "InstType_USDT_FUTURES" || info.instrumentType == "InstType_USDT_SWAP" || info.calculateType == 0) {
-                floatAmount += (price - vPosition[i].avgPrice) * vPosition[i].size * info.multiple;
-            } else if (info.instrumentType == "InstType_C_FUTURES" || info.instrumentType == "InstType_C_SWAP" || info.calculateType == 1) {
-                floatAmount += (1 / vPosition[i].avgPrice - 1 / price) * vPosition[i].size * info.multiple;
+            if (info.instTypeEnum == USDT_SWAP || info.instTypeEnum == USDT_FUTURES) {
+                floatAmount += (price - vPosition[i].avgPrice) * vPosition[i].size * info.value;
+            } 
+            else if (info.instTypeEnum == C_SWAP || info.instTypeEnum == C_FUTURES) {
+                floatAmount += (1 / vPosition[i].avgPrice - 1 / price) * vPosition[i].size * info.value;
             }
         }
     }
