@@ -1,11 +1,8 @@
 #pragma once
 
-#include <cpprest/json.h>
 #include <string>
 #include <unordered_map>
 #include "AccountItem.h"
-
-using namespace std;
 
 
 class AccountMgr {
@@ -29,8 +26,6 @@ public:
     vector<MsgCard> GetFundingRateAlarmMsg();
     vector<MsgCard> GetPositionLiquidationPriceAlarmMsg();
     vector<igmonitor::RiskInfo> GetRiskInfo();
-    vector<MsgCard> GetMarketStatusAlarmMsg();
-    vector<MsgCard> GetOrderAlarmMsg();
 
 private:
 	AccountMgr();
@@ -38,6 +33,5 @@ private:
 
     unordered_map<string, igmonitor::Asset> mTotalAsset;
     unordered_map<string, igmonitor::Position> mTotalPosition;
-    unordered_map<string, igmonitor::MarketInfo> mMarketInfo;
     double openInterestAlarm;
 };

@@ -1,7 +1,11 @@
 #include "MdMgr.h"
 #include "MonitorConfig.h"
-#include "MdMonitor.h"
 #include "ExchangeRestMd.h"
+#include "BinanceAdapterMgr.h"
+#include "GateioAdapterMgr.h"
+#include "BybitAdapterMgr.h"
+#include "OkxAdapterMgr.h"
+
 
 MdMgr::MdMgr() {
 
@@ -65,18 +69,15 @@ double MdMgr::GetMidPrice(const std::string&  key) {
 }
 
 double MdMgr::GetAssetPrice(const std::string&  asset, const std::string&  exchangeStr) {
-	string key = exchangeStr + "|" + asset + "-" + "USDT" + "|SPOT";
+	std::string instId = asset + "-" + "USDT";
+	std::string key = crypto::get_instrumentInfo_channel_key(ExchangeTypeStr2EnumMap[exchangeStr], SPOT, instId);
 	double price = GetMidPrice(key);
 	if (price <= 0.0) {
-		key = exchangeStr + "|" + asset + "-" + "USDT" + "|SWAP";
+		key = crypto::get_instrumentInfo_channel_key(ExchangeTypeStr2EnumMap[exchangeStr], USDT_SWAP, instId);
 		price = GetMidPrice(key);
 	}
 	if (price <= 0.0) {
-		key = exchangeStr + "|" + asset + "-" + "BUSD" + "|SPOT";
-		price = GetMidPrice(key);
-		key = exchangeStr + "|" + "BUSD" + "-" + "USDT" + "|SPOT";
-		double priceBUSD = GetMidPrice(key);
-		price = price * priceBUSD;
+		LOG_ERROR("cannot get asset price, asset:{} exchange:{}", asset, exchangeStr);
 	}
 	return price;
 }

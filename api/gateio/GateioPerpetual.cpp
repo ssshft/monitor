@@ -1,4 +1,5 @@
 #include "gateio/GateioPerpetual.h"
+#include "Net.h"
 
 
 GateioPerpetual::GateioPerpetual(AccountInfo& info) {
@@ -67,7 +68,7 @@ bool GateioPerpetual::QueryAccount(std::vector<gateio::FutureAsset>& vFutureAsse
             futureAsset.bonus = std::stod(res["bonus"].GetString());
         }  
         if (res.HasMember("in_dual_mode")) {
-            futureAsset.inDualMode = crypto::to_upper(res["in_dual_mode"].GetString());
+            futureAsset.inDualMode = res["in_dual_mode"].GetBool();
         }
   
         if (futureAsset.total >= 0.0000000001) {
@@ -75,7 +76,7 @@ bool GateioPerpetual::QueryAccount(std::vector<gateio::FutureAsset>& vFutureAsse
             vFutureAsset.emplace_back(futureAsset);
         }
 
-        if (res.has_field("label")) {
+        if (res.HasMember("label")) {
             std::string label = res["label"].GetString();
             std::string msg = "";
             if (label != "USER_NOT_FOUND") {
@@ -87,7 +88,7 @@ bool GateioPerpetual::QueryAccount(std::vector<gateio::FutureAsset>& vFutureAsse
                 }
             }
 
-            std::string errMsg = fmt::format("GateioPerpetual QueryAccount code: {}, msg: {}", code, msg);
+            std::string errMsg = fmt::format("GateioPerpetual QueryAccount msg: {}", msg);
             LOG_INFO("QueryAccount AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
         } 
@@ -212,7 +213,7 @@ bool GateioPerpetual::QueryPosition(vector<gateio::FuturePosition>& vFuturePosit
             }
         }
 
-        if (res.has_field("label")) {
+        if (res.HasMember("label")) {
             std::string label = res["label"].GetString();
             std::string msg = "";
             if (label != "USER_NOT_FOUND") {
@@ -224,7 +225,7 @@ bool GateioPerpetual::QueryPosition(vector<gateio::FuturePosition>& vFuturePosit
                 }
             }
 
-            std::string errMsg = fmt::format("GateioPerpetual QueryPosition code: {}, msg: {}", code, msg);
+            std::string errMsg = fmt::format("GateioPerpetual QueryPosition msg: {}", msg);
             LOG_INFO("QueryPosition AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
         } 
@@ -326,7 +327,7 @@ bool GateioPerpetual::QueryOpenOrder(vector<gateio::FutureOrder>& vFutureOrder, 
             }
         }
 
-        if (res.has_field("label")) {
+        if (res.HasMember("label")) {
             std::string label = res["label"].GetString();
             std::string msg = "";
             if (label != "USER_NOT_FOUND") {
@@ -338,7 +339,7 @@ bool GateioPerpetual::QueryOpenOrder(vector<gateio::FutureOrder>& vFutureOrder, 
                 }
             }
 
-            std::string errMsg = fmt::format("GateioPerpetual QueryOpenOrder code: {}, msg: {}", code, msg);
+            std::string errMsg = fmt::format("GateioPerpetual QueryOpenOrder msg: {}", msg);
             LOG_INFO("QueryOpenOrder AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
         } 

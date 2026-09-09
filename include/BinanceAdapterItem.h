@@ -54,7 +54,7 @@ public:
 private:
     AccountInfo accountInfo;
 
-    std::unordered_map<std::stirng, md::InstrumentInfo> mInst;
+    std::unordered_map<std::string, md::InstrumentInfo> mInst;
 
     BinanceSpot* binanceSpot;
     BinanceUFuture* binanceUFuture;

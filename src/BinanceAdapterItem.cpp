@@ -1,6 +1,5 @@
 #include "BinanceAdapterItem.h"
-#include "BasicInfoMgr.h"
-#include "BinanceMdMgr.h"
+#include "MdMgr.h"
 
 BinanceAdapterItem::BinanceAdapterItem(AccountInfo info, sm::SecurityManager* s) {
     accountInfo = info;
@@ -407,11 +406,11 @@ double BinanceAdapterItem::GetUFloatAmount(string asset) {
     for (size_t i = 0; i < vUFuturePosition.size(); ++i) {
         double price = -1.0;
         md::InstrumentInfo info;
-        if(smc->get_instrument_info("BINANCE", "USDT_SWAP", vUFuturePosition[i].symbol.c_str(), info)) {
+        if(smc->get_instrument_info(BINANCE, USDT_SWAP, vUFuturePosition[i].symbol.c_str(), info)) {
             std::string key = crypto::get_instrumentInfo_channel_key(BINANCE, USDT_SWAP, info.instId);
             price = MdMgr::GetInstance().GetMidPrice(key);
         }
-        else if (smc->get_instrument_info("BINANCE", "USDT_FUTURES", vUFuturePosition[i].symbol.c_str(), info)) {
+        else if (smc->get_instrument_info(BINANCE, USDT_FUTURES, vUFuturePosition[i].symbol.c_str(), info)) {
             std::string key = crypto::get_instrumentInfo_channel_key(BINANCE, USDT_FUTURES, info.instId);
             price = MdMgr::GetInstance().GetMidPrice(key);
         }
@@ -489,11 +488,11 @@ double BinanceAdapterItem::GetUnifyPositionValue(string asset) {
     for (size_t i = 0; i < vUmUnifyPosition.size(); ++i) {
         double price = -1.0;
         md::InstrumentInfo info;
-        if(smc->get_instrument_info("BINANCE", "USDT_SWAP", vUmUnifyPosition[i].symbol.c_str(), info)) {
+        if(smc->get_instrument_info(BINANCE, USDT_SWAP, vUmUnifyPosition[i].symbol.c_str(), info)) {
             std::string key = crypto::get_instrumentInfo_channel_key(BINANCE, USDT_SWAP, info.instId);
             price = MdMgr::GetInstance().GetMidPrice(key);
         }
-        else if (smc->get_instrument_info("BINANCE", "USDT_FUTURES", vUmUnifyPosition[i].symbol.c_str(), info)) {
+        else if (smc->get_instrument_info(BINANCE, USDT_FUTURES, vUmUnifyPosition[i].symbol.c_str(), info)) {
             std::string key = crypto::get_instrumentInfo_channel_key(BINANCE, USDT_FUTURES, info.instId);
             price = MdMgr::GetInstance().GetMidPrice(key);
         }
@@ -505,12 +504,19 @@ double BinanceAdapterItem::GetUnifyPositionValue(string asset) {
     }
 
     for (size_t i = 0; i < vCmUnifyPosition.size(); ++i) {
-        string instrumentKey = "BINANCE|" + vCmUnifyPosition[i].symbol + "|FUTURES";
-        string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instrumentKey);
-        double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
+        double price = -1.0;
+        md::InstrumentInfo info;
+        if (smc->get_instrument_info(BINANCE, C_SWAP, vCmUnifyPosition[i].symbol.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(BINANCE, C_SWAP, info.instId);
+            price = MdMgr::GetInstance().GetMidPrice(key);
+        }
+        else if (smc->get_instrument_info(BINANCE, C_FUTURES, vCmUnifyPosition[i].symbol.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(BINANCE, C_FUTURES, info.instId);
+            price = MdMgr::GetInstance().GetMidPrice(key);
+        }
+
         if (asset == info.margin && price > 0.0) {
-            positionValue += fabs(vCmUnifyPosition[i].positionAmt / price * info.multiple);
+            positionValue += fabs(vCmUnifyPosition[i].positionAmt / price * info.value);
         }
     }
     return positionValue;
@@ -519,16 +525,19 @@ double BinanceAdapterItem::GetUnifyPositionValue(string asset) {
 double BinanceAdapterItem::GetUnifyFloatAmount(string asset) {
     double floatAmount = 0.0;
     for (size_t i = 0; i < vUmUnifyPosition.size(); ++i) {
-        string instrumentKey = "BINANCE|" + vUmUnifyPosition[i].symbol + "|FUTURES";
-        string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instrumentKey);
-        double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
-        if (asset == info.margin && price > 0.0) {
-            floatAmount += (price - vUmUnifyPosition[i].entryPrice) * vUmUnifyPosition[i].positionAmt * info.multiple;
+        double price = -1.0;
+        md::InstrumentInfo info;
+        if(smc->get_instrument_info(BINANCE, USDT_SWAP, vUmUnifyPosition[i].symbol.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(BINANCE, USDT_SWAP, info.instId);
+            price = MdMgr::GetInstance().GetMidPrice(key);
+        }
+        else if (smc->get_instrument_info(BINANCE, USDT_FUTURES, vUmUnifyPosition[i].symbol.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(BINANCE, USDT_FUTURES, info.instId);
+            price = MdMgr::GetInstance().GetMidPrice(key);
+        }
 
-            stringstream ss;
-            ss << "accountId:" << accountInfo.accountId << " instrumentKey:" << instrumentKey << " price:" << price << " entryPrice:" << vUmUnifyPosition[i].entryPrice << " positionAmt:" << vUmUnifyPosition[i].positionAmt << " multiple:" << info.multiple << " floatAmount:" << floatAmount;
-            LOG_INFO("GetUFloatAmount: %s", ss.str().c_str()); 
+        if (asset == info.margin && price > 0.0) {
+            floatAmount += (price - vUmUnifyPosition[i].entryPrice) * vUmUnifyPosition[i].positionAmt * info.value;
         }
     }
 

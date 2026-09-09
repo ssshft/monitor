@@ -1,7 +1,6 @@
 #include "AccountMgr.h"
-#include "BasicInfoMgr.h"
-#include "BinanceMdMgr.h"
-#include "MarketInfo.h"
+#include "MdMgr.h"
+#include "MonitorConfig.h"
 
 AccountMgr::AccountMgr() {
 
@@ -88,35 +87,79 @@ void AccountMgr::CalculateRiskInfo() {
 }
 
 string AccountMgr::GetPhysicalOverView() {
-    vector<web::json::value> previewV;
-    for (auto iter = mAccount.begin(); iter != mAccount.end(); ++iter) {
-        string type = iter->second->GetAccountType();
-        if (type == "physical") {
-            previewV.push_back(iter->second->GetPreview());
-        }
+    rapidjson::Document previewRes;
+    previewRes.SetObject();
+    auto& allocator = previewRes.GetAllocator();
+    
+    // 创建data对象
+    rapidjson::Value previewDataV(rapidjson::kObjectType);
+    
+    // 创建list数组
+    rapidjson::Value listArray(rapidjson::kArrayType);
+    
+    for (auto iter = mAccount.begin(); iter != mAccount.end(); ++iter) {       
+        // 获取每个账户的preview Document
+        rapidjson::Document previewDoc = iter->second->GetPreview();
+        
+        // 将Document的值复制到listArray中
+        rapidjson::Value previewValue;
+        previewValue.CopyFrom(previewDoc, allocator);
+        listArray.PushBack(previewValue, allocator);
+        
     }
-	web::json::value previewDataV;
-	previewDataV["list"] = web::json::value::array(previewV);
-	web::json::value previewRes;
-	previewRes["type"] = web::json::value::number(4);
-	previewRes["data"] = previewDataV;
-    return previewRes.serialize();
+    
+    // 添加list到data对象
+    previewDataV.AddMember("list", listArray, allocator);
+    
+    // 添加type和data到previewRes
+    previewRes.AddMember("type", 4, allocator);
+    previewRes.AddMember("data", previewDataV, allocator);
+    
+    // 序列化为字符串
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    previewRes.Accept(writer);
+    
+    return buffer.GetString();
 }
 
 string AccountMgr::GetPhysicalAccountStatus() {
-    vector<web::json::value> detailV;
+    rapidjson::Document detailRes;
+    detailRes.SetObject();
+    auto& allocator = detailRes.GetAllocator();
+    
+    // 创建data对象
+    rapidjson::Value detailDataV(rapidjson::kObjectType);
+    
+    // 创建list数组
+    rapidjson::Value listArray(rapidjson::kArrayType);
+    
     for (auto iter = mAccount.begin(); iter != mAccount.end(); ++iter) {
         string type = iter->second->GetAccountType();
         if (type == "physical") {
-            detailV.push_back(iter->second->GetDetail());
+            // 获取每个账户的detail Document
+            rapidjson::Document detailDoc = iter->second->GetDetail();
+            
+            // 将Document的值复制到listArray中
+            rapidjson::Value detailValue;
+            detailValue.CopyFrom(detailDoc, allocator);
+            listArray.PushBack(detailValue, allocator);
         }
     }
-    web::json::value detailDataV;
-    detailDataV["list"] = web::json::value::array(detailV);
-    web::json::value detailRes;
-    detailRes["type"] = web::json::value::number(1);
-    detailRes["data"] = detailDataV;
-    return detailRes.serialize();
+    
+    // 添加list到data对象
+    detailDataV.AddMember("list", listArray, allocator);
+    
+    // 添加type和data到detailRes
+    detailRes.AddMember("type", 1, allocator);
+    detailRes.AddMember("data", detailDataV, allocator);
+    
+    // 序列化为字符串
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    detailRes.Accept(writer);
+    
+    return buffer.GetString();
 }
 
 void AccountMgr::CalculateAccount() {
@@ -196,38 +239,6 @@ vector<igmonitor::RiskInfo> AccountMgr::GetRiskInfo() {
             igmonitor::RiskInfo& riskInfo = iter->second->GetRiskInfo();
             v.emplace_back(riskInfo);
         }
-    }
-    return v;
-}
-
-vector<MsgCard> AccountMgr::GetMarketStatusAlarmMsg() {
-    int64_t currentTime = gettickcount();
-    vector<MsgCard> v;
-    if (openInterestAlarm > 0) {
-        for (auto iter = mMarketInfo.begin(); iter != mMarketInfo.end(); ++iter) {
-            if (fabs(iter->second.concentration) >= openInterestAlarm) {   
-                stringstream ss;
-                string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
-                ss << "Symbol: " << iter->first << " 集中度超过阈值:" << openInterestAlarm << " 当前集中度=" << iter->second.concentration;
-                
-                MsgCard msgCard;
-                msgCard.templateId = 2;
-                msgCard.title = "MarketInfo";
-                msgCard.datetime = currentTimeStr;
-                msgCard.content = ss.str();
-                v.emplace_back(msgCard);
-            }
-        }
-    }
-
-    return v;
-}
-
-vector<MsgCard> AccountMgr::GetOrderAlarmMsg() {
-    vector<MsgCard> v;
-    for (auto iter = mAccount.begin(); iter != mAccount.end(); ++iter) {
-        vector<MsgCard> vAlarmMsg = iter->second->GetOrderAlarmMsg();
-        v.insert(v.end(), vAlarmMsg.begin(), vAlarmMsg.end());
     }
     return v;
 }

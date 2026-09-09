@@ -103,9 +103,9 @@ struct SubData {
 };
 
 struct Depth {
-	ExchangeType xchangeType{""};
-	InstType instrumentType{""};
-	md::MarketType marketType{""};
+	ExchangeType exchangeType;
+	InstType instrumentType;
+	md::MarketType marketType;
 	string instrumentId{""};
 	vector<double> askP;
 	vector<double> askV;

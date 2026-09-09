@@ -1,12 +1,11 @@
 #include "ProductItem.h"
-#include "BinanceAccountMgr.h"
+#include "AccountMgr.h"
 #include "MonitorConfig.h"
-#include "BinanceMdMgr.h"
-#include "CoinbaseMdMgr.h"
+#include "MdMgr.h"
 #include "BinanceAdapterMgr.h"
-#include "CoinbaseAdapterMgr.h"
 #include "GateioAdapterMgr.h"
 #include "BybitAdapterMgr.h"
+#include "OkxAdapterMgr.h"
 #include <regex>
 
 ProductItem::ProductItem(string na, vector<int> v) {
@@ -77,7 +76,7 @@ void ProductItem::CalculateRiskInfo() {
     double maxRealLeverageD = 0.0;
     for (size_t i = 0; i < vAccountId.size(); ++i) {
         int accountId = vAccountId[i];
-        BinanceAccountItem* item = BinanceAccountMgr::GetInstance().GetAccountItem(accountId);
+        AccountItem* item = AccountMgr::GetInstance().GetAccountItem(accountId);
         if (item) {
             bool query = item->GetAdapterQueryStatus();
             adapterQuery = adapterQuery && query;
@@ -197,9 +196,9 @@ void ProductItem::CalculateRiskInfo() {
         if (iter->first == "USDT" || iter->first == "BUSD") {
             price = 1;
         } else {
-            price = BinanceMdMgr::GetInstance().GetAssetPrice(iter->first, "GATEIO");
+            price = MdMgr::GetInstance().GetAssetPrice(iter->first, "GATEIO");
             if (price <= 0.0000000001) {
-                price = BinanceMdMgr::GetInstance().GetAssetPrice(iter->first, "BINANCE");
+                price = MdMgr::GetInstance().GetAssetPrice(iter->first, "BINANCE");
             }
         }
         
@@ -207,9 +206,9 @@ void ProductItem::CalculateRiskInfo() {
         if (baseAsset == "USDT" || baseAsset == "USD") {
             priceBaseAsset = 1;
         } else {
-            priceBaseAsset = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, "GATEIO");
+            priceBaseAsset = MdMgr::GetInstance().GetAssetPrice(baseAsset, "GATEIO");
             if (price <= 0.0000000001) {
-                price = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, "BINANCE");
+                price = MdMgr::GetInstance().GetAssetPrice(baseAsset, "BINANCE");
             }
         }
         
@@ -395,12 +394,7 @@ vector<MsgCard> ProductItem::GetAlarmMsg() {
         if (alarmInfo.netValueThreshold.monthValue > 0 && alarmInfo.netValueThreshold.initValue > 0) {
             double netValueU = riskInfo.netValueD;
             if (baseAsset != "USDT") {
-                double price = 0.0;
-                if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT") {
-                    price = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
-                } else if (exchangeStr == "COINBASE") {
-                    price = CoinbaseMdMgr::GetInstance().GetAssetPrice(baseAsset);
-                }
+                double price = MdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
                 netValueU *= price;
             }
             double maxValue = max(alarmInfo.netValueThreshold.monthValue, alarmInfo.netValueThreshold.initValue) / 0.8 * alarmInfo.netValueThreshold.percent;
@@ -460,11 +454,6 @@ void ProductItem::UpdateAccountInfo() {
 	        bItem->UpdateAccountInfo();
 	    }
 
-	    CoinbaseAdapterItem* cItem = CoinbaseAdapterMgr::GetInstance().GetAdapterItem(accountId);
-	    if (cItem) {
-	        cItem->UpdateAccountInfo();
-	    }
-
 	    GateioAdapterItem* gItem = GateioAdapterMgr::GetInstance().GetAdapterItem(accountId);
 	    if (gItem) {
 	        gItem->UpdateAccountInfo();
@@ -474,6 +463,12 @@ void ProductItem::UpdateAccountInfo() {
 	    if (bybItem) {
 	        bybItem->UpdateAccountInfo();
 	    }
+
+        OkxAdapterItem* okxItem = OkxAdapterMgr::GetInstance().GetAdapterItem(accountId);
+	    if (okxItem) {
+	        okxItem->UpdateAccountInfo();
+	    }
+
     }
 }
 

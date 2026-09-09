@@ -25,12 +25,14 @@ private:
 
     int calcAccountStatsInterval;
     int accountAlarmInterval;
+    int pubAccountInfoInterval;
     int storeRiskInfoInterval;
     int systemMonitorInterval;
 
     int64_t startTime;
     int64_t lastCalcAccountStatsTime;
     int64_t lastAccountAlarmTime;
+    int64_t lastPubAccountInfoTime;
     int64_t lastStoreRiskInfoTime;
     int64_t lastSystemMonitorTime;
 

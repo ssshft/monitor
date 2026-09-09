@@ -1,4 +1,5 @@
 #include "bybit/Bybit.h"
+#include "Net.h"
 
 
 Bybit::Bybit(AccountInfo& info) {
@@ -16,11 +17,11 @@ bool Bybit::QueryAccount(bybit::TotalAccountInfo& totalAccountInfo, std::vector<
     int status = 0;
     std::string body;
 
-    std::string query = "accountType=UNIFIED";
-    std::string fullPath = accountUrl + "?" + query;
+    std::string queryStr = "accountType=UNIFIED";
+    std::string fullPath = accountUrl + "?" + queryStr;
 
     std::string ts = std::to_string(crypto::getCurrentTimeMilli());
-    std::string sign = crypto::getBybitSignatureRest(accountInfo.secretKey, ts, accountInfo.apiKey, "5000", query);
+    std::string sign = crypto::getBybitSignatureRest(accountInfo.secretKey, ts, accountInfo.apiKey, "5000", queryStr);
     std::vector<std::pair<std::string, std::string>> headers = {{"X-BAPI-API-KEY", accountInfo.apiKey}, {"X-BAPI-TIMESTAMP", ts}, {"X-BAPI-RECV-WINDOW", "5000"}, {"X-BAPI-SIGN", sign}};
 
     try {
@@ -111,7 +112,7 @@ bool Bybit::QueryAccount(bybit::TotalAccountInfo& totalAccountInfo, std::vector<
  
                     LOG_INFO("QueryAccount AccountId: {}   Bybit totalAccountInfo: {}", accountInfo.accountId, totalAccountInfo.toString());
 
-                    if (data[i].HasMember("coin") && data[i]["coin"].IsArray) {
+                    if (data[i].HasMember("coin") && data[i]["coin"].IsArray()) {
                         const rapidjson::Value& coinArr = data[i]["coin"];
                         for (rapidjson::SizeType j = 0; j < coinArr.Size(); ++j) {
                             bybit::Asset asset;
@@ -211,11 +212,11 @@ bool Bybit::QueryPosition(vector<bybit::Position>& vPosition, vector<string>& vE
     int status = 0;
     std::string body;
 
-    std::string query = fmt::format("category={}&settleCoin=USDT", "linear");
-    std::string fullPath = positionUrl + "?" + query;
+    std::string queryStr = fmt::format("category={}&settleCoin=USDT", "linear");
+    std::string fullPath = positionUrl + "?" + queryStr;
 
     std::string ts = std::to_string(crypto::getCurrentTimeMilli());
-    std::string sign = crypto::getBybitSignatureRest(accountInfo.secretKey, ts, accountInfo.apiKey, "5000", query);
+    std::string sign = crypto::getBybitSignatureRest(accountInfo.secretKey, ts, accountInfo.apiKey, "5000", queryStr);
     std::vector<std::pair<std::string, std::string>> headers = {{"X-BAPI-API-KEY", accountInfo.apiKey}, {"X-BAPI-TIMESTAMP", ts}, {"X-BAPI-RECV-WINDOW", "5000"}, {"X-BAPI-SIGN", sign}};
 
     try {
@@ -332,11 +333,11 @@ bool Bybit::QueryOpenOrder(vector<bybit::Order>& vOpenOrder, vector<string>& vEr
     int status = 0;
     std::string body;
 
-    std::string query = "category=linear&settleCoin=USDT&orderFilter=Order&limit=50";
-    std::string fullPath = orderUrl + "?" + query;
+    std::string queryStr = "category=linear&settleCoin=USDT&orderFilter=Order&limit=50";
+    std::string fullPath = orderUrl + "?" + queryStr;
 
     std::string ts = std::to_string(crypto::getCurrentTimeMilli());
-    std::string sign = crypto::getBybitSignatureRest(accountInfo.secretKey, ts, accountInfo.apiKey, "5000", query);
+    std::string sign = crypto::getBybitSignatureRest(accountInfo.secretKey, ts, accountInfo.apiKey, "5000", queryStr);
     std::vector<std::pair<std::string, std::string>> headers = {{"X-BAPI-API-KEY", accountInfo.apiKey}, {"X-BAPI-TIMESTAMP", ts}, {"X-BAPI-RECV-WINDOW", "5000"}, {"X-BAPI-SIGN", sign}};
 
     try {
@@ -363,59 +364,59 @@ bool Bybit::QueryOpenOrder(vector<bybit::Order>& vOpenOrder, vector<string>& vEr
                 for (rapidjson::SizeType i = 0; i < data.Size(); ++i) {
                     bybit::Order order;
                     if (data[i].HasMember("orderId")) {
-                        position.orderId = data[i]["orderId"].GetString();
+                        order.orderId = data[i]["orderId"].GetString();
                     }
 
                     if (data[i].HasMember("orderLinkId")) {
-                        position.orderLinkId = data[i]["orderLinkId"].GetString();
+                        order.orderLinkId = data[i]["orderLinkId"].GetString();
                     }
 
                     if (data[i].HasMember("symbol")) {
-                        position.symbol = data[i]["symbol"].GetString();
+                        order.symbol = data[i]["symbol"].GetString();
                     }
    
                     if (data[i].HasMember("price")) {
-                        position.price = std::stod(data[i]["price"].GetString());
+                        order.price = std::stod(data[i]["price"].GetString());
                     }  
 
                     if (data[i].HasMember("qty")) {
-                        position.qty = std::stod(data[i]["qty"].GetString());
+                        order.qty = std::stod(data[i]["qty"].GetString());
                     }  
 
                     if (data[i].HasMember("side")) {
-                        position.side = data[i]["side"].GetString();
+                        order.side = data[i]["side"].GetString();
                     }             
 
                     if (data[i].HasMember("avgPrice")) {
-                        position.avgPrice = std::stod(data[i]["avgPrice"].GetString());
+                        order.avgPrice = std::stod(data[i]["avgPrice"].GetString());
                     } 
 
                     if (data[i].HasMember("cumExecQty")) {
-                        position.cumExecQty = std::stod(data[i]["cumExecQty"].GetString());
+                        order.cumExecQty = std::stod(data[i]["cumExecQty"].GetString());
                     } 
 
                     if (data[i].HasMember("cumExecValue")) {
-                        position.cumExecValue = std::stod(data[i]["cumExecValue"].GetString());
+                        order.cumExecValue = std::stod(data[i]["cumExecValue"].GetString());
                     } 
 
                     if (data[i].HasMember("cumExecFee")) {
-                        position.cumExecFee = std::stod(data[i]["cumExecFee"].GetString());
+                        order.cumExecFee = std::stod(data[i]["cumExecFee"].GetString());
                     } 
 
                     if (data[i].HasMember("timeInForce")) {
-                        position.timeInForce = data[i]["timeInForce"].GetString();
+                        order.timeInForce = data[i]["timeInForce"].GetString();
                     }  
 
                     if (data[i].HasMember("orderType")) {
-                        position.orderType = data[i]["orderType"].GetString();
+                        order.orderType = data[i]["orderType"].GetString();
                     }  
 
                     if (data[i].HasMember("createdTime")) {
-                        position.createdTime = std::stoll(data[i]["createdTime"].GetString());
+                        order.createdTime = std::stoll(data[i]["createdTime"].GetString());
                     } 
 
                     if (data[i].HasMember("updatedTime")) {
-                        position.updatedTime = std::stoll(data[i]["updatedTime"].GetString());
+                        order.updatedTime = std::stoll(data[i]["updatedTime"].GetString());
                     } 
  
                     if (fabs(order.qty) > 0.0000000001) {

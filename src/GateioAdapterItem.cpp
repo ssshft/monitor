@@ -1,6 +1,5 @@
 #include "GateioAdapterItem.h"
-#include "BasicInfoMgr.h"
-#include "BinanceMdMgr.h"
+#include "MdMgr.h"
 
 
 GateioAdapterItem::GateioAdapterItem(AccountInfo info, sm::SecurityManager* s) {
@@ -88,18 +87,14 @@ void GateioAdapterItem::UpdateAccountInfo() {
         bool perpetualQueryOpenOrder = gateioPerpetual->QueryOpenOrder(vPerpetualOpenOrder, vPerpetualOpenOrderErrMsg);
         query = query && perpetualQueryOpenOrder;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vPerpetualOpenOrderErrMsg.begin(), vPerpetualOpenOrderErrMsg.end());
-
-        vector<string> vPerpetualOrderErrMsg;
-        bool perpetualQueryOrder = gateioPerpetual->QueryOrder(vPerpetualOrder, vPerpetualOrderErrMsg);
-        //query = query && perpetualQueryOrder;
-        //vQueryErrMsg.insert(vQueryErrMsg.end(), vPerpetualOrderErrMsg.begin(), vPerpetualOrderErrMsg.end());
     }
 
 
     if (unifiedEnable && gateioUnified) {
         vSpotAsset.clear();  // 统一账户暂时使用放到现货里
         vector<string> vUnifiedErrMsg;
-        bool unifiedQueryAccount = gateioUnified->QueryAccount(vSpotAsset, vUnifiedErrMsg);
+
+        bool unifiedQueryAccount = gateioUnified->QueryAccount(unifyTotalAccount, vSpotAsset, vUnifiedErrMsg);
         query = query && unifiedQueryAccount;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vUnifiedErrMsg.begin(), vUnifiedErrMsg.end()); 
     }
@@ -187,6 +182,25 @@ vector<gateio::FutureOrder>& GateioAdapterItem::GetPerpetualOpenOrder() {
 
 vector<gateio::FutureOrder>& GateioAdapterItem::GetPerpetualOrder() {
     return vPerpetualOrder;
+}
+
+double GateioAdapterItem::GetPerpetualPositionValue(std::string asset) {
+    double positionValue = 0.0;
+    for (size_t i = 0; i < vPerpetualPosition.size(); ++i) {
+        std::string originInstId = vPerpetualPosition[i].contract;
+        double price = -1.0;
+        md::InstrumentInfo info;
+        if (smc->get_instrument_info(GATEIO, USDT_SWAP, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(GATEIO, USDT_SWAP, info.instId);
+            price = MdMgr::GetInstance().GetMidPrice(key);
+        }
+
+        if (asset == info.margin && price > 0.0 && vPerpetualPosition[i].entryPrice > 0.0) {
+            double f = std::fabs(vPerpetualPosition[i].size) * price * info.value;
+            positionValue += f;
+        }
+    }
+    return positionValue;
 }
 
 double GateioAdapterItem::GetPerpetualFloatAmount(string asset) {

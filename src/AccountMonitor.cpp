@@ -36,9 +36,6 @@ vector<MsgCard> AccountMonitor::GetAlarmMsg() {
     vector<MsgCard> vAccountMgrPrice = AccountMgr::GetInstance().GetPositionLiquidationPriceAlarmMsg();
     v.insert(v.end(), vAccountMgrPrice.begin(), vAccountMgrPrice.end());
 
-    vector<MsgCard> vAccountMgrOrder = AccountMgr::GetInstance().GetOrderAlarmMsg();
-    v.insert(v.end(), vAccountMgrOrder.begin(), vAccountMgrOrder.end());
-
     vector<MsgCard> vProductMgr = ProductMgr::GetInstance().GetAlarmMsg();
     v.insert(v.end(), vProductMgr.begin(), vProductMgr.end());
     return v;

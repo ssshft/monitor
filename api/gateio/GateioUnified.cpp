@@ -1,4 +1,5 @@
 #include "gateio/GateioUnified.h"
+#include "Net.h"
 
 
 GateioUnified::GateioUnified(AccountInfo& info) {
@@ -96,7 +97,7 @@ bool GateioUnified::QueryAccount(gateio::UnifyTotalAccount& unifyTotalAccount, s
             }
         }
 
-        if (res.has_field("label")) {
+        if (res.HasMember("label")) {
             query = false;
             std::string label = res["label"].GetString();
             std::string msg = "";
@@ -108,7 +109,7 @@ bool GateioUnified::QueryAccount(gateio::UnifyTotalAccount& unifyTotalAccount, s
                 }
             }
 
-            std::string errMsg = fmt::format("GateioUnified QueryAccount code: {}, msg: {}", code, msg);
+            std::string errMsg = fmt::format("GateioUnified QueryAccount msg: {}", msg);
             LOG_INFO("QueryAccount AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
         } 

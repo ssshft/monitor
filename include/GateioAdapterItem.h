@@ -2,9 +2,7 @@
 
 #include "MonitorConfig.h"
 #include "gateio/GateioSpot.h"
-#include "gateio/GateioDelivery.h"
 #include "gateio/GateioPerpetual.h"
-#include "gateio/GateioCrossMargin.h"
 #include "gateio/GateioUnified.h"
 #include "securitymanager.h"
 #include <map>
@@ -23,6 +21,7 @@ public:
     std::vector<gateio::FuturePosition>& GetPerpetualPosition();
     std::vector<gateio::FutureOrder>& GetPerpetualOpenOrder();
     std::vector<gateio::FutureOrder>& GetPerpetualOrder();
+    double GetPerpetualPositionValue(std::string asset);
     double GetPerpetualFloatAmount(std::string asset);
     double GetPerpetualAssetTotal(std::string asset);
     void GetPerpetualLongShortFrozenPosition(std::string symbol, double longFrozenPos, double shortFrozenPos);
@@ -33,7 +32,7 @@ public:
 
 private:
     AccountInfo accountInfo;
-    std::unordered_map<std::stirng, md::InstrumentInfo> mInst;
+    std::unordered_map<std::string, md::InstrumentInfo> mInst;
 
     GateioSpot* gateioSpot;
     GateioPerpetual* gateioPerpetual;
@@ -46,6 +45,7 @@ private:
     std::vector<gateio::FuturePosition> vPerpetualPosition;
     std::vector<gateio::FutureOrder> vPerpetualOpenOrder;
     std::vector<gateio::FutureOrder> vPerpetualOrder;
+    gateio::UnifyTotalAccount unifyTotalAccount;
     string baseAsset;
     int64_t updateTime;
 

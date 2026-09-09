@@ -24,6 +24,7 @@ public:
     int GetPubPort();
     std::string GetPubPassword();
     std::string GetPhysicalPubChannel();
+    std::string GetOverviewPubChannel();
     std::unordered_map<int, AccountInfo>& GetAccountInfo();
     std::unordered_map<std::string, ProductInfo>& GetProductInfo();
     std::string GetBaseAssetById(int customerId);

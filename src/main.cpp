@@ -6,6 +6,8 @@
 std::mutex mut;
 
 
+// to do
+// 1. 账户持仓付出的资金费用需要报警
 int main(int argc, char* argv[]) {
     std::string currentTimeStr = CovertToUtcStr(crypto::getCurrentTime(), false);
     std::cout << currentTimeStr << " monitor server executed..." << std::endl;
@@ -32,7 +34,7 @@ int main(int argc, char* argv[]) {
     }
     crypto::write_program_pid(program);
 
-    int logLevel = MonitorConfig::GetInstance().GetLogLevel();
+    std::string logLevel = std::to_string(MonitorConfig::GetInstance().GetLogLevel());
     std::string logPath = MonitorConfig::GetInstance().GetLogPath();
 
     MonitorOperation* op = new MonitorOperation();

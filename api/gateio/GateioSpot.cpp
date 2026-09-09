@@ -1,4 +1,5 @@
 #include "gateio/GateioSpot.h"
+#include "Net.h"
 
 
 GateioSpot::GateioSpot(AccountInfo& info) {
@@ -57,7 +58,7 @@ bool GateioSpot::QueryAccount(std::vector<gateio::SpotAsset>& vSpotAsset, std::v
             }
         }
 
-        if (res.has_field("label")) {
+        if (res.HasMember("label")) {
             query = false;
             std::string label = res["label"].GetString();
             std::string msg = "";
@@ -69,7 +70,7 @@ bool GateioSpot::QueryAccount(std::vector<gateio::SpotAsset>& vSpotAsset, std::v
                 }
             }
 
-            std::string errMsg = fmt::format("GateioSpot QueryAccount code: {}, msg: {}", code, msg);
+            std::string errMsg = fmt::format("GateioSpot QueryAccount msg: {}", msg);
             LOG_INFO("QueryAccount AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
         } 
@@ -161,7 +162,7 @@ bool GateioSpot::QueryOpenOrder(std::vector<gateio::SpotOrder>& vSpotOpenOrder, 
             }
         }
 
-        if (res.has_field("label")) {
+        if (res.HasMember("label")) {
             query = false;
             std::string label = res["label"].GetString();
             std::string msg = "";
@@ -173,7 +174,7 @@ bool GateioSpot::QueryOpenOrder(std::vector<gateio::SpotOrder>& vSpotOpenOrder, 
                 }
             }
 
-            std::string errMsg = fmt::format("GateioSpot QueryOpenOrder code: {}, msg: {}", code, msg);
+            std::string errMsg = fmt::format("GateioSpot QueryOpenOrder msg: {}", msg);
             LOG_INFO("QueryOpenOrder AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
         } 

@@ -1,9 +1,6 @@
 #include "AccountItem.h"
-#include "BasicInfoMgr.h"
-#include "BinanceMdMgr.h"
+#include "MdMgr.h"
 #include "BinanceAdapterMgr.h"
-#include "CoinbaseAdapterMgr.h"
-#include "CoinbaseMdMgr.h"
 #include "GateioAdapterMgr.h"
 #include "BybitAdapterMgr.h"
 #include "OkxAdapterMgr.h"
@@ -86,11 +83,11 @@ void AccountItem::UpdateByBinanceAdapter() {
             mSpotAsset[asset.asset] = asset;            
         }
 
+        
         std::vector<binance::SpotOpenOrder>& vSpotOpenOrder = item->GetSpotOpenOrder();
         for (size_t i = 0; i < vSpotOpenOrder.size(); ++i) {
             std::string symbol = vSpotOpenOrder[i].symbol;
-            std::string instKey = exchangeStr + "|" + symbol + "|SPOT";
-            std::string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+            std::string key = exchangeStr + "|" + symbol;
 
             double openQty = vSpotOpenOrder[i].origQty - vSpotOpenOrder[i].executedQty;
             auto iter = mSpotOpenOrder.find(key);
@@ -104,6 +101,7 @@ void AccountItem::UpdateByBinanceAdapter() {
                 mSpotOpenOrder[key] = openOrder;
             }
        }
+       
 
         // ufuture
         std::vector<binance::UFutureAsset>& vUFutureAsset = item->GetUFutureAsset();
@@ -143,8 +141,7 @@ void AccountItem::UpdateByBinanceAdapter() {
             position.netAvgPriceD = vUFuturePosition[i].entryPrice;
             position.floatAmountD = vUFuturePosition[i].unrealizedProfit;
             position.liquidationPrice = liquidationPrice;
-            std::string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
-            position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+            std::string key = exchangeStr + "|" + position.symbol;
             position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
             position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
 
@@ -154,9 +151,7 @@ void AccountItem::UpdateByBinanceAdapter() {
         vector<binance::FutureOpenOrder>& vUFutureOpenOrder = item->GetUOpenOrder();
         for (size_t i = 0; i < vUFutureOpenOrder.size(); ++i) {
             std::string symbol = vUFutureOpenOrder[i].symbol;
-            std::string instKey = exchangeStr + "|" + symbol + "|FUTURES";
-            std::string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
-
+            std::string key = exchangeStr + "|" + symbol;
             double openQty = vUFutureOpenOrder[i].origQty - vUFutureOpenOrder[i].executedQty;
             auto iter = mUFutureOpenOrder.find(key);
             if (iter != mUFutureOpenOrder.end()) {
@@ -208,8 +203,8 @@ void AccountItem::UpdateByBinanceAdapter() {
             position.netAvgPriceD = vCFuturePosition[i].entryPrice;
             position.floatAmountD = vCFuturePosition[i].unrealizedProfit;
             position.liquidationPrice = liquidationPrice;
-            std::string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
-            position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+
+            std::string key = exchangeStr + "|" + position.symbol;
             position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
             position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
 
@@ -219,9 +214,8 @@ void AccountItem::UpdateByBinanceAdapter() {
         std::vector<binance::FutureOpenOrder>& vCFutureOpenOrder = item->GetCOpenOrder();
         for (size_t i = 0; i < vCFutureOpenOrder.size(); ++i) {
             std::string symbol = vCFutureOpenOrder[i].symbol;
-            std::string instKey = exchangeStr + "|" + symbol + "|FUTURES";
-            std::string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
 
+            std::string key = exchangeStr + "|" + symbol;
             double openQty = vCFutureOpenOrder[i].origQty - vCFutureOpenOrder[i].executedQty;
             auto iter = mCFutureOpenOrder.find(key);
             if (iter != mCFutureOpenOrder.end()) {
@@ -265,8 +259,8 @@ void AccountItem::UpdateByBinanceAdapter() {
                 position.netPositionD = vUmUnifyPosition[i].positionAmt;
                 position.netAvgPriceD = vUmUnifyPosition[i].entryPrice;
                 position.floatAmountD = vUmUnifyPosition[i].unRealizedProfit;
-                std::string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
-                position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+ 
+                std::string key = exchangeStr + "|" + position.symbol;                
                 position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
                 position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
                 mUFuturePosition[position.symbol] = position;
@@ -284,8 +278,8 @@ void AccountItem::UpdateByBinanceAdapter() {
                 position.netPositionD = vCmUnifyPosition[i].positionAmt;
                 position.netAvgPriceD = vCmUnifyPosition[i].entryPrice;
                 position.floatAmountD = vCmUnifyPosition[i].unRealizedProfit;
-                std::string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
-                position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+
+                std::string key = exchangeStr + "|" + position.symbol;   
                 position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
                 position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
                 mCFuturePosition[position.symbol] = position;
@@ -294,9 +288,8 @@ void AccountItem::UpdateByBinanceAdapter() {
             std::vector<binance::UnifyOpenOrder>& vUmUnifyOpenOrder = item->GetUmUnifyOpenOrder();
             for (size_t i = 0; i < vUmUnifyOpenOrder.size(); ++i) {
                 std::string symbol = vUmUnifyOpenOrder[i].symbol;
-                std::string instKey = exchangeStr + "|" + symbol + "|FUTURES";
-                std::string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
 
+                std::string key = exchangeStr + "|" + symbol;   
                 double openQty = vUmUnifyOpenOrder[i].origQty - vUmUnifyOpenOrder[i].executedQty;
                 auto iter = mUFutureOpenOrder.find(key);
                 if (iter != mUFutureOpenOrder.end()) {
@@ -312,9 +305,8 @@ void AccountItem::UpdateByBinanceAdapter() {
             std::vector<binance::UnifyOpenOrder>& vCmUnifyOpenOrder = item->GetCmUnifyOpenOrder();
             for (size_t i = 0; i < vCmUnifyOpenOrder.size(); ++i) {
                 std::string symbol = vCmUnifyOpenOrder[i].symbol;
-                std::string instKey = exchangeStr + "|" + symbol + "|FUTURES";
-                std::string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
 
+                std::string key = exchangeStr + "|" + symbol;   
                 double openQty = vCmUnifyOpenOrder[i].origQty - vCmUnifyOpenOrder[i].executedQty;
                 auto iter = mCFutureOpenOrder.find(key);
                 if (iter != mCFutureOpenOrder.end()) {
@@ -337,10 +329,6 @@ void AccountItem::UpdateByGateioAdapter() {
         adapterQuery = item->GetQueryStatus();
         adapterQueryErrMsg = item->GetQueryErrMsg();
         unified = item->isUnified();
-
-        gateio::CrossMarginAccountTotal& crossMarginAccountTotal = item->GetCrossMarginAccountTotal();
-        totalMarginBalance = crossMarginAccountTotal.totalMarginBalance;
-        initialMarginRate = crossMarginAccountTotal.totalInitialMarginRate;
     
         // spot
         vector<gateio::SpotAsset>& vSpotAsset = item->GetSpotAsset();
@@ -390,8 +378,8 @@ void AccountItem::UpdateByGateioAdapter() {
             position.netAvgPriceD = vPerpetualPosition[i].entryPrice;
             position.floatAmountD = vPerpetualPosition[i].unrealisedPnl;
             position.liquidationPrice = vPerpetualPosition[i].liqPrice;
-            string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
-            position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+
+            std::string key = exchangeStr + "|" + position.symbol;   
             position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
             position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
 
@@ -401,8 +389,8 @@ void AccountItem::UpdateByGateioAdapter() {
         vector<gateio::FutureOrder>& vPerpetualOpenOrder = item->GetPerpetualOpenOrder();
         for (size_t i = 0; i < vPerpetualOpenOrder.size(); ++i) {
             string symbol = vPerpetualOpenOrder[i].contract;
-            string instKey = exchangeStr + "|" + symbol + "|FUTURES";
-            string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+
+            std::string key = exchangeStr + "|" + symbol; 
             double openQty = vPerpetualOpenOrder[i].left;
             auto iter = mPerpetualOpenOrder.find(key);
             if (iter != mPerpetualOpenOrder.end()) {
@@ -463,8 +451,8 @@ void AccountItem::UpdateByBybitAdapter() {
             position.netAvgPriceD = vPosition[i].avgPrice;
             position.floatAmountD = vPosition[i].unrealisedPnl;
             position.liquidationPrice = vPosition[i].liqPrice;
-            string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
-            position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+
+            std::string key = exchangeStr + "|" + position.symbol; 
             position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
             position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
 
@@ -474,8 +462,8 @@ void AccountItem::UpdateByBybitAdapter() {
         vector<bybit::Order>& vOpenOrder = item->GetOpenOrder();
         for (size_t i = 0; i < vOpenOrder.size(); ++i) {
             string symbol = vOpenOrder[i].symbol;
-            string instKey = exchangeStr + "|" + symbol + "|FUTURES";
-            string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+
+            std::string key = exchangeStr + "|" + symbol; 
             double openQty = vOpenOrder[i].qty - vOpenOrder[i].cumExecQty;
             auto iter = mUFutureOpenOrder.find(key);
             if (iter != mUFutureOpenOrder.end()) {
@@ -535,8 +523,8 @@ void AccountItem::UpdateByOkxAdapter() {
             position.netAvgPriceD = vPosition[i].avgPx;
             position.floatAmountD = vPosition[i].upl;
             position.liquidationPrice = vPosition[i].liqPx;
-            string instKey = exchangeStr + "|" + position.symbol + "|FUTURES";
-            position.key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+
+            std::string key = exchangeStr + "|" + position.symbol; 
             position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
             position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
 
@@ -546,8 +534,8 @@ void AccountItem::UpdateByOkxAdapter() {
         vector<okx::OkxOrder>& vOpenOrder = item->GetOpenOrder();
         for (size_t i = 0; i < vOpenOrder.size(); ++i) {
             string symbol = vOpenOrder[i].instId;
-            string instKey = exchangeStr + "|" + symbol + "|FUTURES";
-            string key = BasicInfoMgr::GetInstance().GetSysIdByOriginId(instKey);
+
+            std::string key = exchangeStr + "|" + symbol; 
             double openQty = vOpenOrder[i].sz - vOpenOrder[i].accFillSz;
             auto iter = mUFutureOpenOrder.find(key);
             if (iter != mUFutureOpenOrder.end()) {
@@ -676,31 +664,43 @@ void AccountItem::UpdateTotalAsset(igmonitor::Asset& asset) {
 
 void AccountItem::CalculateExposure() {
     for (auto iter = mUFuturePosition.begin(); iter != mUFuturePosition.end(); ++iter) {
-        UpdateExposure("UFuture", iter->second);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(iter->second.key);
-        if (info.instrumentType == "SWAP" || info.instrumentType == "InstType_USDT_SWAP") {
-            UpdatePositionFundingRate(iter->second);
+        std::string originInstId = iter->second.symbol;
+        md::InstrumentInfo info;
+        if (smc->get_instrument_info(ExchangeTypeStr2EnumMap[exchangeStr], USDT_SWAP, originInstId.c_str(), info)) {
+        }
+        else if (smc->get_instrument_info(ExchangeTypeStr2EnumMap[exchangeStr], USDT_FUTURES, originInstId.c_str(), info)) {
+        }
+
+        UpdateExposure(info, iter->second);
+        if (info.instTypeEnum == USDT_SWAP) {
+            //UpdatePositionFundingRate(iter->second);
         }
     }
    
     for (auto iter = mCFuturePosition.begin(); iter != mCFuturePosition.end(); ++iter) {
-        UpdateExposure("CFuture", iter->second);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(iter->second.key);
-        if (info.instrumentType == "SWAP" ||info.instrumentType == "InstType_BTC_SWAP") {
-            UpdatePositionFundingRate(iter->second);
+        std::string originInstId = iter->second.symbol;
+        md::InstrumentInfo info;
+        if (smc->get_instrument_info(ExchangeTypeStr2EnumMap[exchangeStr], C_SWAP, originInstId.c_str(), info)) {
+        }
+        else if (smc->get_instrument_info(ExchangeTypeStr2EnumMap[exchangeStr], C_FUTURES, originInstId.c_str(), info)) {
+        }
+
+        UpdateExposure(info, iter->second);
+        if (info.instTypeEnum == C_SWAP) {
+            //UpdatePositionFundingRate(iter->second);
         }
     }
 
     for (auto iter = mPerpetualPosition.begin(); iter != mPerpetualPosition.end(); ++iter) {
-        string key = iter->second.key;
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
-        if (info.instrumentType == "InstType_USDT_SWAP" || info.calculateType == 0) {
-            UpdateExposure("UFuture", iter->second);
-        } else if (info.instrumentType == "InstType_BTC_SWAP" || info.calculateType == 1) {
-            UpdateExposure("CFuture", iter->second);
+        std::string originInstId = iter->second.symbol;
+        md::InstrumentInfo info;
+        if (smc->get_instrument_info(ExchangeTypeStr2EnumMap[exchangeStr], USDT_SWAP, originInstId.c_str(), info)) {
+        }
+        else if (smc->get_instrument_info(ExchangeTypeStr2EnumMap[exchangeStr], C_SWAP, originInstId.c_str(), info)) {
         }
 
-        UpdatePositionFundingRate(iter->second);
+        UpdateExposure(info, iter->second);
+        //UpdatePositionFundingRate(iter->second);
     }
  
     for (auto iter = mTotalAsset.begin(); iter != mTotalAsset.end(); ++iter) {
@@ -719,17 +719,9 @@ void AccountItem::CalculateExposure() {
             iter->second.initialValue = iter->second.initialAmount;
         } else {
             if (asset == "USDT" || asset == "USD") {
-                double price = 0.0;
-                if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
-                    price = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
-                } else if (exchangeStr == "COINBASE") {
-                    price = CoinbaseMdMgr::GetInstance().GetAssetPrice(baseAsset);
-                }
+                double price = MdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
                 
-                if (price > MINDOUBLE) {
-                    stringstream ss;
-                    ss << "accountId:" << accountId << " asset:" << asset << " price:" << price << " exposureAmountD:" << iter->second.exposureAmountD;
-                    LOG_INFO("CalculateExposure: %s", ss.str().c_str());  
+                if (price > MINDOUBLE) { 
                     iter->second.exposureValueS = iter->second.exposureAmountS / price;
                     iter->second.exposureValueD = iter->second.exposureAmountD / price;
                     iter->second.deltaAmountS = iter->second.exposureAmountS - iter->second.initialAmount;
@@ -739,18 +731,11 @@ void AccountItem::CalculateExposure() {
                     iter->second.initialValue = iter->second.initialAmount / price;
                 }
             } else {
-                string key = exchangeStr + "|" + asset + "-" + baseAsset + "|SPOT";
-                double price = 0.0;
-                if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
-                    price = BinanceMdMgr::GetInstance().GetMidPrice(key);  // 首先获取币对现货价格
-                } else if (exchangeStr == "COINBASE") {
-                    price = CoinbaseMdMgr::GetInstance().GetMidPrice(key);  // 首先获取币对现货价格
-                }
+	            std::string instId = asset + "-" + baseAsset;
+	            std::string key = crypto::get_instrumentInfo_channel_key(ExchangeTypeStr2EnumMap[exchangeStr], SPOT, instId);
+                double price = MdMgr::GetInstance().GetMidPrice(key);
                 
                 if (price > MINDOUBLE) {
-                    stringstream ss;
-                    ss << "accountId:" << accountId << " asset:" << asset << " price:" << price << " exposureAmountD:" << iter->second.exposureAmountD;
-                    LOG_INFO("CalculateExposure: %s", ss.str().c_str());  
                     iter->second.exposureValueS = iter->second.exposureAmountS * price;
                     iter->second.exposureValueD = iter->second.exposureAmountD * price;
                     iter->second.deltaAmountS = iter->second.exposureAmountS - iter->second.initialAmount;
@@ -760,17 +745,9 @@ void AccountItem::CalculateExposure() {
                     iter->second.initialValue = iter->second.initialAmount * price;
                 } else { // 获取对应usdt的价格，再换算成币
                     if (baseAsset == "USDT" || baseAsset == "USD") {
-                        double price = 0.0;
-                        if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
-                            price = BinanceMdMgr::GetInstance().GetAssetPrice(asset, exchangeStr);
-                        } else if (exchangeStr == "COINBASE") {
-                            price = CoinbaseMdMgr::GetInstance().GetAssetPrice(asset);
-                        }
+                        double price = MdMgr::GetInstance().GetAssetPrice(asset, exchangeStr);
 
-                        if (price > MINDOUBLE) {
-                            stringstream ss;
-                            ss << "accountId:" << accountId << " asset:" << asset << " price:" << price << " exposureAmountD:" << iter->second.exposureAmountD;
-                            LOG_INFO("CalculateExposure: %s", ss.str().c_str());  
+                        if (price > MINDOUBLE) { 
                             iter->second.exposureValueS = iter->second.exposureAmountS * price;
                             iter->second.exposureValueD = iter->second.exposureAmountD * price;
                             iter->second.deltaAmountS = iter->second.exposureAmountS - iter->second.initialAmount;
@@ -780,21 +757,10 @@ void AccountItem::CalculateExposure() {
                             iter->second.initialValue = iter->second.initialAmount * price;
                         }
                     } else {
-                        double priceU = 0.0;
-                        double priceBaseAsset = 0.0;
-
-                        if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
-                            priceU = BinanceMdMgr::GetInstance().GetAssetPrice(asset, exchangeStr);
-                            priceBaseAsset = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
-                        } else if (exchangeStr == "COINBASE") {
-                            priceU = CoinbaseMdMgr::GetInstance().GetAssetPrice(asset);
-                            priceBaseAsset = CoinbaseMdMgr::GetInstance().GetAssetPrice(baseAsset);
-                        }
+                        double priceU = MdMgr::GetInstance().GetAssetPrice(asset, exchangeStr);
+                        double priceBaseAsset = MdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
 
                         if (priceBaseAsset > MINDOUBLE) {
-                            stringstream ss;
-                            ss << "accountId:" << accountId << " asset:" << asset << " priceU:" << priceU << " baseAsset:" << baseAsset << " priceBaseAsset:" << priceBaseAsset << " exposureAmountD:" << iter->second.exposureAmountD;
-                            LOG_INFO("CalculateExposure: %s", ss.str().c_str());  
                             iter->second.exposureValueS = iter->second.exposureAmountS * priceU / priceBaseAsset;
                             iter->second.exposureValueD = iter->second.exposureAmountD * priceU / priceBaseAsset;
                             iter->second.deltaAmountS = iter->second.exposureAmountS - iter->second.initialAmount;
@@ -810,90 +776,66 @@ void AccountItem::CalculateExposure() {
     }
 }
 
-void AccountItem::UpdateExposure(string positionType, igmonitor::Position& position) {
-    string key = position.key;
-    double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-    InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
-    string base = info.instLeft;
-    string quote = info.instRight;
-
-    stringstream ss;
-    ss << "accountId:" << accountId << " key:" << key << " price:" << price << " netPositionD:" << position.netPositionD;
-    LOG_INFO("UpdateExposure: %s", ss.str().c_str());  
+void AccountItem::UpdateExposure(const md::InstrumentInfo& info, const igmonitor::Position& position) {
+    std::string key = crypto::get_instrumentInfo_channel_key(info.exchangeTypeEnum, info.instTypeEnum, info.instId);
+    double price = MdMgr::GetInstance().GetMidPrice(key);
+    string base = info.base;
+    string quote = info.quote;
 
     auto i = mExposure.find(base);
     if (i != mExposure.end()) {
-        if (positionType == "UFuture") {
-            i->second.exposureAmountS += position.netPositionS * info.multiple;
-            i->second.exposureAmountD += position.netPositionD * info.multiple;
-        } else if (positionType == "CFuture") {
+        if (info.instTypeEnum == USDT_SWAP || info.instTypeEnum == USDT_FUTURES) {
+            i->second.exposureAmountS += position.netPositionS * info.value;
+            i->second.exposureAmountD += position.netPositionD * info.value;
+        } 
+        else if (info.instTypeEnum == C_SWAP || info.instTypeEnum == C_FUTURES) {
             if (price > MINDOUBLE) {
-                if (exchangeStr == "GATEIO") {
-                    i->second.exposureAmountS += position.netPositionS * info.multipleVolume / price;
-                    i->second.exposureAmountD += position.netPositionD * info.multipleVolume / price;
-                } else {
-                    i->second.exposureAmountS += position.netPositionS * info.multiple / price;
-                    i->second.exposureAmountD += position.netPositionD * info.multiple / price;
-                }
+                i->second.exposureAmountS += position.netPositionS * info.value / price;
+                i->second.exposureAmountD += position.netPositionD * info.value / price;
             }
         }
     } else {
         igmonitor::Exposure baseExposure;
         baseExposure.asset = base;
-        if (positionType == "UFuture") {
-            baseExposure.exposureAmountS = position.netPositionS * info.multiple ;
-            baseExposure.exposureAmountD = position.netPositionD * info.multiple ;
-        } else if (positionType == "CFuture") {
+        if (info.instTypeEnum == USDT_SWAP || info.instTypeEnum == USDT_FUTURES) {
+            baseExposure.exposureAmountS = position.netPositionS * info.value;
+            baseExposure.exposureAmountD = position.netPositionD * info.value;
+        } 
+        else if (info.instTypeEnum == C_SWAP || info.instTypeEnum == C_FUTURES) {
             if (price > MINDOUBLE) {
-                if (exchangeStr == "GATEIO") {
-                    baseExposure.exposureAmountS = position.netPositionS * info.multipleVolume / price;
-                    baseExposure.exposureAmountD = position.netPositionD * info.multipleVolume / price;
-                } else {
-                    baseExposure.exposureAmountS = position.netPositionS * info.multiple / price;
-                    baseExposure.exposureAmountD = position.netPositionD * info.multiple / price;
-                }
+                baseExposure.exposureAmountS = position.netPositionS * info.value / price;
+                baseExposure.exposureAmountD = position.netPositionD * info.value / price;
             }
         }
-        mExposure.insert(make_pair(base, baseExposure));
+        mExposure[base] = baseExposure;
     }
 
     auto j = mExposure.find(quote);
     if (j != mExposure.end()) {
-        if (positionType == "UFuture") {
-            j->second.exposureAmountS -= position.netPositionS * price * info.multiple ;
-            j->second.exposureAmountD -= position.netPositionD * price * info.multiple ;
-        } else if (positionType == "CFuture") {
-            if (exchangeStr == "GATEIO") {
-                j->second.exposureAmountS -= position.netPositionS * info.multipleVolume;
-                j->second.exposureAmountD -= position.netPositionD * info.multipleVolume;
-            } else {
-                j->second.exposureAmountS -= position.netPositionS * info.multiple;
-                j->second.exposureAmountD -= position.netPositionD * info.multiple;
-            }
+        if (info.instTypeEnum == USDT_SWAP || info.instTypeEnum == USDT_FUTURES) {
+            j->second.exposureAmountS -= position.netPositionS * price * info.value;
+            j->second.exposureAmountD -= position.netPositionD * price * info.value;
+        } 
+        else if (info.instTypeEnum == C_SWAP || info.instTypeEnum == C_FUTURES) {
+            j->second.exposureAmountS -= position.netPositionS * info.value;
+            j->second.exposureAmountD -= position.netPositionD * info.value;
         }
     } else {
         igmonitor::Exposure quoteExposure;
         quoteExposure.asset = quote;
-        if (positionType == "UFuture") {
-            quoteExposure.exposureAmountS = -position.netPositionS * price * info.multiple ;
-            quoteExposure.exposureAmountD = -position.netPositionD * price * info.multiple ;
-        } else if (positionType == "CFuture") {
-            if (exchangeStr == "GATEIO") {
-                quoteExposure.exposureAmountS = -position.netPositionS * info.multipleVolume;
-                quoteExposure.exposureAmountD = -position.netPositionD * info.multipleVolume;
-            } else {
-                quoteExposure.exposureAmountS = -position.netPositionS * info.multiple;
-                quoteExposure.exposureAmountD = -position.netPositionD * info.multiple;
-            }
+        if (info.instTypeEnum == USDT_SWAP || info.instTypeEnum == USDT_FUTURES) {
+            quoteExposure.exposureAmountS = -position.netPositionS * price * info.value;
+            quoteExposure.exposureAmountD = -position.netPositionD * price * info.value;
+        } 
+        else if (info.instTypeEnum == C_SWAP || info.instTypeEnum == C_FUTURES) {
+            quoteExposure.exposureAmountS = -position.netPositionS * info.value;
+            quoteExposure.exposureAmountD = -position.netPositionD * info.value;
         }      
-        mExposure.insert(make_pair(quote, quoteExposure));
+        mExposure[quote] = quoteExposure;
     }
 }
 
 void AccountItem::UpdateExposure(igmonitor::Asset& asset) {
-    stringstream ss;
-    ss << "accountId:" << accountId << " asset:" << asset.asset << " netAmountD:" << asset.netAmountD;
-    LOG_INFO("UpdateExposure: %s", ss.str().c_str());  
     auto iter = mExposure.find(asset.asset);
     if (iter != mExposure.end()) {
         iter->second.exposureAmountS += asset.netAmountS;
@@ -905,10 +847,11 @@ void AccountItem::UpdateExposure(igmonitor::Asset& asset) {
         exposure.exposureAmountS = asset.netAmountS;
         exposure.exposureAmountD = asset.netAmountD;
         exposure.initialAmount = asset.initialAmount;
-        mExposure.insert(make_pair(asset.asset, exposure));
+        mExposure[exposure.asset] = exposure;
     }
 }
 
+/*
 void AccountItem::UpdatePositionFundingRate(igmonitor::Position& position) {
     if (fabs(position.netPositionD) < MINDOUBLE) {
         return;
@@ -922,6 +865,7 @@ void AccountItem::UpdatePositionFundingRate(igmonitor::Position& position) {
     LOG_INFO("UpdatePositionFundingRate:  accountId: %d  key:%s  flag:%d  value:%f", accountId, position.key.c_str(), pfr.flag, pfr.value);
     mPositionFundingRate[position.key] = pfr;
 }
+*/
 
 double AccountItem::GetUnderwayOrderValue(string asset, double frozenAmount) {
     double underwayOrderValue = 0.0;
@@ -929,47 +873,25 @@ double AccountItem::GetUnderwayOrderValue(string asset, double frozenAmount) {
         underwayOrderValue = frozenAmount;
     } else {
         if (asset == "USDT" || asset == "USD") {
-            double priceBaseAsset = 0.0;
-            if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
-                priceBaseAsset = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
-            } else if (exchangeStr == "COINBASE") {
-                priceBaseAsset = CoinbaseMdMgr::GetInstance().GetAssetPrice(baseAsset);
-            }
+            double priceBaseAsset = MdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
             
             if (priceBaseAsset > MINDOUBLE) {
                 underwayOrderValue = frozenAmount / priceBaseAsset;
             }
         } else {
-            string key = exchangeStr + "|" + asset + "-" + baseAsset + "|SPOT";
-            double price = 0.0;
-            if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
-                price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-            } else if (exchangeStr == "COINBASE") {
-                price = CoinbaseMdMgr::GetInstance().GetMidPrice(key);
-            }
-            
+	        std::string instId = asset + "-" + baseAsset;
+	        std::string key = crypto::get_instrumentInfo_channel_key(ExchangeTypeStr2EnumMap[exchangeStr], SPOT, instId);
+            double price = MdMgr::GetInstance().GetMidPrice(key);
+
             if (price > 0) {
                 underwayOrderValue = frozenAmount * price;
             } else {
                 if (baseAsset == "USDT" || baseAsset == "USD") {
-                    double price = 0.0;
-                    if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
-                        price = BinanceMdMgr::GetInstance().GetAssetPrice(asset, exchangeStr);
-                    } else if (exchangeStr == "COINBASE") {
-                        price = CoinbaseMdMgr::GetInstance().GetAssetPrice(asset);
-                    }
-                    
+                    double price = MdMgr::GetInstance().GetAssetPrice(asset, exchangeStr);
                     underwayOrderValue = frozenAmount * price;
                 } else {
-                    double priceU = 0.0;
-                    double priceBaseAsset = 0.0;
-                    if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
-                        priceU = BinanceMdMgr::GetInstance().GetAssetPrice(asset, exchangeStr);
-                        priceBaseAsset = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
-                    } else if (exchangeStr == "COINBASE") {
-                        priceU = CoinbaseMdMgr::GetInstance().GetAssetPrice(asset);
-                        priceBaseAsset = CoinbaseMdMgr::GetInstance().GetAssetPrice(baseAsset);
-                    }
+                    double priceU = MdMgr::GetInstance().GetAssetPrice(asset, exchangeStr);
+                    double priceBaseAsset = MdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
 
                     if (priceBaseAsset > MINDOUBLE) {
                         underwayOrderValue = frozenAmount * priceU / priceBaseAsset;
@@ -992,7 +914,6 @@ void AccountItem::CalculateRiskInfo() {
     double totalPositionValue = 0.0;
     for (auto iter = mTotalAsset.begin(); iter != mTotalAsset.end(); ++iter) {
         string asset = iter->first;
-        double assetRate = MonitorConfig::GetInstance().GetAssetRate(exchangeStr, asset);
         if (asset == baseAsset) {
             yNetValue += iter->second.initialAmount;
             netValueS += iter->second.netAmountS;
@@ -1001,72 +922,51 @@ void AccountItem::CalculateRiskInfo() {
             totalPositionValue += iter->second.positionValueD;
         } else {
             if (asset == "USDT" || asset == "USD") {
-                double price = 0.0;
-                if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
-                    price = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
-                } else if (exchangeStr == "COINBASE") {
-                    price = CoinbaseMdMgr::GetInstance().GetAssetPrice(baseAsset);
-                }
+                double price = MdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
                 
                 if (price > MINDOUBLE) {
                     yNetValue += iter->second.initialAmount / price;
                     netValueS += iter->second.netAmountS / price;
                     netValueD += iter->second.netAmountD / price;
                     if (iter->second.netAmountD > 0) {
-                        totalAvailMargin += iter->second.netAmountD / price * assetRate;
+                        totalAvailMargin += iter->second.netAmountD / price;
                     }
                     totalPositionValue += iter->second.positionValueD / price;
                 }
             } else {
-                string key = exchangeStr + "|" + asset + "-" + baseAsset + "|SPOT";  // 首先获取币对现货价格
-                double price = 0.0;
-                if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
-                    price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-                } else if (exchangeStr == "COINBASE") {
-                    price = CoinbaseMdMgr::GetInstance().GetMidPrice(key);
-                }
+                std::string instId = asset + "-" + baseAsset;
+                std::string key = crypto::get_instrumentInfo_channel_key(ExchangeTypeStr2EnumMap[exchangeStr], SPOT, instId);
+                double price = MdMgr::GetInstance().GetMidPrice(key);
                 
                 if (price > MINDOUBLE) {
                     yNetValue += iter->second.initialAmount * price;
                     netValueS += iter->second.netAmountS * price;
                     netValueD += iter->second.netAmountD * price;
                     if (iter->second.netAmountD > 0) {
-                        totalAvailMargin += iter->second.netAmountD * price * assetRate;
+                        totalAvailMargin += iter->second.netAmountD * price;
                     }
                     totalPositionValue += iter->second.positionValueD / price;
                 } else {
                     if (baseAsset == "USDT" || baseAsset == "USD") {
-                        double price = 0.0;
-                        if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
-                            price = BinanceMdMgr::GetInstance().GetAssetPrice(asset, exchangeStr);
-                        } else if (exchangeStr == "COINBASE") {
-                            price = CoinbaseMdMgr::GetInstance().GetAssetPrice(asset);
-                        }
+                        double price = MdMgr::GetInstance().GetAssetPrice(asset, exchangeStr);
                         
                         yNetValue += iter->second.initialAmount * price;
                         netValueS += iter->second.netAmountS * price;
                         netValueD += iter->second.netAmountD * price;
                         if (iter->second.netAmountD > 0) {
-                            totalAvailMargin += iter->second.netAmountD * price * assetRate;
+                            totalAvailMargin += iter->second.netAmountD * price;
                         }
                         totalPositionValue += iter->second.positionValueD * price;
                     } else {
-                        double priceU = 0.0;
-                        double priceBaseAsset = 0.0;
-                        if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
-                            priceU = BinanceMdMgr::GetInstance().GetAssetPrice(asset, exchangeStr);
-                            priceBaseAsset = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
-                        } else if (exchangeStr == "COINBASE") {
-                            priceU = CoinbaseMdMgr::GetInstance().GetAssetPrice(asset);
-                            priceBaseAsset = CoinbaseMdMgr::GetInstance().GetAssetPrice(baseAsset);
-                        }
+                        double priceU = MdMgr::GetInstance().GetAssetPrice(asset, exchangeStr);
+                        double priceBaseAsset = MdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
 
                         if (priceBaseAsset > MINDOUBLE) {
                             yNetValue += iter->second.initialAmount * priceU / priceBaseAsset;
                             netValueS += iter->second.netAmountS * priceU / priceBaseAsset;
                             netValueD += iter->second.netAmountD * priceU / priceBaseAsset;
                             if (iter->second.netAmountD > 0) {
-                                totalAvailMargin += iter->second.netAmountD * priceU / priceBaseAsset * assetRate;
+                                totalAvailMargin += iter->second.netAmountD * priceU / priceBaseAsset;
                             }
                             totalPositionValue += iter->second.positionValueD * priceU / priceBaseAsset;
                         }
@@ -1111,21 +1011,6 @@ void AccountItem::CalculateRiskInfo() {
         if (iter->second.realLeverageRatioD > maxRealLeverageD) {
             maxRealLeverageD = iter->second.realLeverageRatioD;
             maxLeverageTabD = "UFuture";
-            maxLeverageUD = true;
-            maxLeverageAssetD = iter->first;
-        }
-    }
-
-    for (auto iter = mDeliveryAsset.begin(); iter != mDeliveryAsset.end(); ++iter) {
-        if (iter->second.realLeverageRatioS > maxRealLeverageS) {
-            maxRealLeverageS = iter->second.realLeverageRatioS;
-            maxLeverageTabS = "Delivery";
-            maxLeverageUS = true;
-            maxLeverageAssetS = iter->first;
-        }
-        if (iter->second.realLeverageRatioD > maxRealLeverageD) {
-            maxRealLeverageD = iter->second.realLeverageRatioD;
-            maxLeverageTabD = "Delivery";
             maxLeverageUD = true;
             maxLeverageAssetD = iter->first;
         }
@@ -1243,19 +1128,29 @@ void AccountItem::CalculateRiskInfo() {
     double underwayOrderValueD = 0.0;
 
     for (auto iter = mUFuturePosition.begin(); iter != mUFuturePosition.end(); ++iter) {
-        string key = iter->second.key;
-        double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
         double underwayOrderValue = 0.0;
         double underwayOrderValued = 0.0;
+
+        double price = 0.0;
+        std::string originInstId = iter->second.symbol;
+        md::InstrumentInfo info;
+        if (smc->get_instrument_info(ExchangeTypeStr2EnumMap[exchangeStr], USDT_SWAP, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(ExchangeTypeStr2EnumMap[exchangeStr], USDT_SWAP, info.instId);
+            price = MdMgr::GetInstance().GetMidPrice(key);
+        }
+        else if (smc->get_instrument_info(ExchangeTypeStr2EnumMap[exchangeStr], USDT_FUTURES, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(ExchangeTypeStr2EnumMap[exchangeStr], USDT_FUTURES, info.instId);
+            price = MdMgr::GetInstance().GetMidPrice(key);
+        }
+
         if (baseAsset == "USDT") {
-            underwayOrderValue = iter->second.underwayAbsPositionS * price *  info.multiple;
-            underwayOrderValued = iter->second.underwayAbsPositioD * price * info.multiple;
+            underwayOrderValue = iter->second.underwayAbsPositionS * price *  info.value;
+            underwayOrderValued = iter->second.underwayAbsPositioD * price * info.value;
         } else {
-            double priceBaseAsset = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
+            double priceBaseAsset = MdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
             if (priceBaseAsset > MINDOUBLE) {
-                underwayOrderValue = iter->second.underwayAbsPositionS * price * info.multiple / priceBaseAsset;
-                underwayOrderValued = iter->second.underwayAbsPositioD * price * info.multiple / priceBaseAsset;
+                underwayOrderValue = iter->second.underwayAbsPositionS * price * info.value / priceBaseAsset;
+                underwayOrderValued = iter->second.underwayAbsPositioD * price * info.value / priceBaseAsset;
             }
         }
         
@@ -1268,25 +1163,35 @@ void AccountItem::CalculateRiskInfo() {
     }
 
     for (auto iter = mCFuturePosition.begin(); iter != mCFuturePosition.end(); ++iter) {
-        string key = iter->second.key;
-        double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
         double underwayOrderValue = 0.0;
         double underwayOrderValued = 0.0;
+
+        double price = 0.0;
+        std::string originInstId = iter->second.symbol;
+        md::InstrumentInfo info;
+        if (smc->get_instrument_info(ExchangeTypeStr2EnumMap[exchangeStr], C_SWAP, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(ExchangeTypeStr2EnumMap[exchangeStr], C_SWAP, info.instId);
+            price = MdMgr::GetInstance().GetMidPrice(key);
+        }
+        else if (smc->get_instrument_info(ExchangeTypeStr2EnumMap[exchangeStr], C_FUTURES, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(ExchangeTypeStr2EnumMap[exchangeStr], C_FUTURES, info.instId);
+            price = MdMgr::GetInstance().GetMidPrice(key);
+        }
+
         if (baseAsset == "USDT") {
-            underwayOrderValue = iter->second.underwayAbsPositionS * info.multiple;
-            underwayOrderValued = iter->second.underwayAbsPositioD * info.multiple;
+            underwayOrderValue = iter->second.underwayAbsPositionS * info.value;
+            underwayOrderValued = iter->second.underwayAbsPositioD * info.value;
         } else {
             if (baseAsset == info.margin) {
                 if (price > MINDOUBLE) {
-                    underwayOrderValue = iter->second.underwayAbsPositionS * info.multiple / price;
-                    underwayOrderValued = iter->second.underwayAbsPositioD * info.multiple / price;
+                    underwayOrderValue = iter->second.underwayAbsPositionS * info.value / price;
+                    underwayOrderValued = iter->second.underwayAbsPositioD * info.value / price;
                 }
             } else {
-                double priceBaseAsset = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
+                double priceBaseAsset = MdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
                 if (priceBaseAsset > MINDOUBLE) {
-                    underwayOrderValue = iter->second.underwayAbsPositionS * info.multiple / priceBaseAsset;
-                    underwayOrderValued = iter->second.underwayAbsPositioD * info.multiple / priceBaseAsset;
+                    underwayOrderValue = iter->second.underwayAbsPositionS * info.value / priceBaseAsset;
+                    underwayOrderValued = iter->second.underwayAbsPositioD * info.value / priceBaseAsset;
                 }
             }
         }
@@ -1354,15 +1259,25 @@ void AccountItem::CalculateRiskInfo() {
 */
     for (auto iter = mUFutureOpenOrder.begin(); iter != mUFutureOpenOrder.end(); ++iter) {
         double underwayOrderValue = 0.0;
-        string key = iter->first;
-        double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
+
+        double price = 0.0;
+        std::string originInstId = iter->second.symbol;
+        md::InstrumentInfo info;
+        if (smc->get_instrument_info(ExchangeTypeStr2EnumMap[exchangeStr], USDT_SWAP, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(ExchangeTypeStr2EnumMap[exchangeStr], USDT_SWAP, info.instId);
+            price = MdMgr::GetInstance().GetMidPrice(key);
+        }
+        else if (smc->get_instrument_info(ExchangeTypeStr2EnumMap[exchangeStr], USDT_FUTURES, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(ExchangeTypeStr2EnumMap[exchangeStr], USDT_FUTURES, info.instId);
+            price = MdMgr::GetInstance().GetMidPrice(key);
+        }
+
         if (baseAsset == "USDT") {
-            underwayOrderValue = iter->second.openQty * price * info.multiple;
+            underwayOrderValue = iter->second.openQty * price * info.value;
         } else {
-            double priceBaseAsset = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
+            double priceBaseAsset = MdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
             if (priceBaseAsset > MINDOUBLE) {
-                underwayOrderValue = iter->second.openQty * price * info.multiple / priceBaseAsset;
+                underwayOrderValue = iter->second.openQty * price * info.value / priceBaseAsset;
             }
         }
         if (underwayOrderValue > underwayOrderValueD) {
@@ -1372,61 +1287,34 @@ void AccountItem::CalculateRiskInfo() {
     }
 
     for (auto iter = mCFutureOpenOrder.begin(); iter != mCFutureOpenOrder.end(); ++iter) {
-        string key = iter->first;
-        double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
         double underwayOrderValue = 0.0;
+
+        double price = 0.0;
+        std::string originInstId = iter->second.symbol;
+        md::InstrumentInfo info;
+        if (smc->get_instrument_info(ExchangeTypeStr2EnumMap[exchangeStr], C_SWAP, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(ExchangeTypeStr2EnumMap[exchangeStr], C_SWAP, info.instId);
+            price = MdMgr::GetInstance().GetMidPrice(key);
+        }
+        else if (smc->get_instrument_info(ExchangeTypeStr2EnumMap[exchangeStr], C_FUTURES, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(ExchangeTypeStr2EnumMap[exchangeStr], C_FUTURES, info.instId);
+            price = MdMgr::GetInstance().GetMidPrice(key);
+        }
+        
         if (baseAsset == "USDT") {
-            underwayOrderValue = iter->second.openQty * info.multiple;
+            underwayOrderValue = iter->second.openQty * info.value;
         } else {
             if (baseAsset == info.margin) {
                 if (price > MINDOUBLE) {
-                    underwayOrderValue = iter->second.openQty * info.multiple / price;
+                    underwayOrderValue = iter->second.openQty * info.value / price;
                 }
             } else {
-                double priceBaseAsset = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
+                double priceBaseAsset = MdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
                 if (priceBaseAsset > MINDOUBLE) {
-                    underwayOrderValue = iter->second.openQty * info.multiple / priceBaseAsset;
+                    underwayOrderValue = iter->second.openQty * info.value / priceBaseAsset;
                 }
             }
         }
-        if (underwayOrderValue > underwayOrderValueD) {
-            underwayOrderValueD = underwayOrderValue;
-        }
-        LOG_INFO("underwayOrderValue: accountId: %d  underwayOrderValue: %f", accountId, underwayOrderValue); 
-    }
-
-    for (auto iter = mDeliveryOpenOrder.begin(); iter != mDeliveryOpenOrder.end(); ++iter) {
-        double underwayOrderValue = 0.0;
-        string key = iter->first;
-        double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
-        if (info.instrumentType == "InstType_USDT_FUTURES" || info.calculateType == 0) {
-            if (baseAsset == "USDT") {
-                underwayOrderValue = iter->second.openQty * price * info.multiple;
-            } else {
-                double priceBaseAsset = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
-                if (priceBaseAsset > MINDOUBLE) {
-                    underwayOrderValue = iter->second.openQty * price * info.multiple / priceBaseAsset;
-                }
-            }
-        } else if (info.instrumentType == "InstType_BTC_FUTURES" || info.calculateType == 1) {
-            if (baseAsset == "USDT") {
-                underwayOrderValue = iter->second.openQty * info.multiple;
-            } else {
-                if (baseAsset == info.margin) {
-                    if (price > MINDOUBLE) {
-                        underwayOrderValue = iter->second.openQty * info.multiple / price;
-                    }
-                } else {
-                    double priceBaseAsset = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
-                    if (priceBaseAsset > MINDOUBLE) {
-                        underwayOrderValue = iter->second.openQty * info.multiple / priceBaseAsset;
-                    }
-                }
-            }
-        }
-
         if (underwayOrderValue > underwayOrderValueD) {
             underwayOrderValueD = underwayOrderValue;
         }
@@ -1435,30 +1323,41 @@ void AccountItem::CalculateRiskInfo() {
 
     for (auto iter = mPerpetualOpenOrder.begin(); iter != mPerpetualOpenOrder.end(); ++iter) {
         double underwayOrderValue = 0.0;
-        string key = iter->first;
-        double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
-        InstrumentInfo& info = BasicInfoMgr::GetInstance().GetBasicInfo(key);
-        if (info.instrumentType == "InstType_USDT_SWAP" || info.calculateType == 0) {
+
+        double price = 0.0;
+        std::string originInstId = iter->second.symbol;
+        md::InstrumentInfo info;
+        if (smc->get_instrument_info(ExchangeTypeStr2EnumMap[exchangeStr], USDT_SWAP, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(ExchangeTypeStr2EnumMap[exchangeStr], USDT_SWAP, info.instId);
+            price = MdMgr::GetInstance().GetMidPrice(key);
+        }
+        else if (smc->get_instrument_info(ExchangeTypeStr2EnumMap[exchangeStr], C_SWAP, originInstId.c_str(), info)) {
+            std::string key = crypto::get_instrumentInfo_channel_key(ExchangeTypeStr2EnumMap[exchangeStr], C_SWAP, info.instId);
+            price = MdMgr::GetInstance().GetMidPrice(key);
+
+        }
+
+        if (info.instTypeEnum == USDT_SWAP) {
             if (baseAsset == "USDT") {
-                underwayOrderValue = iter->second.openQty * price * info.multiple;
+                underwayOrderValue = iter->second.openQty * price * info.value;
             } else {
-                double priceBaseAsset = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
+                double priceBaseAsset = MdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
                 if (priceBaseAsset > MINDOUBLE) {
-                    underwayOrderValue = iter->second.openQty * price * info.multiple / priceBaseAsset;
+                    underwayOrderValue = iter->second.openQty * price * info.value / priceBaseAsset;
                 }
             }
-        } else if (info.instrumentType == "InstType_BTC_SWAP" || info.calculateType == 1) {
+        } else if (info.instTypeEnum == C_SWAP) {
             if (baseAsset == "USDT") {
-                underwayOrderValue = iter->second.openQty * info.multiple;
+                underwayOrderValue = iter->second.openQty * info.value;
             } else {
                 if (baseAsset == info.margin) {
                     if (price > MINDOUBLE) {
-                        underwayOrderValue = iter->second.openQty * info.multiple / price;
+                        underwayOrderValue = iter->second.openQty * info.value / price;
                     }
                 } else {
-                    double priceBaseAsset = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
+                    double priceBaseAsset = MdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
                     if (priceBaseAsset > MINDOUBLE) {
-                        underwayOrderValue = iter->second.openQty * info.multiple / priceBaseAsset;
+                        underwayOrderValue = iter->second.openQty * info.value / priceBaseAsset;
                     }
                 }
             }
@@ -1472,22 +1371,6 @@ void AccountItem::CalculateRiskInfo() {
 
     riskInfo.underwayOrderValueD = underwayOrderValueD;
 
-
-    // order alarm
-    int64_t currentTime = gettickcount();
-    orderAlarmMsg = "";
-    for (auto iter = mOrder.begin(); iter != mOrder.end(); ++iter) {
-        int64_t updateTime = iter->second.updateTime;
-        if (currentTime - updateTime <  10 * 60 * 1000) {
-            if (iter->second.category == "twap") {
-                orderAlarmMsg += "自动换币 " + iter->second.toString();
-            } else if (iter->second.category == "adl") {
-                orderAlarmMsg += "ADL " + iter->second.toString();
-            } else if (iter->second.category == "liquidated") {
-                orderAlarmMsg += "强制减仓 " + iter->second.toString();
-            }
-        }
-    }
 
     LOG_INFO("riskInfo: %s", riskInfo.toString().c_str());  
 }
@@ -1663,1621 +1546,1309 @@ set<string> AccountItem::GetInstrumentList() {
     return s;
 }
 
-web::json::value AccountItem::GetDetail() {
-    web::json::value detailV;
-    detailV["customer_id"] = web::json::value::number(accountId);
-    web::json::value totalAssetV;
+rapidjson::Document AccountItem::GetDetail() {
+    rapidjson::Document detailV;
+    detailV.SetObject();
+    auto& allocator = detailV.GetAllocator();
+    
+    // account_id字段
+    detailV.AddMember("account_id", accountId, allocator);
 
+    // TotalAssetChecked
+    rapidjson::Value totalAssetChecked(rapidjson::kObjectType);
     for (auto iter = mTotalAsset.begin(); iter != mTotalAsset.end(); ++iter) {
-        web::json::value assetV;
+        rapidjson::Value assetV(rapidjson::kObjectType);
         char data[24];
+        
         sprintf(data, "%s|0", iter->second.asset.c_str());
-        assetV["asset"] = web::json::value::string(data);
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.realLeverageRatioD);
-            assetV["realLeverageRatio"] = web::json::value::string(data);
-        } else {
-            sprintf(data, "%f|0", iter->second.realLeverageRatioS);
-            assetV["realLeverageRatio"] = web::json::value::string(data);
-        }
-
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.positionValueD);
-            assetV["positionValue"] = web::json::value::string(data);
-        } else {
-            sprintf(data, "%f|0", iter->second.positionValueS);
-            assetV["positionValue"] = web::json::value::string(data);
-        }
-
+        assetV.AddMember("asset", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.realLeverageRatioD);
+        assetV.AddMember("realLeverageRatio", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.positionValueD);
+        assetV.AddMember("positionValue", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.transferAmount);
-        assetV["transferAmount"] = web::json::value::string(data);
+        assetV.AddMember("transferAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.transferFrozenAmount);
-        assetV["transferFrozenAmount"] = web::json::value::string(data);
-
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.netAmountD);
-            assetV["netAmount"] = web::json::value::string(data);
+        assetV.AddMember("transferFrozenAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.netAmountD);
+        assetV.AddMember("netAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.availableAmountD);
+        assetV.AddMember("availableAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.totalAmountS);
+        assetV.AddMember("totalAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.totalAmountD);
+        assetV.AddMember("totalAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.frozenAmountS);
+        assetV.AddMember("frozenAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.frozenAmountD);
+        assetV.AddMember("frozenAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.floatAmountS);
+        assetV.AddMember("floatAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.floatAmountD);
+        assetV.AddMember("floatAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.marginAmountS);
+        assetV.AddMember("marginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.marginAmountD);
+        assetV.AddMember("marginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.frozenMarginAmountS);
+        assetV.AddMember("frozenMarginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.frozenMarginAmountD);
+        assetV.AddMember("frozenMarginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.initialAmount);
+        assetV.AddMember("initialAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        if (fabs(iter->second.positionValueS) >= MINDOUBLE) {
+            if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) / fabs(iter->second.positionValueS) > 0.01) {
+                sprintf(data, "%f|1", iter->second.floatAmountS);
+                assetV["floatAmount_s"].SetString(data, allocator);
+                sprintf(data, "%f|1", iter->second.floatAmountD);
+                assetV["floatAmount_d"].SetString(data, allocator);
+            }
         } else {
-            sprintf(data, "%f|0", iter->second.netAmountS);
-            assetV["netAmount"] = web::json::value::string(data);
+            if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
+                sprintf(data, "%f|1", iter->second.floatAmountS);
+                assetV["floatAmount_s"].SetString(data, allocator);
+                sprintf(data, "%f|1", iter->second.floatAmountD);
+                assetV["floatAmount_d"].SetString(data, allocator);
+            }
         }
         
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.availableAmountD);
-            assetV["availableAmount"] = web::json::value::string(data);
+        if (fabs(iter->second.totalAmountD) >= MINDOUBLE) {
+            if (fabs(iter->second.totalAmountS / iter->second.totalAmountD - 1) >= 0.05) {
+                sprintf(data, "%f|1", iter->second.totalAmountS);
+                assetV["totalAmount_s"].SetString(data, allocator);
+                sprintf(data, "%f|1", iter->second.totalAmountD);
+                assetV["totalAmount_d"].SetString(data, allocator);
+            }
         } else {
-            sprintf(data, "%f|0", iter->second.availableAmountS);
-            assetV["availableAmount"] = web::json::value::string(data);
-        }
-
-        sprintf(data, "%f|0", iter->second.totalAmountS);
-        assetV["totalAmount_s"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.totalAmountD);
-        assetV["totalAmount_d"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.frozenAmountS);
-        assetV["frozenAmount_s"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.frozenAmountD);
-        assetV["frozenAmount_d"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.floatAmountS);
-        assetV["floatAmount_s"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.floatAmountD);
-        assetV["floatAmount_d"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.marginAmountS);
-        assetV["marginAmount_s"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.marginAmountD);
-        assetV["marginAmount_d"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.frozenMarginAmountS);
-        assetV["frozenMarginAmount_s"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.frozenMarginAmountD);
-        assetV["frozenMarginAmount_d"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.initialAmount);
-        assetV["initialAmount"] = web::json::value::string(data);
-
-        if (type == "physical") {
-            if (fabs(iter->second.positionValueS) >= MINDOUBLE) {
-                if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) / fabs(iter->second.positionValueS) > 0.01) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    assetV["floatAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    assetV["floatAmount_d"] = web::json::value::string(data);
-                }
-            } else {
-                if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    assetV["floatAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    assetV["floatAmount_d"] = web::json::value::string(data);
-                }
-            }
-
-            if (fabs(iter->second.totalAmountD) >= MINDOUBLE) {
-                if (fabs(iter->second.totalAmountS / iter->second.totalAmountD - 1) >= 0.05) {
-                    sprintf(data, "%f|1", iter->second.totalAmountS);
-                    assetV["totalAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.totalAmountD);
-                    assetV["totalAmount_d"] = web::json::value::string(data);
-                }
-            } else {
-                if (fabs(iter->second.totalAmountS - iter->second.totalAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.totalAmountS);
-                    assetV["totalAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.totalAmountD);
-                    assetV["totalAmount_d"] = web::json::value::string(data);
-                }
-            }
-
-            if (fabs(iter->second.frozenAmountD) >= MINDOUBLE) {
-                if (fabs(iter->second.frozenAmountS / iter->second.frozenAmountD - 1) >= 0.05) {
-                    sprintf(data, "%f|1", iter->second.frozenAmountS);
-                    assetV["frozenAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.frozenAmountD);
-                    assetV["frozenAmount_d"] = web::json::value::string(data);
-                }
-            } else {
-                if (fabs(iter->second.frozenAmountS - iter->second.frozenAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.frozenAmountS);
-                    assetV["frozenAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.frozenAmountD);
-                    assetV["frozenAmount_d"] = web::json::value::string(data);
-                }
-            }
-
-            if (iter->second.marginAmountS < iter->second.marginAmountD) {
-                sprintf(data, "%f|1", iter->second.marginAmountS);
-                assetV["marginAmount_s"] = web::json::value::string(data);
-                sprintf(data, "%f|1", iter->second.marginAmountD);
-                assetV["marginAmount_d"] = web::json::value::string(data);
-            }
-
-            if (iter->second.frozenMarginAmountS < iter->second.frozenMarginAmountD) {
-                sprintf(data, "%f|1", iter->second.frozenMarginAmountS);
-                assetV["frozenMarginAmount_s"] = web::json::value::string(data);
-                sprintf(data, "%f|1", iter->second.frozenMarginAmountD);
-                assetV["frozenMarginAmount_d"] = web::json::value::string(data);
+            if (fabs(iter->second.totalAmountS - iter->second.totalAmountD) >= MINDOUBLE) {
+                sprintf(data, "%f|1", iter->second.totalAmountS);
+                assetV["totalAmount_s"].SetString(data, allocator);
+                sprintf(data, "%f|1", iter->second.totalAmountD);
+                assetV["totalAmount_d"].SetString(data, allocator);
             }
         }
-        totalAssetV[iter->second.asset] = assetV;
+        
+        if (fabs(iter->second.frozenAmountD) >= MINDOUBLE) {
+            if (fabs(iter->second.frozenAmountS / iter->second.frozenAmountD - 1) >= 0.05) {
+                sprintf(data, "%f|1", iter->second.frozenAmountS);
+                assetV["frozenAmount_s"].SetString(data, allocator);
+                sprintf(data, "%f|1", iter->second.frozenAmountD);
+                assetV["frozenAmount_d"].SetString(data, allocator);
+            }
+        } else {
+            if (fabs(iter->second.frozenAmountS - iter->second.frozenAmountD) >= MINDOUBLE) {
+                sprintf(data, "%f|1", iter->second.frozenAmountS);
+                assetV["frozenAmount_s"].SetString(data, allocator);
+                sprintf(data, "%f|1", iter->second.frozenAmountD);
+                assetV["frozenAmount_d"].SetString(data, allocator);
+            }
+        }
+        
+        if (iter->second.marginAmountS < iter->second.marginAmountD) {
+            sprintf(data, "%f|1", iter->second.marginAmountS);
+            assetV["marginAmount_s"].SetString(data, allocator);
+            sprintf(data, "%f|1", iter->second.marginAmountD);
+            assetV["marginAmount_d"].SetString(data, allocator);
+        }
+        
+        if (iter->second.frozenMarginAmountS < iter->second.frozenMarginAmountD) {
+            sprintf(data, "%f|1", iter->second.frozenMarginAmountS);
+            assetV["frozenMarginAmount_s"].SetString(data, allocator);
+            sprintf(data, "%f|1", iter->second.frozenMarginAmountD);
+            assetV["frozenMarginAmount_d"].SetString(data, allocator);
+        }
+        
+        totalAssetChecked.AddMember(rapidjson::Value(iter->second.asset.c_str(), allocator).Move(), assetV, allocator);
     }
+    detailV.AddMember("TotalAssetChecked", totalAssetChecked, allocator);
 
-    if (totalAssetV.size() == 0) {
-        detailV["TotalAssetChecked"] = web::json::value::object();
-    } else {
-        detailV["TotalAssetChecked"] = totalAssetV;
-    }
-
-
-    web::json::value spotAssetV;
+    // SpotAssetChecked
+    rapidjson::Value spotAssetChecked(rapidjson::kObjectType);
     for (auto iter = mSpotAsset.begin(); iter != mSpotAsset.end(); ++iter) {
-        web::json::value assetV;
+        rapidjson::Value assetV(rapidjson::kObjectType);
         char data[24];
+        
         sprintf(data, "%s|0", iter->second.asset.c_str());
-        assetV["asset"] = web::json::value::string(data);
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.realLeverageRatioD);
-            assetV["realLeverageRatio"] = web::json::value::string(data);
-        } else {
-            sprintf(data, "%f|0", iter->second.realLeverageRatioS);
-            assetV["realLeverageRatio"] = web::json::value::string(data);
-        }
+        assetV.AddMember("asset", rapidjson::Value(data, allocator).Move(), allocator);
         
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.positionValueD);
-            assetV["positionValue"] = web::json::value::string(data);
-        } else {
-            sprintf(data, "%f|0", iter->second.positionValueS);
-            assetV["positionValue"] = web::json::value::string(data);
-        }
-
+        sprintf(data, "%f|0", iter->second.realLeverageRatioD);
+        assetV.AddMember("realLeverageRatio", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.positionValueD);
+        assetV.AddMember("positionValue", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.transferAmount);
-        assetV["transferAmount"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.transferFrozenAmount);
-        assetV["transferFrozenAmount"] = web::json::value::string(data);
-
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.netAmountD);
-            assetV["netAmount"] = web::json::value::string(data);
-        } else {
-            sprintf(data, "%f|0", iter->second.netAmountS);
-            assetV["netAmount"] = web::json::value::string(data);
-        }
+        assetV.AddMember("transferAmount", rapidjson::Value(data, allocator).Move(), allocator);
         
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.availableAmountD);
-            assetV["availableAmount"] = web::json::value::string(data);
-        } else {
-            sprintf(data, "%f|0", iter->second.availableAmountS);
-            assetV["availableAmount"] = web::json::value::string(data);
-        }
+        sprintf(data, "%f|0", iter->second.transferFrozenAmount);
+        assetV.AddMember("transferFrozenAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.netAmountD);
+        assetV.AddMember("netAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.availableAmountD);
+        assetV.AddMember("availableAmount", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.floatAmountS);
-        assetV["floatAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("floatAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.floatAmountD);
-        assetV["floatAmount_d"] = web::json::value::string(data);
+        assetV.AddMember("floatAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.initialAmount);
-        assetV["initialAmount"] = web::json::value::string(data);
+        assetV.AddMember("initialAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.totalAmountS);
-        assetV["totalAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("totalAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.totalAmountD);
-        assetV["totalAmount_d"] = web::json::value::string(data);
+        assetV.AddMember("totalAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.frozenAmountS);
-        assetV["frozenAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("frozenAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.frozenAmountD);
-        assetV["frozenAmount_d"] = web::json::value::string(data);
+        assetV.AddMember("frozenAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.marginAmountS);
-        assetV["marginAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("marginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.marginAmountD);
-        assetV["marginAmount_d"] = web::json::value::string(data);
+        assetV.AddMember("marginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.frozenMarginAmountS);
-        assetV["frozenMarginAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("frozenMarginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.frozenMarginAmountD);
-        assetV["frozenMarginAmount_d"] = web::json::value::string(data);
-
-        if (type == "physical") {
-            if (fabs(iter->second.positionValueS) >= MINDOUBLE) {
-                if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) / fabs(iter->second.positionValueS) > 0.01) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    assetV["floatAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    assetV["floatAmount_d"] = web::json::value::string(data);
-                }
-            } else {
-                if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    assetV["floatAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    assetV["floatAmount_d"] = web::json::value::string(data);
-                }
+        assetV.AddMember("frozenMarginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        if (fabs(iter->second.positionValueS) >= MINDOUBLE) {
+            if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) / fabs(iter->second.positionValueS) > 0.01) {
+                sprintf(data, "%f|1", iter->second.floatAmountS);
+                assetV["floatAmount_s"].SetString(data, allocator);
+                sprintf(data, "%f|1", iter->second.floatAmountD);
+                assetV["floatAmount_d"].SetString(data, allocator);
             }
-
-            if (fabs(iter->second.totalAmountD) >= MINDOUBLE) {
-                if (fabs(iter->second.totalAmountS / iter->second.totalAmountD - 1) >= 0.05) {
-                    sprintf(data, "%f|1", iter->second.totalAmountS);
-                    assetV["totalAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.totalAmountD);
-                    assetV["totalAmount_d"] = web::json::value::string(data);
-                }
-            } else {
-                if (fabs(iter->second.totalAmountS - iter->second.totalAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.totalAmountS);
-                    assetV["totalAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.totalAmountD);
-                    assetV["totalAmount_d"] = web::json::value::string(data);
-                }
-            }
-
-            if (fabs(iter->second.frozenAmountD) >= MINDOUBLE) {
-                if (fabs(iter->second.frozenAmountS / iter->second.frozenAmountD - 1) >= 0.05) {
-                    sprintf(data, "%f|1", iter->second.frozenAmountS);
-                    assetV["frozenAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.frozenAmountD);
-                    assetV["frozenAmount_d"] = web::json::value::string(data);
-                }
-            } else {
-                if (fabs(iter->second.frozenAmountS - iter->second.frozenAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.frozenAmountS);
-                    assetV["frozenAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.frozenAmountD);
-                    assetV["frozenAmount_d"] = web::json::value::string(data);
-                }
-            }
-
-            if (iter->second.marginAmountS < iter->second.marginAmountD) {
-                sprintf(data, "%f|1", iter->second.marginAmountS);
-                assetV["marginAmount_s"] = web::json::value::string(data);
-                sprintf(data, "%f|1", iter->second.marginAmountD);
-                assetV["marginAmount_d"] = web::json::value::string(data);
-            }
-
-            if (iter->second.frozenMarginAmountS < iter->second.frozenMarginAmountD) {
-                sprintf(data, "%f|1", iter->second.frozenMarginAmountS);
-                assetV["frozenMarginAmount_s"] = web::json::value::string(data);
-                sprintf(data, "%f|1", iter->second.frozenMarginAmountD);
-                assetV["frozenMarginAmount_d"] = web::json::value::string(data);
+        } else {
+            if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
+                sprintf(data, "%f|1", iter->second.floatAmountS);
+                assetV["floatAmount_s"].SetString(data, allocator);
+                sprintf(data, "%f|1", iter->second.floatAmountD);
+                assetV["floatAmount_d"].SetString(data, allocator);
             }
         }
-        spotAssetV[iter->second.asset] = assetV;
+        
+        if (fabs(iter->second.totalAmountD) >= MINDOUBLE) {
+            if (fabs(iter->second.totalAmountS / iter->second.totalAmountD - 1) >= 0.05) {
+                sprintf(data, "%f|1", iter->second.totalAmountS);
+                assetV["totalAmount_s"].SetString(data, allocator);
+                sprintf(data, "%f|1", iter->second.totalAmountD);
+                assetV["totalAmount_d"].SetString(data, allocator);
+            }
+        } else {
+            if (fabs(iter->second.totalAmountS - iter->second.totalAmountD) >= MINDOUBLE) {
+                sprintf(data, "%f|1", iter->second.totalAmountS);
+                assetV["totalAmount_s"].SetString(data, allocator);
+                sprintf(data, "%f|1", iter->second.totalAmountD);
+                assetV["totalAmount_d"].SetString(data, allocator);
+            }
+        }
+        
+        if (fabs(iter->second.frozenAmountD) >= MINDOUBLE) {
+            if (fabs(iter->second.frozenAmountS / iter->second.frozenAmountD - 1) >= 0.05) {
+                sprintf(data, "%f|1", iter->second.frozenAmountS);
+                assetV["frozenAmount_s"].SetString(data, allocator);
+                sprintf(data, "%f|1", iter->second.frozenAmountD);
+                assetV["frozenAmount_d"].SetString(data, allocator);
+            }
+        } else {
+            if (fabs(iter->second.frozenAmountS - iter->second.frozenAmountD) >= MINDOUBLE) {
+                sprintf(data, "%f|1", iter->second.frozenAmountS);
+                assetV["frozenAmount_s"].SetString(data, allocator);
+                sprintf(data, "%f|1", iter->second.frozenAmountD);
+                assetV["frozenAmount_d"].SetString(data, allocator);
+            }
+        }
+        
+        if (iter->second.marginAmountS < iter->second.marginAmountD) {
+            sprintf(data, "%f|1", iter->second.marginAmountS);
+            assetV["marginAmount_s"].SetString(data, allocator);
+            sprintf(data, "%f|1", iter->second.marginAmountD);
+            assetV["marginAmount_d"].SetString(data, allocator);
+        }
+        
+        if (iter->second.frozenMarginAmountS < iter->second.frozenMarginAmountD) {
+            sprintf(data, "%f|1", iter->second.frozenMarginAmountS);
+            assetV["frozenMarginAmount_s"].SetString(data, allocator);
+            sprintf(data, "%f|1", iter->second.frozenMarginAmountD);
+            assetV["frozenMarginAmount_d"].SetString(data, allocator);
+        }
+        
+        spotAssetChecked.AddMember(rapidjson::Value(iter->second.asset.c_str(), allocator).Move(), assetV, allocator);
     }
- 
-    if (spotAssetV.size() == 0) {
-        detailV["SpotAssetChecked"] = web::json::value::object();
-    } else {
-        detailV["SpotAssetChecked"] = spotAssetV;
-    }
+    detailV.AddMember("SpotAssetChecked", spotAssetChecked, allocator);
 
-
-    web::json::value uFutureAssetV;
+    // UFutureAssetChecked
+    rapidjson::Value uFutureAssetChecked(rapidjson::kObjectType);
     for (auto iter = mUFutureAsset.begin(); iter != mUFutureAsset.end(); ++iter) {
-        web::json::value assetV;
+        rapidjson::Value assetV(rapidjson::kObjectType);
         char data[48];
+        
         sprintf(data, "%s|0", iter->second.asset.c_str());
-        assetV["asset"] = web::json::value::string(data);
+        assetV.AddMember("asset", rapidjson::Value(data, allocator).Move(), allocator);
+        
         if (type == "physical") {
             if (maxLeverageUD == true && maxLeverageAssetD == iter->first) {
                 sprintf(data, "%f|0|MaxRealLeverage", iter->second.realLeverageRatioD);
-                assetV["realLeverageRatio"] = web::json::value::string(data);
             } else {
                 sprintf(data, "%f|0", iter->second.realLeverageRatioD);
-                assetV["realLeverageRatio"] = web::json::value::string(data);
             }
         } else {
             if (maxLeverageUS == true && maxLeverageAssetS == iter->first) {
                 sprintf(data, "%f|0|MaxRealLeverage", iter->second.realLeverageRatioS);
-                assetV["realLeverageRatio"] = web::json::value::string(data);
             } else {
                 sprintf(data, "%f|0", iter->second.realLeverageRatioS);
-                assetV["realLeverageRatio"] = web::json::value::string(data);
             }
         }
+        assetV.AddMember("realLeverageRatio", rapidjson::Value(data, allocator).Move(), allocator);
         
         if (type == "physical") {
             sprintf(data, "%f|0", iter->second.positionValueD);
-            assetV["positionValue"] = web::json::value::string(data);
         } else {
             sprintf(data, "%f|0", iter->second.positionValueS);
-            assetV["positionValue"] = web::json::value::string(data);
         }
-
+        assetV.AddMember("positionValue", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.transferAmount);
-        assetV["transferAmount"] = web::json::value::string(data);
+        assetV.AddMember("transferAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.transferFrozenAmount);
-        assetV["transferFrozenAmount"] = web::json::value::string(data);
-
+        assetV.AddMember("transferFrozenAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
         if (type == "physical") {
             sprintf(data, "%f|0", iter->second.netAmountD);
-            assetV["netAmount"] = web::json::value::string(data);
         } else {
             sprintf(data, "%f|0", iter->second.netAmountS);
-            assetV["netAmount"] = web::json::value::string(data);
         }
-
+        assetV.AddMember("netAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
         if (type == "physical") {
             sprintf(data, "%f|0", iter->second.availableAmountD);
-            assetV["availableAmount"] = web::json::value::string(data);
         } else {
             sprintf(data, "%f|0", iter->second.availableAmountS);
-            assetV["availableAmount"] = web::json::value::string(data);
         }
-
+        assetV.AddMember("availableAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.totalAmountS);
-        assetV["totalAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("totalAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.totalAmountD);
-        assetV["totalAmount_d"] = web::json::value::string(data);
+        assetV.AddMember("totalAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.frozenAmountS);
-        assetV["frozenAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("frozenAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.frozenAmountD);
-        assetV["frozenAmount_d"] = web::json::value::string(data);
+        assetV.AddMember("frozenAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.floatAmountS);
-        assetV["floatAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("floatAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.floatAmountD);
-        assetV["floatAmount_d"] = web::json::value::string(data);
+        assetV.AddMember("floatAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.marginAmountS);
-        assetV["marginAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("marginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.marginAmountD);
-        assetV["marginAmount_d"] = web::json::value::string(data);
+        assetV.AddMember("marginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.frozenMarginAmountS);
-        assetV["frozenMarginAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("frozenMarginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.frozenMarginAmountD);
-        assetV["frozenMarginAmount_d"] = web::json::value::string(data);
+        assetV.AddMember("frozenMarginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.initialAmount);
-        assetV["initialAmount"] = web::json::value::string(data);
-
+        assetV.AddMember("initialAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
         if (type == "physical") {
             if (fabs(iter->second.positionValueS) >= MINDOUBLE) {
                 if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) / fabs(iter->second.positionValueS) > 0.01) {
                     sprintf(data, "%f|1", iter->second.floatAmountS);
-                    assetV["floatAmount_s"] = web::json::value::string(data);
+                    assetV["floatAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.floatAmountD);
-                    assetV["floatAmount_d"] = web::json::value::string(data);
+                    assetV["floatAmount_d"].SetString(data, allocator);
                 }
             } else {
                 if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
                     sprintf(data, "%f|1", iter->second.floatAmountS);
-                    assetV["floatAmount_s"] = web::json::value::string(data);
+                    assetV["floatAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.floatAmountD);
-                    assetV["floatAmount_d"] = web::json::value::string(data);
+                    assetV["floatAmount_d"].SetString(data, allocator);
                 }
             }
-
+            
             if (fabs(iter->second.totalAmountD) >= MINDOUBLE) {
                 if (fabs(iter->second.totalAmountS / iter->second.totalAmountD - 1) >= 0.05) {
                     sprintf(data, "%f|1", iter->second.totalAmountS);
-                    assetV["totalAmount_s"] = web::json::value::string(data);
+                    assetV["totalAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.totalAmountD);
-                    assetV["totalAmount_d"] = web::json::value::string(data);
+                    assetV["totalAmount_d"].SetString(data, allocator);
                 }
             } else {
                 if (fabs(iter->second.totalAmountS - iter->second.totalAmountD) >= MINDOUBLE) {
                     sprintf(data, "%f|1", iter->second.totalAmountS);
-                    assetV["totalAmount_s"] = web::json::value::string(data);
+                    assetV["totalAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.totalAmountD);
-                    assetV["totalAmount_d"] = web::json::value::string(data);
+                    assetV["totalAmount_d"].SetString(data, allocator);
                 }
             }
-
+            
             if (fabs(iter->second.frozenAmountD) >= MINDOUBLE) {
                 if (fabs(iter->second.frozenAmountS / iter->second.frozenAmountD - 1) >= 0.05) {
                     sprintf(data, "%f|1", iter->second.frozenAmountS);
-                    assetV["frozenAmount_s"] = web::json::value::string(data);
+                    assetV["frozenAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.frozenAmountD);
-                    assetV["frozenAmount_d"] = web::json::value::string(data);
+                    assetV["frozenAmount_d"].SetString(data, allocator);
                 }
             } else {
                 if (fabs(iter->second.frozenAmountS - iter->second.frozenAmountD) >= MINDOUBLE) {
                     sprintf(data, "%f|1", iter->second.frozenAmountS);
-                    assetV["frozenAmount_s"] = web::json::value::string(data);
+                    assetV["frozenAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.frozenAmountD);
-                    assetV["frozenAmount_d"] = web::json::value::string(data);
+                    assetV["frozenAmount_d"].SetString(data, allocator);
                 }
             }
-
+            
             if (iter->second.marginAmountS < iter->second.marginAmountD) {
                 sprintf(data, "%f|1", iter->second.marginAmountS);
-                assetV["marginAmount_s"] = web::json::value::string(data);
+                assetV["marginAmount_s"].SetString(data, allocator);
                 sprintf(data, "%f|1", iter->second.marginAmountD);
-                assetV["marginAmount_d"] = web::json::value::string(data);
+                assetV["marginAmount_d"].SetString(data, allocator);
             }
-
+            
             if (iter->second.frozenMarginAmountS < iter->second.frozenMarginAmountD) {
                 sprintf(data, "%f|1", iter->second.frozenMarginAmountS);
-                assetV["frozenMarginAmount_s"] = web::json::value::string(data);
+                assetV["frozenMarginAmount_s"].SetString(data, allocator);
                 sprintf(data, "%f|1", iter->second.frozenMarginAmountD);
-                assetV["frozenMarginAmount_d"] = web::json::value::string(data);
+                assetV["frozenMarginAmount_d"].SetString(data, allocator);
             }
         }
-        uFutureAssetV[iter->second.asset] = assetV;
+        
+        uFutureAssetChecked.AddMember(rapidjson::Value(iter->second.asset.c_str(), allocator).Move(), assetV, allocator);
     }
+    detailV.AddMember("UFutureAssetChecked", uFutureAssetChecked, allocator);
 
-    if (uFutureAssetV.size() == 0) {
-        detailV["UFutureAssetChecked"] = web::json::value::object();
-    } else {
-        detailV["UFutureAssetChecked"] = uFutureAssetV;
-    }
-
-
-    web::json::value cFutureAssetV;
+    // CFutureAssetChecked
+    rapidjson::Value cFutureAssetChecked(rapidjson::kObjectType);
     for (auto iter = mCFutureAsset.begin(); iter != mCFutureAsset.end(); ++iter) {
-        web::json::value assetV;
+        rapidjson::Value assetV(rapidjson::kObjectType);
         char data[48];
+        
         sprintf(data, "%s|0", iter->second.asset.c_str());
-        assetV["asset"] = web::json::value::string(data);
-
+        assetV.AddMember("asset", rapidjson::Value(data, allocator).Move(), allocator);
+        
         if (type == "physical") {
             if (maxLeverageUD == false && maxLeverageAssetD == iter->first) {
                 sprintf(data, "%f|0|MaxRealLeverage", iter->second.realLeverageRatioD);
-                assetV["realLeverageRatio"] = web::json::value::string(data);
             } else {
                 sprintf(data, "%f|0", iter->second.realLeverageRatioD);
-                assetV["realLeverageRatio"] = web::json::value::string(data);
             }
         } else {
             if (maxLeverageUS == false && maxLeverageAssetS == iter->first) {
                 sprintf(data, "%f|0|MaxRealLeverage", iter->second.realLeverageRatioS);
-                assetV["realLeverageRatio"] = web::json::value::string(data);
             } else {
                 sprintf(data, "%f|0", iter->second.realLeverageRatioS);
-                assetV["realLeverageRatio"] = web::json::value::string(data);
             }
         }
+        assetV.AddMember("realLeverageRatio", rapidjson::Value(data, allocator).Move(), allocator);
         
         if (type == "physical") {
             sprintf(data, "%f|0", iter->second.positionValueD);
-            assetV["positionValue"] = web::json::value::string(data);
         } else {
             sprintf(data, "%f|0", iter->second.positionValueS);
-            assetV["positionValue"] = web::json::value::string(data);
         }
-
+        assetV.AddMember("positionValue", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.transferAmount);
-        assetV["transferAmount"] = web::json::value::string(data);
+        assetV.AddMember("transferAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.transferFrozenAmount);
-        assetV["transferFrozenAmount"] = web::json::value::string(data);
-
+        assetV.AddMember("transferFrozenAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
         if (type == "physical") {
             sprintf(data, "%f|0", iter->second.netAmountD);
-            assetV["netAmount"] = web::json::value::string(data);
         } else {
             sprintf(data, "%f|0", iter->second.netAmountS);
-            assetV["netAmount"] = web::json::value::string(data);
         }
-
+        assetV.AddMember("netAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
         if (type == "physical") {
             sprintf(data, "%f|0", iter->second.availableAmountD);
-            assetV["availableAmount"] = web::json::value::string(data);
         } else {
             sprintf(data, "%f|0", iter->second.availableAmountS);
-            assetV["availableAmount"] = web::json::value::string(data);
         }
-
+        assetV.AddMember("availableAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.totalAmountS);
-        assetV["totalAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("totalAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.totalAmountD);
-        assetV["totalAmount_d"] = web::json::value::string(data);
+        assetV.AddMember("totalAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.frozenAmountS);
-        assetV["frozenAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("frozenAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.frozenAmountD);
-        assetV["frozenAmount_d"] = web::json::value::string(data);
+        assetV.AddMember("frozenAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.floatAmountS);
-        assetV["floatAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("floatAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.floatAmountD);
-        assetV["floatAmount_d"] = web::json::value::string(data);
+        assetV.AddMember("floatAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.marginAmountS);
-        assetV["marginAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("marginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.marginAmountD);
-        assetV["marginAmount_d"] = web::json::value::string(data);
+        assetV.AddMember("marginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.frozenMarginAmountS);
-        assetV["frozenMarginAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("frozenMarginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.frozenMarginAmountD);
-        assetV["frozenMarginAmount_d"] = web::json::value::string(data);
+        assetV.AddMember("frozenMarginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.initialAmount);
-        assetV["initialAmount"] = web::json::value::string(data);
-
+        assetV.AddMember("initialAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
         if (type == "physical") {
             if (fabs(iter->second.positionValueS) >= MINDOUBLE) {
                 if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) / fabs(iter->second.positionValueS) > 0.01) {
                     sprintf(data, "%f|1", iter->second.floatAmountS);
-                    assetV["floatAmount_s"] = web::json::value::string(data);
+                    assetV["floatAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.floatAmountD);
-                    assetV["floatAmount_d"] = web::json::value::string(data);
+                    assetV["floatAmount_d"].SetString(data, allocator);
                 }
             } else {
                 if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
                     sprintf(data, "%f|1", iter->second.floatAmountS);
-                    assetV["floatAmount_s"] = web::json::value::string(data);
+                    assetV["floatAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.floatAmountD);
-                    assetV["floatAmount_d"] = web::json::value::string(data);
+                    assetV["floatAmount_d"].SetString(data, allocator);
                 }
             }
-
+            
             if (fabs(iter->second.totalAmountD) >= MINDOUBLE) {
                 if (fabs(iter->second.totalAmountS / iter->second.totalAmountD - 1) >= 0.05) {
                     sprintf(data, "%f|1", iter->second.totalAmountS);
-                    assetV["totalAmount_s"] = web::json::value::string(data);
+                    assetV["totalAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.totalAmountD);
-                    assetV["totalAmount_d"] = web::json::value::string(data);
+                    assetV["totalAmount_d"].SetString(data, allocator);
                 }
             } else {
                 if (fabs(iter->second.totalAmountS - iter->second.totalAmountD) >= MINDOUBLE) {
                     sprintf(data, "%f|1", iter->second.totalAmountS);
-                    assetV["totalAmount_s"] = web::json::value::string(data);
+                    assetV["totalAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.totalAmountD);
-                    assetV["totalAmount_d"] = web::json::value::string(data);
+                    assetV["totalAmount_d"].SetString(data, allocator);
                 }
             }
-
+            
             if (fabs(iter->second.frozenAmountD) >= MINDOUBLE) {
                 if (fabs(iter->second.frozenAmountS / iter->second.frozenAmountD - 1) >= 0.05) {
                     sprintf(data, "%f|1", iter->second.frozenAmountS);
-                    assetV["frozenAmount_s"] = web::json::value::string(data);
+                    assetV["frozenAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.frozenAmountD);
-                    assetV["frozenAmount_d"] = web::json::value::string(data);
+                    assetV["frozenAmount_d"].SetString(data, allocator);
                 }
             } else {
                 if (fabs(iter->second.frozenAmountS - iter->second.frozenAmountD) >= MINDOUBLE) {
                     sprintf(data, "%f|1", iter->second.frozenAmountS);
-                    assetV["frozenAmount_s"] = web::json::value::string(data);
+                    assetV["frozenAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.frozenAmountD);
-                    assetV["frozenAmount_d"] = web::json::value::string(data);
+                    assetV["frozenAmount_d"].SetString(data, allocator);
                 }
             }
-
+            
             if (iter->second.marginAmountS < iter->second.marginAmountD) {
                 sprintf(data, "%f|1", iter->second.marginAmountS);
-                assetV["marginAmount_s"] = web::json::value::string(data);
+                assetV["marginAmount_s"].SetString(data, allocator);
                 sprintf(data, "%f|1", iter->second.marginAmountD);
-                assetV["marginAmount_d"] = web::json::value::string(data);
+                assetV["marginAmount_d"].SetString(data, allocator);
             }
-
+            
             if (iter->second.frozenMarginAmountS < iter->second.frozenMarginAmountD) {
                 sprintf(data, "%f|1", iter->second.frozenMarginAmountS);
-                assetV["frozenMarginAmount_s"] = web::json::value::string(data);
+                assetV["frozenMarginAmount_s"].SetString(data, allocator);
                 sprintf(data, "%f|1", iter->second.frozenMarginAmountD);
-                assetV["frozenMarginAmount_d"] = web::json::value::string(data);
-            }
-        }
-
-        cFutureAssetV[iter->second.asset] = assetV;
-    }
-
-    if (cFutureAssetV.size() == 0) {
-        detailV["CFutureAssetChecked"] = web::json::value::object();
-    } else {
-        detailV["CFutureAssetChecked"] = cFutureAssetV;
-    }
-
-    // delivery asset
-    web::json::value deliveryAssetV;
-    for (auto iter = mDeliveryAsset.begin(); iter != mDeliveryAsset.end(); ++iter) {
-        web::json::value assetV;
-        char data[48];
-        sprintf(data, "%s|0", iter->second.asset.c_str());
-        assetV["asset"] = web::json::value::string(data);
-
-        if (type == "physical") {
-            if (maxLeverageUD == false && maxLeverageAssetD == iter->first) {
-                sprintf(data, "%f|0|MaxRealLeverage", iter->second.realLeverageRatioD);
-                assetV["realLeverageRatio"] = web::json::value::string(data);
-            } else {
-                sprintf(data, "%f|0", iter->second.realLeverageRatioD);
-                assetV["realLeverageRatio"] = web::json::value::string(data);
-            }
-        } else {
-            if (maxLeverageUS == false && maxLeverageAssetS == iter->first) {
-                sprintf(data, "%f|0|MaxRealLeverage", iter->second.realLeverageRatioS);
-                assetV["realLeverageRatio"] = web::json::value::string(data);
-            } else {
-                sprintf(data, "%f|0", iter->second.realLeverageRatioS);
-                assetV["realLeverageRatio"] = web::json::value::string(data);
+                assetV["frozenMarginAmount_d"].SetString(data, allocator);
             }
         }
         
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.positionValueD);
-            assetV["positionValue"] = web::json::value::string(data);
-        } else {
-            sprintf(data, "%f|0", iter->second.positionValueS);
-            assetV["positionValue"] = web::json::value::string(data);
-        }
-
-        sprintf(data, "%f|0", iter->second.transferAmount);
-        assetV["transferAmount"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.transferFrozenAmount);
-        assetV["transferFrozenAmount"] = web::json::value::string(data);
-
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.netAmountD);
-            assetV["netAmount"] = web::json::value::string(data);
-        } else {
-            sprintf(data, "%f|0", iter->second.netAmountS);
-            assetV["netAmount"] = web::json::value::string(data);
-        }
-
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.availableAmountD);
-            assetV["availableAmount"] = web::json::value::string(data);
-        } else {
-            sprintf(data, "%f|0", iter->second.availableAmountS);
-            assetV["availableAmount"] = web::json::value::string(data);
-        }
-
-        sprintf(data, "%f|0", iter->second.totalAmountS);
-        assetV["totalAmount_s"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.totalAmountD);
-        assetV["totalAmount_d"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.frozenAmountS);
-        assetV["frozenAmount_s"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.frozenAmountD);
-        assetV["frozenAmount_d"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.floatAmountS);
-        assetV["floatAmount_s"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.floatAmountD);
-        assetV["floatAmount_d"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.marginAmountS);
-        assetV["marginAmount_s"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.marginAmountD);
-        assetV["marginAmount_d"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.frozenMarginAmountS);
-        assetV["frozenMarginAmount_s"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.frozenMarginAmountD);
-        assetV["frozenMarginAmount_d"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.initialAmount);
-        assetV["initialAmount"] = web::json::value::string(data);
-
-        if (type == "physical") {
-            if (fabs(iter->second.positionValueS) >= MINDOUBLE) {
-                if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) / fabs(iter->second.positionValueS) > 0.01) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    assetV["floatAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    assetV["floatAmount_d"] = web::json::value::string(data);
-                }
-            } else {
-                if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    assetV["floatAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    assetV["floatAmount_d"] = web::json::value::string(data);
-                }
-            }
-
-            if (fabs(iter->second.totalAmountD) >= MINDOUBLE) {
-                if (fabs(iter->second.totalAmountS / iter->second.totalAmountD - 1) >= 0.05) {
-                    sprintf(data, "%f|1", iter->second.totalAmountS);
-                    assetV["totalAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.totalAmountD);
-                    assetV["totalAmount_d"] = web::json::value::string(data);
-                }
-            } else {
-                if (fabs(iter->second.totalAmountS - iter->second.totalAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.totalAmountS);
-                    assetV["totalAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.totalAmountD);
-                    assetV["totalAmount_d"] = web::json::value::string(data);
-                }
-            }
-
-            if (fabs(iter->second.frozenAmountD) >= MINDOUBLE) {
-                if (fabs(iter->second.frozenAmountS / iter->second.frozenAmountD - 1) >= 0.05) {
-                    sprintf(data, "%f|1", iter->second.frozenAmountS);
-                    assetV["frozenAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.frozenAmountD);
-                    assetV["frozenAmount_d"] = web::json::value::string(data);
-                }
-            } else {
-                if (fabs(iter->second.frozenAmountS - iter->second.frozenAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.frozenAmountS);
-                    assetV["frozenAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.frozenAmountD);
-                    assetV["frozenAmount_d"] = web::json::value::string(data);
-                }
-            }
-
-            if (iter->second.marginAmountS < iter->second.marginAmountD) {
-                sprintf(data, "%f|1", iter->second.marginAmountS);
-                assetV["marginAmount_s"] = web::json::value::string(data);
-                sprintf(data, "%f|1", iter->second.marginAmountD);
-                assetV["marginAmount_d"] = web::json::value::string(data);
-            }
-
-            if (iter->second.frozenMarginAmountS < iter->second.frozenMarginAmountD) {
-                sprintf(data, "%f|1", iter->second.frozenMarginAmountS);
-                assetV["frozenMarginAmount_s"] = web::json::value::string(data);
-                sprintf(data, "%f|1", iter->second.frozenMarginAmountD);
-                assetV["frozenMarginAmount_d"] = web::json::value::string(data);
-            }
-        }
-
-        deliveryAssetV[iter->second.asset] = assetV;
+        cFutureAssetChecked.AddMember(rapidjson::Value(iter->second.asset.c_str(), allocator).Move(), assetV, allocator);
     }
+    detailV.AddMember("CFutureAssetChecked", cFutureAssetChecked, allocator);
 
-    if (deliveryAssetV.size() == 0) {
-        detailV["DeliveryAssetChecked"] = web::json::value::object();
-    } else {
-        detailV["DeliveryAssetChecked"] = deliveryAssetV;
-    }
 
-    // perpetual asset
-    web::json::value perpetualAssetV;
+    // PerpetualAssetChecked
+    rapidjson::Value perpetualAssetChecked(rapidjson::kObjectType);
     for (auto iter = mPerpetualAsset.begin(); iter != mPerpetualAsset.end(); ++iter) {
-        web::json::value assetV;
+        rapidjson::Value assetV(rapidjson::kObjectType);
         char data[48];
+        
         sprintf(data, "%s|0", iter->second.asset.c_str());
-        assetV["asset"] = web::json::value::string(data);
-
+        assetV.AddMember("asset", rapidjson::Value(data, allocator).Move(), allocator);
+        
         if (type == "physical") {
             if (maxLeverageUD == false && maxLeverageAssetD == iter->first) {
                 sprintf(data, "%f|0|MaxRealLeverage", iter->second.realLeverageRatioD);
-                assetV["realLeverageRatio"] = web::json::value::string(data);
             } else {
                 sprintf(data, "%f|0", iter->second.realLeverageRatioD);
-                assetV["realLeverageRatio"] = web::json::value::string(data);
             }
         } else {
             if (maxLeverageUS == false && maxLeverageAssetS == iter->first) {
                 sprintf(data, "%f|0|MaxRealLeverage", iter->second.realLeverageRatioS);
-                assetV["realLeverageRatio"] = web::json::value::string(data);
             } else {
                 sprintf(data, "%f|0", iter->second.realLeverageRatioS);
-                assetV["realLeverageRatio"] = web::json::value::string(data);
             }
         }
+        assetV.AddMember("realLeverageRatio", rapidjson::Value(data, allocator).Move(), allocator);
         
         if (type == "physical") {
             sprintf(data, "%f|0", iter->second.positionValueD);
-            assetV["positionValue"] = web::json::value::string(data);
         } else {
             sprintf(data, "%f|0", iter->second.positionValueS);
-            assetV["positionValue"] = web::json::value::string(data);
         }
-
+        assetV.AddMember("positionValue", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.transferAmount);
-        assetV["transferAmount"] = web::json::value::string(data);
+        assetV.AddMember("transferAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.transferFrozenAmount);
-        assetV["transferFrozenAmount"] = web::json::value::string(data);
-
+        assetV.AddMember("transferFrozenAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
         if (type == "physical") {
             sprintf(data, "%f|0", iter->second.netAmountD);
-            assetV["netAmount"] = web::json::value::string(data);
         } else {
             sprintf(data, "%f|0", iter->second.netAmountS);
-            assetV["netAmount"] = web::json::value::string(data);
         }
-
+        assetV.AddMember("netAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
         if (type == "physical") {
             sprintf(data, "%f|0", iter->second.availableAmountD);
-            assetV["availableAmount"] = web::json::value::string(data);
         } else {
             sprintf(data, "%f|0", iter->second.availableAmountS);
-            assetV["availableAmount"] = web::json::value::string(data);
         }
-
+        assetV.AddMember("availableAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.totalAmountS);
-        assetV["totalAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("totalAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.totalAmountD);
-        assetV["totalAmount_d"] = web::json::value::string(data);
+        assetV.AddMember("totalAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.frozenAmountS);
-        assetV["frozenAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("frozenAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.frozenAmountD);
-        assetV["frozenAmount_d"] = web::json::value::string(data);
+        assetV.AddMember("frozenAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.floatAmountS);
-        assetV["floatAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("floatAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.floatAmountD);
-        assetV["floatAmount_d"] = web::json::value::string(data);
+        assetV.AddMember("floatAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.marginAmountS);
-        assetV["marginAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("marginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.marginAmountD);
-        assetV["marginAmount_d"] = web::json::value::string(data);
+        assetV.AddMember("marginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.frozenMarginAmountS);
-        assetV["frozenMarginAmount_s"] = web::json::value::string(data);
+        assetV.AddMember("frozenMarginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.frozenMarginAmountD);
-        assetV["frozenMarginAmount_d"] = web::json::value::string(data);
+        assetV.AddMember("frozenMarginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.initialAmount);
-        assetV["initialAmount"] = web::json::value::string(data);
-
+        assetV.AddMember("initialAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
         if (type == "physical") {
             if (fabs(iter->second.positionValueS) >= MINDOUBLE) {
                 if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) / fabs(iter->second.positionValueS) > 0.01) {
                     sprintf(data, "%f|1", iter->second.floatAmountS);
-                    assetV["floatAmount_s"] = web::json::value::string(data);
+                    assetV["floatAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.floatAmountD);
-                    assetV["floatAmount_d"] = web::json::value::string(data);
+                    assetV["floatAmount_d"].SetString(data, allocator);
                 }
             } else {
                 if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
                     sprintf(data, "%f|1", iter->second.floatAmountS);
-                    assetV["floatAmount_s"] = web::json::value::string(data);
+                    assetV["floatAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.floatAmountD);
-                    assetV["floatAmount_d"] = web::json::value::string(data);
+                    assetV["floatAmount_d"].SetString(data, allocator);
                 }
             }
-
+            
             if (fabs(iter->second.totalAmountD) >= MINDOUBLE) {
                 if (fabs(iter->second.totalAmountS / iter->second.totalAmountD - 1) >= 0.05) {
                     sprintf(data, "%f|1", iter->second.totalAmountS);
-                    assetV["totalAmount_s"] = web::json::value::string(data);
+                    assetV["totalAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.totalAmountD);
-                    assetV["totalAmount_d"] = web::json::value::string(data);
+                    assetV["totalAmount_d"].SetString(data, allocator);
                 }
             } else {
                 if (fabs(iter->second.totalAmountS - iter->second.totalAmountD) >= MINDOUBLE) {
                     sprintf(data, "%f|1", iter->second.totalAmountS);
-                    assetV["totalAmount_s"] = web::json::value::string(data);
+                    assetV["totalAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.totalAmountD);
-                    assetV["totalAmount_d"] = web::json::value::string(data);
+                    assetV["totalAmount_d"].SetString(data, allocator);
                 }
             }
-
+            
             if (fabs(iter->second.frozenAmountD) >= MINDOUBLE) {
                 if (fabs(iter->second.frozenAmountS / iter->second.frozenAmountD - 1) >= 0.05) {
                     sprintf(data, "%f|1", iter->second.frozenAmountS);
-                    assetV["frozenAmount_s"] = web::json::value::string(data);
+                    assetV["frozenAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.frozenAmountD);
-                    assetV["frozenAmount_d"] = web::json::value::string(data);
+                    assetV["frozenAmount_d"].SetString(data, allocator);
                 }
             } else {
                 if (fabs(iter->second.frozenAmountS - iter->second.frozenAmountD) >= MINDOUBLE) {
                     sprintf(data, "%f|1", iter->second.frozenAmountS);
-                    assetV["frozenAmount_s"] = web::json::value::string(data);
+                    assetV["frozenAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.frozenAmountD);
-                    assetV["frozenAmount_d"] = web::json::value::string(data);
+                    assetV["frozenAmount_d"].SetString(data, allocator);
                 }
             }
-
+            
             if (iter->second.marginAmountS < iter->second.marginAmountD) {
                 sprintf(data, "%f|1", iter->second.marginAmountS);
-                assetV["marginAmount_s"] = web::json::value::string(data);
+                assetV["marginAmount_s"].SetString(data, allocator);
                 sprintf(data, "%f|1", iter->second.marginAmountD);
-                assetV["marginAmount_d"] = web::json::value::string(data);
+                assetV["marginAmount_d"].SetString(data, allocator);
             }
-
+            
             if (iter->second.frozenMarginAmountS < iter->second.frozenMarginAmountD) {
                 sprintf(data, "%f|1", iter->second.frozenMarginAmountS);
-                assetV["frozenMarginAmount_s"] = web::json::value::string(data);
+                assetV["frozenMarginAmount_s"].SetString(data, allocator);
                 sprintf(data, "%f|1", iter->second.frozenMarginAmountD);
-                assetV["frozenMarginAmount_d"] = web::json::value::string(data);
+                assetV["frozenMarginAmount_d"].SetString(data, allocator);
             }
         }
-
-        perpetualAssetV[iter->second.asset] = assetV;
+        
+        perpetualAssetChecked.AddMember(rapidjson::Value(iter->second.asset.c_str(), allocator).Move(), assetV, allocator);
     }
+    detailV.AddMember("PerpetualAssetChecked", perpetualAssetChecked, allocator);
 
-    if (perpetualAssetV.size() == 0) {
-        detailV["PerpetualAssetChecked"] = web::json::value::object();
-    } else {
-        detailV["PerpetualAssetChecked"] = perpetualAssetV;
-    }
-
-
-    web::json::value uFuturePositionV;
+    // UFuturePositionChecked
+    rapidjson::Value uFuturePositionChecked(rapidjson::kObjectType);
     for (auto iter = mUFuturePosition.begin(); iter != mUFuturePosition.end(); ++iter) {
-        web::json::value positionV;
+        rapidjson::Value positionV(rapidjson::kObjectType);
         char data[24];
+        
         sprintf(data, "%s", iter->second.key.c_str());
-        positionV["instrumentKey"] = web::json::value::string(data);
+        positionV.AddMember("instrumentKey", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.netPositionS);
-        positionV["netPosition_s"] = web::json::value::string(data);
+        positionV.AddMember("netPosition_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.netPositionD);
-        positionV["netPosition_d"] = web::json::value::string(data);
+        positionV.AddMember("netPosition_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%.11f|0", iter->second.netAvgPriceS);
-        positionV["netAvgPrice_s"] = web::json::value::string(data);
+        positionV.AddMember("netAvgPrice_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%.11f|0", iter->second.netAvgPriceD);
-        positionV["netAvgPrice_d"] = web::json::value::string(data);
+        positionV.AddMember("netAvgPrice_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.floatAmountS);
-        positionV["floatAmount_s"] = web::json::value::string(data);
+        positionV.AddMember("floatAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.floatAmountD);
-        positionV["floatAmount_d"] = web::json::value::string(data);
+        positionV.AddMember("floatAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.underwayNetPositionS);
-        positionV["underwayNetPosition"] = web::json::value::string(data);
+        positionV.AddMember("underwayNetPosition", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.underwayAbsPositionS);
-        positionV["underwayAbPosition"] = web::json::value::string(data);
+        positionV.AddMember("underwayAbPosition", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%.11f|0", iter->second.liquidationPrice);
-        positionV["liquidationPrice_d"] = web::json::value::string(data);
-
+        positionV.AddMember("liquidationPrice_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         if (type == "physical") {
             if (fabs(iter->second.netPositionD) >= MINDOUBLE) {
                 if (fabs(iter->second.netPositionS / iter->second.netPositionD - 1) >= 0.05) {
                     sprintf(data, "%f|1", iter->second.netPositionS);
-                    positionV["netPosition_s"] = web::json::value::string(data);
+                    positionV["netPosition_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.netPositionD);
-                    positionV["netPosition_d"] = web::json::value::string(data);
+                    positionV["netPosition_d"].SetString(data, allocator);
                 }
             } else {
                 if (fabs(iter->second.netPositionS - iter->second.netPositionD) >= MINDOUBLE) {
                     sprintf(data, "%f|1", iter->second.netPositionS);
-                    positionV["netPosition_s"] = web::json::value::string(data);
+                    positionV["netPosition_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.netPositionD);
-                    positionV["netPosition_d"] = web::json::value::string(data);
+                    positionV["netPosition_d"].SetString(data, allocator);
                 }
             }
-
+            
             if (fabs(iter->second.netAvgPriceD) >= MINDOUBLE) {
                 if (fabs(iter->second.netAvgPriceS / iter->second.netAvgPriceD - 1) >= 0.05) {
                     sprintf(data, "%.11f|1", iter->second.netAvgPriceS);
-                    positionV["netAvgPrice_s"] = web::json::value::string(data);
+                    positionV["netAvgPrice_s"].SetString(data, allocator);
                     sprintf(data, "%.11f|1", iter->second.netAvgPriceD);
-                    positionV["netAvgPrice_d"] = web::json::value::string(data);
+                    positionV["netAvgPrice_d"].SetString(data, allocator);
                 }
             } else {
                 if (fabs(iter->second.netAvgPriceS - iter->second.netAvgPriceD) >= MINDOUBLE) {
                     sprintf(data, "%.11f|1", iter->second.netAvgPriceS);
-                    positionV["netAvgPrice_s"] = web::json::value::string(data);
+                    positionV["netAvgPrice_s"].SetString(data, allocator);
                     sprintf(data, "%.11f|1", iter->second.netAvgPriceD);
-                    positionV["netAvgPrice_d"] = web::json::value::string(data);
+                    positionV["netAvgPrice_d"].SetString(data, allocator);
                 }
             }
-
+            
             if (fabs(iter->second.floatAmountD) >= MINDOUBLE) {
                 if (fabs(iter->second.floatAmountS / iter->second.floatAmountD - 1) > 0.01) {
                     sprintf(data, "%f|1", iter->second.floatAmountS);
-                    positionV["floatAmount_s"] = web::json::value::string(data);
+                    positionV["floatAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.floatAmountD);
-                    positionV["floatAmount_d"] = web::json::value::string(data);
+                    positionV["floatAmount_d"].SetString(data, allocator);
                 }
             } else {
                 if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
                     sprintf(data, "%f|1", iter->second.floatAmountS);
-                    positionV["floatAmount_s"] = web::json::value::string(data);
+                    positionV["floatAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.floatAmountD);
-                    positionV["floatAmount_d"] = web::json::value::string(data);
+                    positionV["floatAmount_d"].SetString(data, allocator);
                 }
             }
         }
-        uFuturePositionV[iter->second.symbol] = positionV;
+        
+        uFuturePositionChecked.AddMember(rapidjson::Value(iter->second.symbol.c_str(), allocator).Move(), positionV, allocator);
     }
+    detailV.AddMember("UFuturePositionChecked", uFuturePositionChecked, allocator);
 
-    if (uFuturePositionV.size() == 0) {
-        detailV["UFuturePositionChecked"] = web::json::value::object();
-    } else {
-        detailV["UFuturePositionChecked"] = uFuturePositionV;
-    }
-
-
-    web::json::value cFuturePositionV;
+    // CFuturePositionChecked
+    rapidjson::Value cFuturePositionChecked(rapidjson::kObjectType);
     for (auto iter = mCFuturePosition.begin(); iter != mCFuturePosition.end(); ++iter) {
-        web::json::value positionV;
+        rapidjson::Value positionV(rapidjson::kObjectType);
         char data[24];
+        
         sprintf(data, "%s", iter->second.key.c_str());
-        positionV["instrumentKey"] = web::json::value::string(data);
+        positionV.AddMember("instrumentKey", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.netPositionS);
-        positionV["netPosition_s"] = web::json::value::string(data);
+        positionV.AddMember("netPosition_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.netPositionD);
-        positionV["netPosition_d"] = web::json::value::string(data);
+        positionV.AddMember("netPosition_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%.11f|0", iter->second.netAvgPriceS);
-        positionV["netAvgPrice_s"] = web::json::value::string(data);
+        positionV.AddMember("netAvgPrice_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%.11f|0", iter->second.netAvgPriceD);
-        positionV["netAvgPrice_d"] = web::json::value::string(data);
+        positionV.AddMember("netAvgPrice_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.floatAmountS);
-        positionV["floatAmount_s"] = web::json::value::string(data);
+        positionV.AddMember("floatAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.floatAmountD);
-        positionV["floatAmount_d"] = web::json::value::string(data);
+        positionV.AddMember("floatAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.underwayNetPositionS);
-        positionV["underwayNetPosition"] = web::json::value::string(data);
+        positionV.AddMember("underwayNetPosition", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.underwayAbsPositionS);
-        positionV["underwayAbPosition"] = web::json::value::string(data);
+        positionV.AddMember("underwayAbPosition", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%.11f|0", iter->second.liquidationPrice);
-        positionV["liquidationPrice_d"] = web::json::value::string(data);
-
+        positionV.AddMember("liquidationPrice_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         if (type == "physical") {
             if (fabs(iter->second.netPositionD) >= MINDOUBLE) {
                 if (fabs(iter->second.netPositionS / iter->second.netPositionD - 1) >= 0.05) {
                     sprintf(data, "%f|1", iter->second.netPositionS);
-                    positionV["netPosition_s"] = web::json::value::string(data);
+                    positionV["netPosition_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.netPositionD);
-                    positionV["netPosition_d"] = web::json::value::string(data);
+                    positionV["netPosition_d"].SetString(data, allocator);
                 }
             } else {
                 if (fabs(iter->second.netPositionS - iter->second.netPositionD) >= MINDOUBLE) {
                     sprintf(data, "%f|1", iter->second.netPositionS);
-                    positionV["netPosition_s"] = web::json::value::string(data);
+                    positionV["netPosition_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.netPositionD);
-                    positionV["netPosition_d"] = web::json::value::string(data);
+                    positionV["netPosition_d"].SetString(data, allocator);
                 }
             }
-
+            
             if (fabs(iter->second.netAvgPriceD) >= MINDOUBLE) {
                 if (fabs(iter->second.netAvgPriceS / iter->second.netAvgPriceD - 1) >= 0.05) {
                     sprintf(data, "%.11f|1", iter->second.netAvgPriceS);
-                    positionV["netAvgPrice_s"] = web::json::value::string(data);
+                    positionV["netAvgPrice_s"].SetString(data, allocator);
                     sprintf(data, "%.11f|1", iter->second.netAvgPriceD);
-                    positionV["netAvgPrice_d"] = web::json::value::string(data);
+                    positionV["netAvgPrice_d"].SetString(data, allocator);
                 }
             } else {
                 if (fabs(iter->second.netAvgPriceS - iter->second.netAvgPriceD) >= MINDOUBLE) {
                     sprintf(data, "%.11f|1", iter->second.netAvgPriceS);
-                    positionV["netAvgPrice_s"] = web::json::value::string(data);
+                    positionV["netAvgPrice_s"].SetString(data, allocator);
                     sprintf(data, "%.11f|1", iter->second.netAvgPriceD);
-                    positionV["netAvgPrice_d"] = web::json::value::string(data);
+                    positionV["netAvgPrice_d"].SetString(data, allocator);
                 }
             }
-
+            
             if (fabs(iter->second.floatAmountD) >= MINDOUBLE) {
                 if (fabs(iter->second.floatAmountS / iter->second.floatAmountD - 1) > 0.01) {
                     sprintf(data, "%f|1", iter->second.floatAmountS);
-                    positionV["floatAmount_s"] = web::json::value::string(data);
+                    positionV["floatAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.floatAmountD);
-                    positionV["floatAmount_d"] = web::json::value::string(data);
+                    positionV["floatAmount_d"].SetString(data, allocator);
                 }
             } else {
                 if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
                     sprintf(data, "%f|1", iter->second.floatAmountS);
-                    positionV["floatAmount_s"] = web::json::value::string(data);
+                    positionV["floatAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.floatAmountD);
-                    positionV["floatAmount_d"] = web::json::value::string(data);
+                    positionV["floatAmount_d"].SetString(data, allocator);
                 }
             }
         }
-        cFuturePositionV[iter->second.symbol] = positionV;
+        
+        cFuturePositionChecked.AddMember(rapidjson::Value(iter->second.symbol.c_str(), allocator).Move(), positionV, allocator);
     }
+    detailV.AddMember("CFuturePositionChecked", cFuturePositionChecked, allocator);
 
-    if (cFuturePositionV.size() == 0) {
-        detailV["CFuturePositionChecked"] = web::json::value::object();
-    } else {
-        detailV["CFuturePositionChecked"] = cFuturePositionV;
-    }
 
-    // delivery position
-    web::json::value deliveryPositionV;
-    for (auto iter = mDeliveryPosition.begin(); iter != mDeliveryPosition.end(); ++iter) {
-        web::json::value positionV;
-        char data[24];
-        sprintf(data, "%s", iter->second.key.c_str());
-        positionV["instrumentKey"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.netPositionS);
-        positionV["netPosition_s"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.netPositionD);
-        positionV["netPosition_d"] = web::json::value::string(data);
-        sprintf(data, "%.11f|0", iter->second.netAvgPriceS);
-        positionV["netAvgPrice_s"] = web::json::value::string(data);
-        sprintf(data, "%.11f|0", iter->second.netAvgPriceD);
-        positionV["netAvgPrice_d"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.floatAmountS);
-        positionV["floatAmount_s"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.floatAmountD);
-        positionV["floatAmount_d"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.underwayNetPositionS);
-        positionV["underwayNetPosition"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.underwayAbsPositionS);
-        positionV["underwayAbPosition"] = web::json::value::string(data);
-        sprintf(data, "%.11f|0", iter->second.liquidationPrice);
-        positionV["liquidationPrice_d"] = web::json::value::string(data);
-
-        if (type == "physical") {
-            if (fabs(iter->second.netPositionD) >= MINDOUBLE) {
-                if (fabs(iter->second.netPositionS / iter->second.netPositionD - 1) >= 0.05) {
-                    sprintf(data, "%f|1", iter->second.netPositionS);
-                    positionV["netPosition_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.netPositionD);
-                    positionV["netPosition_d"] = web::json::value::string(data);
-                }
-            } else {
-                if (fabs(iter->second.netPositionS - iter->second.netPositionD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.netPositionS);
-                    positionV["netPosition_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.netPositionD);
-                    positionV["netPosition_d"] = web::json::value::string(data);
-                }
-            }
-
-            if (fabs(iter->second.netAvgPriceD) >= MINDOUBLE) {
-                if (fabs(iter->second.netAvgPriceS / iter->second.netAvgPriceD - 1) >= 0.05) {
-                    sprintf(data, "%.11f|1", iter->second.netAvgPriceS);
-                    positionV["netAvgPrice_s"] = web::json::value::string(data);
-                    sprintf(data, "%.11f|1", iter->second.netAvgPriceD);
-                    positionV["netAvgPrice_d"] = web::json::value::string(data);
-                }
-            } else {
-                if (fabs(iter->second.netAvgPriceS - iter->second.netAvgPriceD) >= MINDOUBLE) {
-                    sprintf(data, "%.11f|1", iter->second.netAvgPriceS);
-                    positionV["netAvgPrice_s"] = web::json::value::string(data);
-                    sprintf(data, "%.11f|1", iter->second.netAvgPriceD);
-                    positionV["netAvgPrice_d"] = web::json::value::string(data);
-                }
-            }
-
-            if (fabs(iter->second.floatAmountD) >= MINDOUBLE) {
-                if (fabs(iter->second.floatAmountS / iter->second.floatAmountD - 1) > 0.01) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    positionV["floatAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    positionV["floatAmount_d"] = web::json::value::string(data);
-                }
-            } else {
-                if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    positionV["floatAmount_s"] = web::json::value::string(data);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    positionV["floatAmount_d"] = web::json::value::string(data);
-                }
-            }
-        }
-        deliveryPositionV[iter->second.symbol] = positionV;
-    }
-
-    if (deliveryPositionV.size() == 0) {
-        detailV["DeliveryPositionChecked"] = web::json::value::object();
-    } else {
-        detailV["DeliveryPositionChecked"] = deliveryPositionV;
-    }
-
-    // perpetual position
-    web::json::value perpetualPositionV;
+    // PerpetualPositionChecked
+    rapidjson::Value perpetualPositionChecked(rapidjson::kObjectType);
     for (auto iter = mPerpetualPosition.begin(); iter != mPerpetualPosition.end(); ++iter) {
-        web::json::value positionV;
+        rapidjson::Value positionV(rapidjson::kObjectType);
         char data[24];
+        
         sprintf(data, "%s", iter->second.key.c_str());
-        positionV["instrumentKey"] = web::json::value::string(data);
+        positionV.AddMember("instrumentKey", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.netPositionS);
-        positionV["netPosition_s"] = web::json::value::string(data);
+        positionV.AddMember("netPosition_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.netPositionD);
-        positionV["netPosition_d"] = web::json::value::string(data);
+        positionV.AddMember("netPosition_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%.11f|0", iter->second.netAvgPriceS);
-        positionV["netAvgPrice_s"] = web::json::value::string(data);
+        positionV.AddMember("netAvgPrice_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%.11f|0", iter->second.netAvgPriceD);
-        positionV["netAvgPrice_d"] = web::json::value::string(data);
+        positionV.AddMember("netAvgPrice_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.floatAmountS);
-        positionV["floatAmount_s"] = web::json::value::string(data);
+        positionV.AddMember("floatAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.floatAmountD);
-        positionV["floatAmount_d"] = web::json::value::string(data);
+        positionV.AddMember("floatAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.underwayNetPositionS);
-        positionV["underwayNetPosition"] = web::json::value::string(data);
+        positionV.AddMember("underwayNetPosition", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.underwayAbsPositionS);
-        positionV["underwayAbPosition"] = web::json::value::string(data);
+        positionV.AddMember("underwayAbPosition", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%.11f|0", iter->second.liquidationPrice);
-        positionV["liquidationPrice_d"] = web::json::value::string(data);
-
+        positionV.AddMember("liquidationPrice_d", rapidjson::Value(data, allocator).Move(), allocator);
+        
         if (type == "physical") {
             if (fabs(iter->second.netPositionD) >= MINDOUBLE) {
                 if (fabs(iter->second.netPositionS / iter->second.netPositionD - 1) >= 0.05) {
                     sprintf(data, "%f|1", iter->second.netPositionS);
-                    positionV["netPosition_s"] = web::json::value::string(data);
+                    positionV["netPosition_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.netPositionD);
-                    positionV["netPosition_d"] = web::json::value::string(data);
+                    positionV["netPosition_d"].SetString(data, allocator);
                 }
             } else {
                 if (fabs(iter->second.netPositionS - iter->second.netPositionD) >= MINDOUBLE) {
                     sprintf(data, "%f|1", iter->second.netPositionS);
-                    positionV["netPosition_s"] = web::json::value::string(data);
+                    positionV["netPosition_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.netPositionD);
-                    positionV["netPosition_d"] = web::json::value::string(data);
+                    positionV["netPosition_d"].SetString(data, allocator);
                 }
             }
-
+            
             if (fabs(iter->second.netAvgPriceD) >= MINDOUBLE) {
                 if (fabs(iter->second.netAvgPriceS / iter->second.netAvgPriceD - 1) >= 0.05) {
                     sprintf(data, "%.11f|1", iter->second.netAvgPriceS);
-                    positionV["netAvgPrice_s"] = web::json::value::string(data);
+                    positionV["netAvgPrice_s"].SetString(data, allocator);
                     sprintf(data, "%.11f|1", iter->second.netAvgPriceD);
-                    positionV["netAvgPrice_d"] = web::json::value::string(data);
+                    positionV["netAvgPrice_d"].SetString(data, allocator);
                 }
             } else {
                 if (fabs(iter->second.netAvgPriceS - iter->second.netAvgPriceD) >= MINDOUBLE) {
                     sprintf(data, "%.11f|1", iter->second.netAvgPriceS);
-                    positionV["netAvgPrice_s"] = web::json::value::string(data);
+                    positionV["netAvgPrice_s"].SetString(data, allocator);
                     sprintf(data, "%.11f|1", iter->second.netAvgPriceD);
-                    positionV["netAvgPrice_d"] = web::json::value::string(data);
+                    positionV["netAvgPrice_d"].SetString(data, allocator);
                 }
             }
-
+            
             if (fabs(iter->second.floatAmountD) >= MINDOUBLE) {
                 if (fabs(iter->second.floatAmountS / iter->second.floatAmountD - 1) > 0.01) {
                     sprintf(data, "%f|1", iter->second.floatAmountS);
-                    positionV["floatAmount_s"] = web::json::value::string(data);
+                    positionV["floatAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.floatAmountD);
-                    positionV["floatAmount_d"] = web::json::value::string(data);
+                    positionV["floatAmount_d"].SetString(data, allocator);
                 }
             } else {
                 if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
                     sprintf(data, "%f|1", iter->second.floatAmountS);
-                    positionV["floatAmount_s"] = web::json::value::string(data);
+                    positionV["floatAmount_s"].SetString(data, allocator);
                     sprintf(data, "%f|1", iter->second.floatAmountD);
-                    positionV["floatAmount_d"] = web::json::value::string(data);
+                    positionV["floatAmount_d"].SetString(data, allocator);
                 }
             }
         }
-        perpetualPositionV[iter->second.symbol] = positionV;
+        
+        perpetualPositionChecked.AddMember(rapidjson::Value(iter->second.symbol.c_str(), allocator).Move(), positionV, allocator);
     }
+    detailV.AddMember("PerpetualPositionChecked", perpetualPositionChecked, allocator);
 
-    if (perpetualPositionV.size() == 0) {
-        detailV["PerpetualPositionChecked"] = web::json::value::object();
-    } else {
-        detailV["PerpetualPositionChecked"] = perpetualPositionV;
-    }
-
-    web::json::value exposureV;
+    // ExposureFormChecked
+    rapidjson::Value exposureFormChecked(rapidjson::kObjectType);
     for (auto iter = mExposure.begin(); iter != mExposure.end(); ++iter) {
-        web::json::value v;
+        rapidjson::Value exposureV(rapidjson::kObjectType);
         char data[48];
+        
         sprintf(data, "%f|0", iter->second.initialAmount);
-        v["InitialAmount"] = web::json::value::string(data);
+        exposureV.AddMember("InitialAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
         sprintf(data, "%f|0", iter->second.initialValue);
-        v["InitialValue"] = web::json::value::string(data);
-
+        exposureV.AddMember("InitialValue", rapidjson::Value(data, allocator).Move(), allocator);
+        
         if (type == "physical") {
             sprintf(data, "%f|0", iter->second.exposureAmountD);
-            v["ExposureAmount"] = web::json::value::string(data);
+            exposureV.AddMember("ExposureAmount", rapidjson::Value(data, allocator).Move(), allocator);
+            
             if (iter->first == maxRiskExposureAssetD) {
                 sprintf(data, "%f|0|MaxExposureValue", iter->second.exposureValueD);
-                v["ExposureValue"] = web::json::value::string(data);
             } else {
                 sprintf(data, "%f|0", iter->second.exposureValueD);
-                v["ExposureValue"] = web::json::value::string(data);
             }
+            exposureV.AddMember("ExposureValue", rapidjson::Value(data, allocator).Move(), allocator);
+            
             sprintf(data, "%f|0", iter->second.deltaAmountD);
-            v["DeltaAmount"] = web::json::value::string(data);
+            exposureV.AddMember("DeltaAmount", rapidjson::Value(data, allocator).Move(), allocator);
+            
             sprintf(data, "%f|0", iter->second.deltaValueD);
-            v["DeltaValue"] = web::json::value::string(data);
+            exposureV.AddMember("DeltaValue", rapidjson::Value(data, allocator).Move(), allocator);
         } else {
             sprintf(data, "%f|0", iter->second.exposureAmountS);
-            v["ExposureAmount"] = web::json::value::string(data);
+            exposureV.AddMember("ExposureAmount", rapidjson::Value(data, allocator).Move(), allocator);
+            
             if (iter->first == maxRiskExposureAssetS) {
                 sprintf(data, "%f|0|MaxExposureValue", iter->second.exposureValueS);
-                v["ExposureValue"] = web::json::value::string(data);
             } else {
                 sprintf(data, "%f|0", iter->second.exposureValueS);
-                v["ExposureValue"] = web::json::value::string(data);
             }
+            exposureV.AddMember("ExposureValue", rapidjson::Value(data, allocator).Move(), allocator);
+            
             sprintf(data, "%f|0", iter->second.deltaAmountS);
-            v["DeltaAmount"] = web::json::value::string(data);
+            exposureV.AddMember("DeltaAmount", rapidjson::Value(data, allocator).Move(), allocator);
+            
             sprintf(data, "%f|0", iter->second.deltaValueS);
-            v["DeltaValue"] = web::json::value::string(data);
+            exposureV.AddMember("DeltaValue", rapidjson::Value(data, allocator).Move(), allocator);
         }
-
-        exposureV[iter->first] = v;
+        
+        exposureFormChecked.AddMember(rapidjson::Value(iter->first.c_str(), allocator).Move(), exposureV, allocator);
     }
+    detailV.AddMember("ExposureFormChecked", exposureFormChecked, allocator);
 
-    if (exposureV.size() == 0) {
-        detailV["ExposureFormChecked"] = web::json::value::object();
-    } else {
-        detailV["ExposureFormChecked"] = exposureV;
-    }
-
-    web::json::value savingAssetV;
-    for (auto iter = mSavAsset.begin(); iter != mSavAsset.end(); ++iter) {
-        web::json::value v;
-        char data[24];
-        sprintf(data, "%s|0", iter->second.asset.c_str());
-        v["asset"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.amountD);
-        v["amount_d"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.amountInBTCD);
-        v["amountInBTC_d"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.amountInUSDTD);
-        v["amountInUSDT_d"] = web::json::value::string(data);
-        savingAssetV[iter->first] = v;
-    }
-
-    if (savingAssetV.size() == 0) {
-        detailV["SavingAssetChecked"] = web::json::value::object();
-    } else {
-        detailV["SavingAssetChecked"] = savingAssetV;
-    }
-
-    web::json::value marginAccountV;
-    char dataMargin[24];
-    sprintf(dataMargin, "%f|0", totalMarAsset.marginLevel);
-    marginAccountV["marginLevel_d"] = web::json::value::string(dataMargin);
-    sprintf(dataMargin, "%f|0", totalMarAsset.totalAssetOfBtc);
-    marginAccountV["totalAssetOfBtc_d"] = web::json::value::string(dataMargin);
-    sprintf(dataMargin, "%f|0", totalMarAsset.totalLiabilityOfBtc);
-    marginAccountV["totalLiabilityOfBtc_d"] = web::json::value::string(dataMargin);
-    sprintf(dataMargin, "%f|0", totalMarAsset.totalNetAssetOfBtc);
-    marginAccountV["totalNetAssetOfBtc_d"] = web::json::value::string(dataMargin);
-    
-    /*
-    if (totalMarAsset.marginLevel <= MINDOUBLE && totalMarAsset.totalAssetOfBtc <= MINDOUBLE && totalMarAsset.totalLiabilityOfBtc <= MINDOUBLE && totalMarAsset.totalNetAssetOfBtc <= MINDOUBLE) {
-        detailV["MarginAccountChecked"] = web::json::value::object();
-    } else {
-        detailV["MarginAccountChecked"] = marginAccountV;
-    }
-    */
-
-    if (totalMarAsset.marginLevel > MINDOUBLE || totalMarAsset.totalAssetOfBtc > MINDOUBLE || totalMarAsset.totalLiabilityOfBtc > MINDOUBLE || totalMarAsset.totalNetAssetOfBtc > MINDOUBLE) {
-        detailV["MarginAccountChecked"] = marginAccountV;
-    }
-
-    web::json::value marginAssetV;
-    for (auto iter = mMarAsset.begin(); iter != mMarAsset.end(); ++iter) {
-        web::json::value v;
-        char data[24];
-        sprintf(data, "%s|0", iter->second.asset.c_str());
-        v["asset"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.borrowed);
-        v["borrowed_d"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.free);
-        v["free_d"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.interest);
-        v["interest_d"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.locked);
-        v["locked_d"] = web::json::value::string(data);
-        sprintf(data, "%f|0", iter->second.netAsset);
-        v["netAsset_d"] = web::json::value::string(data);
-        marginAssetV[iter->first] = v;
-    }
-
-    /*
-    if (marginAssetV.size() == 0) {
-        detailV["MarginAssetChecked"] = web::json::value::object();
-    } else {
-        detailV["MarginAssetChecked"] = marginAssetV;
-    }
-    */
-
-    if (marginAssetV.size() > 0) {
-        detailV["MarginAssetChecked"] = marginAssetV;
-    }
-
-
-    vector<web::json::value> riskV;
+    // MainFormChecked - array
+    rapidjson::Value mainFormChecked(rapidjson::kArrayType);
     char data[24];
-    web::json::value productNameV;
-    productNameV["key"] = web::json::value::string("ProductName");
-    productNameV["alert"] = web::json::value::boolean(false);
-    productNameV["enable"] = web::json::value::boolean(true);
-    productNameV["value"] = web::json::value::string(name);
-    riskV.push_back(productNameV);
-
-    web::json::value accountIdV;    
+    
+    // ProductName
+    rapidjson::Value productNameV(rapidjson::kObjectType);
+    productNameV.AddMember("key", "ProductName", allocator);
+    productNameV.AddMember("alert", false, allocator);
+    productNameV.AddMember("enable", true, allocator);
+    productNameV.AddMember("value", rapidjson::Value(name.c_str(), allocator).Move(), allocator);
+    mainFormChecked.PushBack(productNameV, allocator);
+    
+    // AccountID
+    rapidjson::Value accountIdV(rapidjson::kObjectType);
     sprintf(data, "%d", accountId);
-    accountIdV["key"] = web::json::value::string("AccountID");
-    accountIdV["alert"] = web::json::value::boolean(false);
-    accountIdV["enable"] = web::json::value::boolean(true);
-    accountIdV["value"] = web::json::value::string(data);
-    riskV.push_back(accountIdV);
-
-    web::json::value strategyIdV;
-    strategyIdV["key"] = web::json::value::string("StrategyID");
-    strategyIdV["alert"] = web::json::value::boolean(false);
-    vector<web::json::value> vStrategyIdV;
+    accountIdV.AddMember("key", "AccountID", allocator);
+    accountIdV.AddMember("alert", false, allocator);
+    accountIdV.AddMember("enable", true, allocator);
+    accountIdV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
+    mainFormChecked.PushBack(accountIdV, allocator);
+    
+    // StrategyID
+    rapidjson::Value strategyIdV(rapidjson::kObjectType);
+    strategyIdV.AddMember("key", "StrategyID", allocator);
+    strategyIdV.AddMember("alert", false, allocator);
+    strategyIdV.AddMember("enable", false, allocator);
+    rapidjson::Value vStrategyIdV(rapidjson::kArrayType);
     for (size_t i = 0; i < riskInfo.vStrategyId.size(); ++i) {
-        vStrategyIdV.push_back(web::json::value::number(riskInfo.vStrategyId[i]));
+        vStrategyIdV.PushBack(riskInfo.vStrategyId[i], allocator);
     }
-    strategyIdV["enable"] = web::json::value::boolean(false);
-    strategyIdV["value"] = web::json::value::array(vStrategyIdV);
-    riskV.push_back(strategyIdV);
-
-    web::json::value traderIdV;
-    traderIdV["key"] = web::json::value::string("TraderID");
-    traderIdV["alert"] = web::json::value::boolean(false);
-    vector<web::json::value> vTraderIdV;
+    strategyIdV.AddMember("value", vStrategyIdV, allocator);
+    mainFormChecked.PushBack(strategyIdV, allocator);
+    
+    // TraderID
+    rapidjson::Value traderIdV(rapidjson::kObjectType);
+    traderIdV.AddMember("key", "TraderID", allocator);
+    traderIdV.AddMember("alert", false, allocator);
+    traderIdV.AddMember("enable", false, allocator);
+    rapidjson::Value vTraderIdV(rapidjson::kArrayType);
     for (size_t i = 0; i < riskInfo.vTraderId.size(); ++i) {
-        vTraderIdV.push_back(web::json::value::number(riskInfo.vTraderId[i]));
+        vTraderIdV.PushBack(riskInfo.vTraderId[i], allocator);
     }
-    traderIdV["enable"] = web::json::value::boolean(false);
-    traderIdV["value"] = web::json::value::array(vTraderIdV);
-    riskV.push_back(traderIdV);
-
-    web::json::value baseAssetV;
-    baseAssetV["key"] = web::json::value::string("BaseAsset");
-    baseAssetV["alert"] = web::json::value::boolean(false);
-    baseAssetV["enable"] = web::json::value::boolean(true);
-    baseAssetV["value"] = web::json::value::string(baseAsset);
-    riskV.push_back(baseAssetV);
-
-    web::json::value timeV;
-    timeV["key"] = web::json::value::string("Time");
-    timeV["alert"] = web::json::value::boolean(false);
-    timeV["enable"] = web::json::value::boolean(true);
-    timeV["value"] = web::json::value::string(CovertToUtcStr(riskInfo.tsLocal));
-    riskV.push_back(timeV);
-
-    web::json::value updateTimeDV;
-    updateTimeDV["key"] = web::json::value::string("UpdateTime_D");
-    updateTimeDV["alert"] = web::json::value::boolean(false);
-    updateTimeDV["enable"] = web::json::value::boolean(true);
-    updateTimeDV["value"] = web::json::value::string(CovertToUtcStr(riskInfo.dUpdateTime));
-    riskV.push_back(updateTimeDV);
-
-    web::json::value updateTimeSV;
-    updateTimeSV["key"] = web::json::value::string("UpdateTime_S");
-    updateTimeSV["alert"] = web::json::value::boolean(false);
-    updateTimeSV["enable"] = web::json::value::boolean(true);
-    updateTimeSV["value"] = web::json::value::string(CovertToUtcStr(riskInfo.sUpdateTime));
-    riskV.push_back(updateTimeSV);
-
-    web::json::value netValueDV;    
+    traderIdV.AddMember("value", vTraderIdV, allocator);
+    mainFormChecked.PushBack(traderIdV, allocator);
+    
+    // BaseAsset
+    rapidjson::Value baseAssetV(rapidjson::kObjectType);
+    baseAssetV.AddMember("key", "BaseAsset", allocator);
+    baseAssetV.AddMember("alert", false, allocator);
+    baseAssetV.AddMember("enable", true, allocator);
+    baseAssetV.AddMember("value", rapidjson::Value(baseAsset.c_str(), allocator).Move(), allocator);
+    mainFormChecked.PushBack(baseAssetV, allocator);
+    
+    // Time
+    rapidjson::Value timeV(rapidjson::kObjectType);
+    timeV.AddMember("key", "Time", allocator);
+    timeV.AddMember("alert", false, allocator);
+    timeV.AddMember("enable", true, allocator);
+    timeV.AddMember("value", rapidjson::Value(CovertToUtcStr(riskInfo.tsLocal).c_str(), allocator).Move(), allocator);
+    mainFormChecked.PushBack(timeV, allocator);
+    
+    // UpdateTime_D
+    rapidjson::Value updateTimeDV(rapidjson::kObjectType);
+    updateTimeDV.AddMember("key", "UpdateTime_D", allocator);
+    updateTimeDV.AddMember("alert", false, allocator);
+    updateTimeDV.AddMember("enable", true, allocator);
+    updateTimeDV.AddMember("value", rapidjson::Value(CovertToUtcStr(riskInfo.dUpdateTime).c_str(), allocator).Move(), allocator);
+    mainFormChecked.PushBack(updateTimeDV, allocator);
+    
+    // UpdateTime_S
+    rapidjson::Value updateTimeSV(rapidjson::kObjectType);
+    updateTimeSV.AddMember("key", "UpdateTime_S", allocator);
+    updateTimeSV.AddMember("alert", false, allocator);
+    updateTimeSV.AddMember("enable", true, allocator);
+    updateTimeSV.AddMember("value", rapidjson::Value(CovertToUtcStr(riskInfo.sUpdateTime).c_str(), allocator).Move(), allocator);
+    mainFormChecked.PushBack(updateTimeSV, allocator);
+    
+    // NetValue_D
+    rapidjson::Value netValueDV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.netValueD);
-    netValueDV["key"] = web::json::value::string("NetValue_D");
-    netValueDV["alert"] = web::json::value::boolean(false);
-    if (type == "physical") {
-        netValueDV["enable"] = web::json::value::boolean(true);
-    } else {
-        netValueDV["enable"] = web::json::value::boolean(false);
-    } 
-    netValueDV["value"] = web::json::value::string(data);
-    riskV.push_back(netValueDV);
-
-    web::json::value netValueSV;
+    netValueDV.AddMember("key", "NetValue_D", allocator);
+    netValueDV.AddMember("alert", false, allocator);
+    netValueDV.AddMember("enable", type == "physical", allocator);
+    netValueDV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
+    mainFormChecked.PushBack(netValueDV, allocator);
+    
+    // NetValue_S
+    rapidjson::Value netValueSV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.netValueS);
-    netValueSV["key"] = web::json::value::string("NetValue_S");
-    netValueSV["alert"] = web::json::value::boolean(false);
-    if (type == "strategy") {
-        netValueSV["enable"] = web::json::value::boolean(true);
-    } else {
-        netValueSV["enable"] = web::json::value::boolean(false);
-    }
-    netValueSV["value"] = web::json::value::string(data);
-    riskV.push_back(netValueSV);
-
-    web::json::value netValueGrowthRateDV;    
+    netValueSV.AddMember("key", "NetValue_S", allocator);
+    netValueSV.AddMember("alert", false, allocator);
+    netValueSV.AddMember("enable", type == "strategy", allocator);
+    netValueSV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
+    mainFormChecked.PushBack(netValueSV, allocator);
+    
+    // NetValueGrowthRate_D
+    rapidjson::Value netValueGrowthRateDV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.netValueGrowthRateD);
-    netValueGrowthRateDV["key"] = web::json::value::string("NetValueGrowthRate_D");
-    netValueGrowthRateDV["alert"] = web::json::value::boolean(false);
-    netValueGrowthRateDV["enable"] = web::json::value::boolean(false);
-    netValueGrowthRateDV["value"] = web::json::value::string(data);
-    riskV.push_back(netValueGrowthRateDV);
-
-    web::json::value netValueGrowthRateSV;    
+    netValueGrowthRateDV.AddMember("key", "NetValueGrowthRate_D", allocator);
+    netValueGrowthRateDV.AddMember("alert", false, allocator);
+    netValueGrowthRateDV.AddMember("enable", false, allocator);
+    netValueGrowthRateDV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
+    mainFormChecked.PushBack(netValueGrowthRateDV, allocator);
+    
+    // NetValueGrowthRate_S
+    rapidjson::Value netValueGrowthRateSV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.netValueGrowthRateS);
-    netValueGrowthRateSV["key"] = web::json::value::string("NetValueGrowthRate_S");
-    netValueGrowthRateSV["alert"] = web::json::value::boolean(false);
-    netValueGrowthRateSV["enable"] = web::json::value::boolean(false);
-    netValueGrowthRateSV["value"] = web::json::value::string(data);
-    riskV.push_back(netValueGrowthRateSV);
-
-    web::json::value maxValueToLoanRatioDV;    
+    netValueGrowthRateSV.AddMember("key", "NetValueGrowthRate_S", allocator);
+    netValueGrowthRateSV.AddMember("alert", false, allocator);
+    netValueGrowthRateSV.AddMember("enable", false, allocator);
+    netValueGrowthRateSV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
+    mainFormChecked.PushBack(netValueGrowthRateSV, allocator);
+    
+    // MaxValueToLoanRatio_D
+    rapidjson::Value maxValueToLoanRatioDV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.maxValueToLoanRatioD);
-    maxValueToLoanRatioDV["key"] = web::json::value::string("MaxValueToLoanRatio_D");
-    maxValueToLoanRatioDV["alert"] = web::json::value::boolean(false);
-    maxValueToLoanRatioDV["enable"] = web::json::value::boolean(false);
-    maxValueToLoanRatioDV["value"] = web::json::value::string(data);
-    riskV.push_back(maxValueToLoanRatioDV);
-
-    web::json::value maxValueToLoanRatioSV;    
+    maxValueToLoanRatioDV.AddMember("key", "MaxValueToLoanRatio_D", allocator);
+    maxValueToLoanRatioDV.AddMember("alert", false, allocator);
+    maxValueToLoanRatioDV.AddMember("enable", false, allocator);
+    maxValueToLoanRatioDV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
+    mainFormChecked.PushBack(maxValueToLoanRatioDV, allocator);
+    
+    // MaxValueToLoanRatio_S
+    rapidjson::Value maxValueToLoanRatioSV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.maxValueToLoanRatioS);
-    maxValueToLoanRatioSV["key"] = web::json::value::string("MaxValueToLoanRatio_S");
-    maxValueToLoanRatioSV["alert"] = web::json::value::boolean(false);
-    maxValueToLoanRatioSV["enable"] = web::json::value::boolean(false);
-    maxValueToLoanRatioSV["value"] = web::json::value::string(data);
-    riskV.push_back(maxValueToLoanRatioSV);
-
-    web::json::value maxRealLeverageDV;    
+    maxValueToLoanRatioSV.AddMember("key", "MaxValueToLoanRatio_S", allocator);
+    maxValueToLoanRatioSV.AddMember("alert", false, allocator);
+    maxValueToLoanRatioSV.AddMember("enable", false, allocator);
+    maxValueToLoanRatioSV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
+    mainFormChecked.PushBack(maxValueToLoanRatioSV, allocator);
+    
+    // MaxRealLeverage_D
+    rapidjson::Value maxRealLeverageDV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.maxRealLeverageD);
-    maxRealLeverageDV["key"] = web::json::value::string("MaxRealLeverage_D");
-    maxRealLeverageDV["alert"] = web::json::value::boolean(false);
-    maxRealLeverageDV["value"] = web::json::value::string(data);
+    maxRealLeverageDV.AddMember("key", "MaxRealLeverage_D", allocator);
+    maxRealLeverageDV.AddMember("alert", false, allocator);
+    maxRealLeverageDV.AddMember("enable", type == "physical", allocator);
     if (type == "physical") {
-        maxRealLeverageDV["enable"] = web::json::value::boolean(true);
-        vector<web::json::value> leveragePositionDV;
-        leveragePositionDV.push_back(web::json::value::string(maxLeverageTabD));
-        leveragePositionDV.push_back(web::json::value::string("MaxRealLeverage"));
-        maxRealLeverageDV["position"] = web::json::value::array(leveragePositionDV);
-    } else {
-        maxRealLeverageDV["enable"] = web::json::value::boolean(false);
+        rapidjson::Value leveragePositionDV(rapidjson::kArrayType);
+        leveragePositionDV.PushBack(rapidjson::Value(maxLeverageTabD.c_str(), allocator).Move(), allocator);
+        leveragePositionDV.PushBack("MaxRealLeverage", allocator);
+        maxRealLeverageDV.AddMember("position", leveragePositionDV, allocator);
     }
-    riskV.push_back(maxRealLeverageDV);
-
-    web::json::value maxRealLeverageSV;    
+    maxRealLeverageDV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
+    mainFormChecked.PushBack(maxRealLeverageDV, allocator);
+    
+    // MaxRealLeverage_S
+    rapidjson::Value maxRealLeverageSV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.maxRealLeverageS);
-    maxRealLeverageSV["key"] = web::json::value::string("MaxRealLeverage_S");
-    maxRealLeverageSV["alert"] = web::json::value::boolean(false);
+    maxRealLeverageSV.AddMember("key", "MaxRealLeverage_S", allocator);
+    maxRealLeverageSV.AddMember("alert", false, allocator);
+    maxRealLeverageSV.AddMember("enable", type == "strategy", allocator);
     if (type == "strategy") {
-        maxRealLeverageSV["enable"] = web::json::value::boolean(true);
-        vector<web::json::value> leveragePositionSV;
-        leveragePositionSV.push_back(web::json::value::string(maxLeverageTabS));
-        leveragePositionSV.push_back(web::json::value::string("MaxRealLeverage"));
-        maxRealLeverageSV["position"] = web::json::value::array(leveragePositionSV);
-    } else {
-        maxRealLeverageSV["enable"] = web::json::value::boolean(false);
+        rapidjson::Value leveragePositionSV(rapidjson::kArrayType);
+        leveragePositionSV.PushBack(rapidjson::Value(maxLeverageTabS.c_str(), allocator).Move(), allocator);
+        leveragePositionSV.PushBack("MaxRealLeverage", allocator);
+        maxRealLeverageSV.AddMember("position", leveragePositionSV, allocator);
     }
-    maxRealLeverageSV["value"] = web::json::value::string(data);
-    riskV.push_back(maxRealLeverageSV);
-
-    web::json::value riskExposureDV;    
+    maxRealLeverageSV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
+    mainFormChecked.PushBack(maxRealLeverageSV, allocator);
+    
+    // RiskExposure_D
+    rapidjson::Value riskExposureDV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.riskExposureD);
-    riskExposureDV["key"] = web::json::value::string("RiskExposure_D");
-    riskExposureDV["alert"] = web::json::value::boolean(false);
-    riskExposureDV["value"] = web::json::value::string(data);
+    riskExposureDV.AddMember("key", "RiskExposure_D", allocator);
+    riskExposureDV.AddMember("alert", false, allocator);
+    riskExposureDV.AddMember("enable", type == "physical", allocator);
     if (type == "physical") {
-        riskExposureDV["enable"] = web::json::value::boolean(true);
-        vector<web::json::value> riskPositionDV;
-        riskPositionDV.push_back(web::json::value::string(maxRiskExposureTab));
-        riskPositionDV.push_back(web::json::value::string("MaxExposureValue"));
-        riskExposureDV["position"] = web::json::value::array(riskPositionDV);
-    } else {
-        riskExposureDV["enable"] = web::json::value::boolean(false);
+        rapidjson::Value riskPositionDV(rapidjson::kArrayType);
+        riskPositionDV.PushBack(rapidjson::Value(maxRiskExposureTab.c_str(), allocator).Move(), allocator);
+        riskPositionDV.PushBack("MaxExposureValue", allocator);
+        riskExposureDV.AddMember("position", riskPositionDV, allocator);
     }
-    riskV.push_back(riskExposureDV);
-
-    web::json::value riskExposureSV;    
+    riskExposureDV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
+    mainFormChecked.PushBack(riskExposureDV, allocator);
+    
+    // RiskExposure_S
+    rapidjson::Value riskExposureSV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.riskExposureS);
-    riskExposureSV["key"] = web::json::value::string("RiskExposure_S");
-    riskExposureSV["alert"] = web::json::value::boolean(false);
-    riskExposureSV["value"] = web::json::value::string(data);
+    riskExposureSV.AddMember("key", "RiskExposure_S", allocator);
+    riskExposureSV.AddMember("alert", false, allocator);
+    riskExposureSV.AddMember("enable", type == "strategy", allocator);
     if (type == "strategy") {
-        riskExposureSV["enable"] = web::json::value::boolean(true);
-        vector<web::json::value> riskPositionSV;
-        riskPositionSV.push_back(web::json::value::string(maxRiskExposureTab));
-        riskPositionSV.push_back(web::json::value::string("MaxExposureValue"));
-        riskExposureSV["position"] = web::json::value::array(riskPositionSV);
-    } else {
-        riskExposureSV["enable"] = web::json::value::boolean(false);
+        rapidjson::Value riskPositionSV(rapidjson::kArrayType);
+        riskPositionSV.PushBack(rapidjson::Value(maxRiskExposureTab.c_str(), allocator).Move(), allocator);
+        riskPositionSV.PushBack("MaxExposureValue", allocator);
+        riskExposureSV.AddMember("position", riskPositionSV, allocator);
     }
-    riskV.push_back(riskExposureSV);
-
-    web::json::value underwayOrderValueDV;    
+    riskExposureSV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
+    mainFormChecked.PushBack(riskExposureSV, allocator);
+    
+    // UnderwayOrderValue_D
+    rapidjson::Value underwayOrderValueDV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.underwayOrderValueD);
-    underwayOrderValueDV["key"] = web::json::value::string("UnderwayOrderValue_D");
-    underwayOrderValueDV["alert"] = web::json::value::boolean(false);
-    if (type == "physical") {
-        underwayOrderValueDV["enable"] = web::json::value::boolean(true);
-    } else {
-        underwayOrderValueDV["enable"] = web::json::value::boolean(false);
-    }
-    underwayOrderValueDV["value"] = web::json::value::string(data);
-    riskV.push_back(underwayOrderValueDV);
-
-    web::json::value underwayOrderValueSV;    
+    underwayOrderValueDV.AddMember("key", "UnderwayOrderValue_D", allocator);
+    underwayOrderValueDV.AddMember("alert", false, allocator);
+    underwayOrderValueDV.AddMember("enable", type == "physical", allocator);
+    underwayOrderValueDV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
+    mainFormChecked.PushBack(underwayOrderValueDV, allocator);
+    
+    // UnderwayOrderValue_S
+    rapidjson::Value underwayOrderValueSV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.underwayOrderValueS);
-    underwayOrderValueSV["key"] = web::json::value::string("UnderwayOrderValue_S");
-    underwayOrderValueSV["alert"] = web::json::value::boolean(false);
-    if (type == "strategy") {
-        underwayOrderValueSV["enable"] = web::json::value::boolean(true);
-    } else {
-        underwayOrderValueSV["enable"] = web::json::value::boolean(false);
-    }
-    underwayOrderValueSV["value"] = web::json::value::string(data);
-    riskV.push_back(underwayOrderValueSV);
-
-    web::json::value verifyRiskV;    
+    underwayOrderValueSV.AddMember("key", "UnderwayOrderValue_S", allocator);
+    underwayOrderValueSV.AddMember("alert", false, allocator);
+    underwayOrderValueSV.AddMember("enable", type == "strategy", allocator);
+    underwayOrderValueSV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
+    mainFormChecked.PushBack(underwayOrderValueSV, allocator);
+    
+    // VerifyRisk
+    rapidjson::Value verifyRiskV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.verifyRiskD);
-    verifyRiskV["key"] = web::json::value::string("VerifyRisk");
-    verifyRiskV["alert"] = web::json::value::boolean(false);
-    verifyRiskV["enable"] = web::json::value::boolean(false);
-    verifyRiskV["value"] = web::json::value::string(data);
-    riskV.push_back(verifyRiskV);
-
-    web::json::value utilizationV;    
+    verifyRiskV.AddMember("key", "VerifyRisk", allocator);
+    verifyRiskV.AddMember("alert", false, allocator);
+    verifyRiskV.AddMember("enable", false, allocator);
+    verifyRiskV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
+    mainFormChecked.PushBack(verifyRiskV, allocator);
+    
+    // Utilization
+    rapidjson::Value utilizationV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.utilizationD);
-    utilizationV["key"] = web::json::value::string("Utilization");
-    utilizationV["alert"] = web::json::value::boolean(false);
-    utilizationV["enable"] = web::json::value::boolean(false);
-    utilizationV["value"] = web::json::value::string(data);
-    riskV.push_back(utilizationV);
-
-    detailV["MainFormChecked"] = web::json::value::array(riskV);
-
+    utilizationV.AddMember("key", "Utilization", allocator);
+    utilizationV.AddMember("alert", false, allocator);
+    utilizationV.AddMember("enable", false, allocator);
+    utilizationV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
+    mainFormChecked.PushBack(utilizationV, allocator);
+    
+    detailV.AddMember("MainFormChecked", mainFormChecked, allocator);
+    
     return detailV;
 }
 
-web::json::value AccountItem::GetPreview() {
-    web::json::value previewV;
-    previewV["AccountID"] = web::json::value::number(accountId);
-    previewV["AccountName"] = web::json::value::string(name);
-    previewV["Time"] = web::json::value::string(CovertToUtcStr(riskInfo.tsLocal));
-    previewV["BaseAsset"] = web::json::value::string(baseAsset);
+rapidjson::Document AccountItem::GetPreview() {
+    rapidjson::Document previewV;
+    previewV.SetObject();
+    auto& allocator = previewV.GetAllocator();
+    
+    previewV.AddMember("AccountID", accountId, allocator);
+    previewV.AddMember("AccountName", rapidjson::Value(name.c_str(), allocator).Move(), allocator);
+    previewV.AddMember("Time", rapidjson::Value(CovertToUtcStr(riskInfo.tsLocal).c_str(), allocator).Move(), allocator);
+    previewV.AddMember("BaseAsset", rapidjson::Value(baseAsset.c_str(), allocator).Move(), allocator);
 
-    if (type == "physical") {
-        previewV["NowNetValue"] = web::json::value::number(riskInfo.netValueD);
-        previewV["NetValueGrowthRate"] = web::json::value::number(riskInfo.netValueGrowthRateD);
-        previewV["ValueToLoanRatio"] = web::json::value::number(riskInfo.maxValueToLoanRatioD);
-        if (hedge) {
-            previewV["Leverage"] = web::json::value::number(riskInfo.maxRealLeverageD);
-            previewV["RiskExposure"] = web::json::value::number(riskInfo.riskExposureD);
-        } else {
-            previewV["Leverage"] = web::json::value::number(0);
-            previewV["RiskExposure"] = web::json::value::number(0);
-        }
-
-        previewV["UnderwayOrderValue"] = web::json::value::number(riskInfo.underwayOrderValueD);
-        previewV["Utilization"] = web::json::value::number(riskInfo.utilizationD);
+    previewV.AddMember("NowNetValue", riskInfo.netValueD, allocator);
+    previewV.AddMember("NetValueGrowthRate", riskInfo.netValueGrowthRateD, allocator);
+    previewV.AddMember("ValueToLoanRatio", riskInfo.maxValueToLoanRatioD, allocator);
+    if (hedge) {
+        previewV.AddMember("Leverage", riskInfo.maxRealLeverageD, allocator);
+        previewV.AddMember("RiskExposure", riskInfo.riskExposureD, allocator);
     } else {
-        previewV["NowNetValue"] = web::json::value::number(riskInfo.netValueS);
-        previewV["NetValueGrowthRate"] = web::json::value::number(riskInfo.netValueGrowthRateS);
-        previewV["ValueToLoanRatio"] = web::json::value::number(riskInfo.maxValueToLoanRatioS);
-        previewV["Leverage"] = web::json::value::number(riskInfo.maxRealLeverageS);
-        previewV["RiskExposure"] = web::json::value::number(riskInfo.riskExposureS);
-        previewV["UnderwayOrderValue"] = web::json::value::number(riskInfo.underwayOrderValueS);
-        previewV["Utilization"] = web::json::value::number(riskInfo.utilizationS);
+        previewV.AddMember("Leverage", 0, allocator);
+        previewV.AddMember("RiskExposure", 0, allocator);
     }
+
+    previewV.AddMember("UnderwayOrderValue", riskInfo.underwayOrderValueD, allocator);
+    previewV.AddMember("Utilization", riskInfo.utilizationD, allocator);
 
     return previewV;
 }
 
 vector<MsgCard> AccountItem::GetAlarmMsg() {
     vector<MsgCard> v;
-    int64_t currentTime = gettickcount();
+    int64_t currentTime = crypto::getCurrentTime();
 
     if (!adapterQuery) {
-        string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
+        string currentTimeStr = CovertToUtcStr(currentTime, false);
         string errMsg = "查询出错: ";
         for (size_t i = 0; i < adapterQueryErrMsg.size(); ++i) {
             errMsg += adapterQueryErrMsg[i] + "   ";
@@ -3293,9 +2864,7 @@ vector<MsgCard> AccountItem::GetAlarmMsg() {
         msgCard.content = errMsg;
         v.emplace_back(msgCard);
 
-        stringstream ss;
-        ss << "accountId:" << accountId << " errMsg:" << errMsg;
-        LOG_INFO("QueryAccount: %s", ss.str().c_str()); 
+        LOG_INFO("QueryAccount accountId: {} errMsg:{}", accountId, errMsg); 
     } else {
         if (alarmInfo.leverageThreshold.warning > 0 && alarmInfo.leverageThreshold.alarm >= alarmInfo.leverageThreshold.warning) {
             bool reachWarning = true;
@@ -3310,7 +2879,7 @@ vector<MsgCard> AccountItem::GetAlarmMsg() {
      
             if (reachAlarm) {
                 stringstream ss;
-                string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
+                string currentTimeStr = CovertToUtcStr(currentTime , false);
                 ss << "Leverage大于等于" <<  alarmInfo.leverageThreshold.alarm << " 当前leverage=" << riskInfo.maxRealLeverageD;
 
                 string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
@@ -3324,7 +2893,7 @@ vector<MsgCard> AccountItem::GetAlarmMsg() {
                 v.emplace_back(msgCard);
             } else if (reachWarning) {
                 stringstream ss;
-                string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
+                string currentTimeStr = CovertToUtcStr(currentTime, false);
                 ss << "Leverage大于等于" <<  alarmInfo.leverageThreshold.warning << " 当前leverage=" << riskInfo.maxRealLeverageD;
 
                 string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
@@ -3352,7 +2921,7 @@ vector<MsgCard> AccountItem::GetAlarmMsg() {
 
             if (reachAlarm) {
                 stringstream ss;
-                string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
+                string currentTimeStr = CovertToUtcStr(currentTime, false);
                 ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.alarm << " 当前riskexposure=" << riskInfo.riskExposureD << " symbol:" << maxRiskExposureAssetD;
 
                 string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
@@ -3366,7 +2935,7 @@ vector<MsgCard> AccountItem::GetAlarmMsg() {
                 v.emplace_back(msgCard);
             } else if (reachWarning) {
                 stringstream ss;
-                string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
+                string currentTimeStr = CovertToUtcStr(currentTime, false);
                 ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.warning << " 当前riskexposure=" << riskInfo.riskExposureD << " symbol:" << maxRiskExposureAssetD;
 
                 string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
@@ -3385,11 +2954,7 @@ vector<MsgCard> AccountItem::GetAlarmMsg() {
             double exposureU = riskInfo.riskExposureD;
             double price = 0.0;
             if (baseAsset != "USDT" && baseAsset != "USD") {
-                if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
-                    price = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
-                } else if (exchangeStr == "COINBASE") {
-                    price = CoinbaseMdMgr::GetInstance().GetAssetPrice(baseAsset);
-                }
+                price = MdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr); 
             } else {
                 price = 1;
             }
@@ -3408,7 +2973,7 @@ vector<MsgCard> AccountItem::GetAlarmMsg() {
 
                 if (reachAlarm) {
                     stringstream ss;
-                    string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
+                    string currentTimeStr = CovertToUtcStr(currentTime, false);
                     ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.ualarm << " 当前riskexposure(换成u)=" << exposureU << " symbol:" << maxRiskExposureAssetD;
 
                     string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
@@ -3422,7 +2987,7 @@ vector<MsgCard> AccountItem::GetAlarmMsg() {
                     v.emplace_back(msgCard);
                 } else if (reachWarning) {
                     stringstream ss;
-                    string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
+                    string currentTimeStr = CovertToUtcStr(currentTime, false);
                     ss << "RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.uwarning << " 当前riskexposure(换成u)=" << exposureU << " symbol:" << maxRiskExposureAssetD;
 
                     string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
@@ -3451,7 +3016,7 @@ vector<MsgCard> AccountItem::GetAlarmMsg() {
 
             if (reachAlarm) {
                 stringstream ss;
-                string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
+                string currentTimeStr = CovertToUtcStr(currentTime, false);
                 ss << "总的RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.totalExposureAlarm << " 当前总riskexposure=" << totalExposure;
 
                 string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
@@ -3465,7 +3030,7 @@ vector<MsgCard> AccountItem::GetAlarmMsg() {
                 v.emplace_back(msgCard);
             } else if (reachWarning) {
                 stringstream ss;
-                string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
+                string currentTimeStr = CovertToUtcStr(currentTime, false);
                 ss << "总的RiskExposure大于等于" <<  alarmInfo.riskExposureThreshold.totalExposureWarning << " 当前总riskexposure=" << totalExposure;
 
                 string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
@@ -3493,7 +3058,7 @@ vector<MsgCard> AccountItem::GetAlarmMsg() {
             
             if (reachAlarm) {
                 stringstream ss;
-                string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
+                string currentTimeStr = CovertToUtcStr(currentTime, false);
                 ss << "UnderwayOrderValueThreshold大于等于" <<  alarmInfo.underwayOrderValueThreshold.alarm << " 当前underwayordervalue=" << riskInfo.underwayOrderValueD;
 
                 string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
@@ -3507,7 +3072,7 @@ vector<MsgCard> AccountItem::GetAlarmMsg() {
                 v.emplace_back(msgCard);
             } else if (reachWarning) {
                 stringstream ss;
-                string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
+                string currentTimeStr = CovertToUtcStr(currentTime, false);
                 ss << "UnderwayOrderValueThreshold大于等于" <<  alarmInfo.underwayOrderValueThreshold.warning << " 当前underwayordervalue=" << riskInfo.underwayOrderValueD;
 
                 string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
@@ -3525,15 +3090,7 @@ vector<MsgCard> AccountItem::GetAlarmMsg() {
         if (alarmInfo.netValueThreshold.monthValue > 0 && alarmInfo.netValueThreshold.initValue > 0) {
             double netValueU = riskInfo.netValueD;
             if (baseAsset != "USDT" && baseAsset != "USD") {
-                double price = 0.0;
-                if (exchangeStr == "BINANCE" || exchangeStr == "GATEIO" || exchangeStr == "BYBIT" || exchangeStr == "OKX") {
-                    price = BinanceMdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
-                } else if (exchangeStr == "COINBASE") {
-                    price = CoinbaseMdMgr::GetInstance().GetAssetPrice(baseAsset);
-                }
-		        if (price < MINDOUBLE) {
-		            return v;
-		        }
+                double price = MdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
                 netValueU *= price;
             }
             double maxValue = max(alarmInfo.netValueThreshold.monthValue, alarmInfo.netValueThreshold.initValue) / 0.8 * alarmInfo.netValueThreshold.percent;
@@ -3555,7 +3112,7 @@ vector<MsgCard> AccountItem::GetAlarmMsg() {
         }
 
         // margin rate
-        if ((alarmInfo.marginRateThreshold.initialMarginRateWarning > 0 && alarmInfo.marginRateThreshold.initialMarginRateWarning > alarmInfo.marginRateThreshold.initialMarginRateAlarm) || (alarmInfo.marginRateThreshold.unifyMaintenanceMarginRateWarning > 0 && alarmInfo.marginRateThreshold.unifyMaintenanceMarginRateWarning > alarmInfo.marginRateThreshold.unifyMaintenanceMarginRateAlarm)) {
+        if (alarmInfo.marginRateThreshold.unifyMaintenanceMarginRateWarning > 0 && alarmInfo.marginRateThreshold.unifyMaintenanceMarginRateWarning > alarmInfo.marginRateThreshold.unifyMaintenanceMarginRateAlarm) {
             if (unified == 1) {
                 if (exchangeStr == "BINANCE" && unifyMaintenanceMarginRate > 0) {
                     bool reachWarning = true;
@@ -3569,7 +3126,7 @@ vector<MsgCard> AccountItem::GetAlarmMsg() {
 
                     if (reachAlarm) {
                         stringstream ss;
-                        string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
+                        string currentTimeStr = CovertToUtcStr(currentTime, false);
                         ss << "UnifyMaintenanceMarginRate小于等于" <<  alarmInfo.marginRateThreshold.unifyMaintenanceMarginRateAlarm << " 当前unifyMaintenanceMarginRate=" << unifyMaintenanceMarginRate;
 
                         string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
@@ -3583,7 +3140,7 @@ vector<MsgCard> AccountItem::GetAlarmMsg() {
                         v.emplace_back(msgCard);
                     } else if (reachWarning) {
                         stringstream ss;
-                        string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
+                        string currentTimeStr = CovertToUtcStr(currentTime, false);
                         ss << "UnifyMaintenanceMarginRate小于等于" <<  alarmInfo.marginRateThreshold.unifyMaintenanceMarginRateWarning << " 当前unifyMaintenanceMarginRate=" << unifyMaintenanceMarginRate;
 
                         string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
@@ -3597,44 +3154,7 @@ vector<MsgCard> AccountItem::GetAlarmMsg() {
                         v.emplace_back(msgCard);
                     }
                 } else if (exchangeStr == "GATEIO" && initialMarginRate > 0) {
-                    bool reachWarning = true;
-                    bool reachAlarm = true;
-                    if (initialMarginRate >= alarmInfo.marginRateThreshold.initialMarginRateWarning) {
-                        reachWarning = false;
-                        reachAlarm = false;
-                    } else if (initialMarginRate > alarmInfo.marginRateThreshold.initialMarginRateAlarm && initialMarginRate <= alarmInfo.marginRateThreshold.initialMarginRateWarning) {
-                        reachAlarm = false;
-                    }
 
-                    if (reachAlarm) {
-                        stringstream ss;
-                        string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
-                        ss << "InitialMarginRate小于等于" <<  alarmInfo.marginRateThreshold.initialMarginRateAlarm << " 当前initialMarginRate=" << initialMarginRate;
-
-                        string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
-                        MsgCard msgCard;
-                        msgCard.accountId = accountId;
-                        msgCard.templateId = 3;
-                        msgCard.title = "InitialMarginRate";
-                        msgCard.object = "账户：" + accountName;
-                        msgCard.datetime = currentTimeStr;
-                        msgCard.content = ss.str();
-                        v.emplace_back(msgCard);
-                    } else if (reachWarning) {
-                        stringstream ss;
-                        string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
-                        ss << "InitialMarginRate小于等于" <<  alarmInfo.marginRateThreshold.initialMarginRateWarning << " 当前initialMarginRate=" << initialMarginRate;
-
-                        string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
-                        MsgCard msgCard;
-                        msgCard.accountId = accountId;
-                        msgCard.templateId = 2;
-                        msgCard.title = "InitialMarginRate";
-                        msgCard.object = "账户：" + accountName;
-                        msgCard.datetime = currentTimeStr;
-                        msgCard.content = ss.str();
-                        v.emplace_back(msgCard);
-                    }
                 }
             }
         }
@@ -3648,9 +3168,9 @@ bool AccountItem::GetAdapterQueryStatus() {
 }
 
 vector<MsgCard> AccountItem::GetFundingRateAlarmMsg() {
-    int64_t currentTime = gettickcount();
+    int64_t currentTime = crypto::getCurrentTime();
     string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
-    string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
+    string currentTimeStr = CovertToUtcStr(currentTime, false);
 
     vector<MsgCard> v;
     string content = "";
@@ -3679,16 +3199,16 @@ vector<MsgCard> AccountItem::GetFundingRateAlarmMsg() {
 
 MsgCard AccountItem::GetLiquidationPriceAlarmMsg(igmonitor::Position& position) {
     MsgCard msgCard;
-    int64_t currentTime = gettickcount();
+    int64_t currentTime = crypto::getCurrentTime();
     string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
-    string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
+    string currentTimeStr = CovertToUtcStr(currentTime , false);
 
     if (alarmInfo.liquidationPriceThreshold.warning > 0 && alarmInfo.liquidationPriceThreshold.alarm >= alarmInfo.liquidationPriceThreshold.warning) {        
         bool reachWarning = true;
         bool reachAlarm = true;
 
         string key = position.key;
-        double price = BinanceMdMgr::GetInstance().GetMidPrice(key);
+        double price = MdMgr::GetInstance().GetMidPrice(key);
         double liquidationPrice = position.liquidationPrice;
         double netAvgPriceD = position.netAvgPriceD;
         double netPositionD = position.netPositionD;
@@ -3728,7 +3248,7 @@ MsgCard AccountItem::GetLiquidationPriceAlarmMsg(igmonitor::Position& position) 
 
         if (reachAlarm) {
             stringstream ss;
-            string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
+            string currentTimeStr = CovertToUtcStr(currentTime, false);
             ss << "持仓InstrumentKey:" << key << " 当前价格已接近强平价! 持仓价格:" << netAvgPriceD << " 持仓手数:" << netPositionD << " 强平价格:" << liquidationPrice << " 当前市场价格:" << price;
 
             msgCard.accountId = accountId;
@@ -3739,7 +3259,7 @@ MsgCard AccountItem::GetLiquidationPriceAlarmMsg(igmonitor::Position& position) 
             msgCard.content = ss.str();
         } else if (reachWarning) {
             stringstream ss;
-            string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
+            string currentTimeStr = CovertToUtcStr(currentTime, false);
             ss << "持仓InstrumentKey:" << key << " 当前价格已接近强平价! 持仓价格:" << netAvgPriceD << " 持仓手数:" << netPositionD << " 强平价格:" << liquidationPrice << " 当前市场价格:" << price;
 
             msgCard.accountId = accountId;
@@ -3771,13 +3291,6 @@ vector<MsgCard> AccountItem::GetPositionLiquidationPriceAlarmMsg() {
         }
     }
 
-    for (auto iter = mDeliveryPosition.begin(); iter != mDeliveryPosition.end(); ++iter) {
-        MsgCard msgCard = GetLiquidationPriceAlarmMsg(iter->second);
-        if (msgCard.accountId > 0) {
-            v.emplace_back(msgCard);
-        }
-    }
-
     for (auto iter = mPerpetualPosition.begin(); iter != mPerpetualPosition.end(); ++iter) {
         MsgCard msgCard = GetLiquidationPriceAlarmMsg(iter->second);
         if (msgCard.accountId > 0) {
@@ -3785,25 +3298,5 @@ vector<MsgCard> AccountItem::GetPositionLiquidationPriceAlarmMsg() {
         }
     }
 
-    return v;
-}
-
-vector<MsgCard> AccountItem::GetOrderAlarmMsg() {
-    int64_t currentTime = gettickcount();
-    string accountName = MonitorConfig::GetInstance().GetAccountNameByAccountId(accountId);
-    string currentTimeStr = CovertToUtcStr(currentTime * 1000, false);
-
-    vector<MsgCard> v;
-    if (orderAlarmMsg.length() > 0) {
-        LOG_INFO("orderAlarmMsg: ", orderAlarmMsg.c_str());
-        MsgCard msgCard;
-        msgCard.accountId = accountId;
-        msgCard.templateId = 2;
-        msgCard.title = "TWAP-ADL";
-        msgCard.object = "账户：" + accountName;
-        msgCard.datetime = currentTimeStr;
-        msgCard.content = orderAlarmMsg;
-        v.emplace_back(msgCard);
-    }
     return v;
 }

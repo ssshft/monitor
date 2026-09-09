@@ -11,7 +11,7 @@ public:
 	BinanceStaking(AccountInfo& info);
 	virtual ~BinanceStaking();
 
-    bool std::vector<binance::StakingPosition> QueryPosition(std::vector<binance::StakingPosition> vStakingPosition, std::vector<std::string>& vErrorMsg);
+    bool QueryPosition(std::vector<binance::StakingPosition> vStakingPosition, std::vector<std::string>& vErrorMsg);
 
 private:
 	std::string positionUrl;

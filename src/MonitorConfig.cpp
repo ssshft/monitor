@@ -2,22 +2,13 @@
 
 MonitorConfig::MonitorConfig() {
     mAccountInfo.clear();
-    vStrategyAccount.clear();
-    vMdSubChannel.clear();
 }
 
 MonitorConfig::~MonitorConfig() {
     mAccountInfo.clear();
     mProductInfo.clear();
-    vStrategyAccount.clear();
-    vMdSubChannel.clear();
-    vAccountMonitorInfo.clear();
-    vMdChannels.clear();
-    vCoinbaseMdSymbol.clear();
     vAccountId.clear();
     mAlarmInfo.clear();
-    vReceiveInfo.clear();
-    mReceiveGroupInfo.clear();
     vProduct.clear();
     mProductAlarmInfo.clear();
 }
@@ -49,11 +40,7 @@ void MonitorConfig::LoadConfig() {
     pubPort = itemPub.get<int>("port");
     pubPassword = itemPub.get<string>("password");
     physicalPubChannel = itemPub.get<string>("physicalpubchannel");
-    strategyPubChannel = itemPub.get<string>("strategypubchannel");
     overviewPubChannel = itemPub.get<string>("overviewpubchannel");
-    mdPubChannel = itemPub.get<string>("mdpubchannel");
-    mdStatusPubChannel = itemPub.get<string>("mdstatuspubchannel", "");
-    paraChannel = itemPub.get<string>("parachannel", "");
     
     auto itemMysql = properties.get_child("MYSQL");
     mysqlAddr = itemMysql.get<string>("addr");
@@ -61,8 +48,6 @@ void MonitorConfig::LoadConfig() {
     mysqlUser = itemMysql.get<string>("user");
     mysqlPassowrd = itemMysql.get<string>("password");
     mysqlDbName = itemMysql.get<string>("dbname");
-    mysqlOrdName = itemMysql.get<string>("dborder");
-    mysqlOrdDetailName = itemMysql.get<string>("dborderdetail");
     mysqlRiskInfoName = itemMysql.get<string>("dbriskinfo", "");
 
 
@@ -114,7 +99,6 @@ void MonitorConfig::LoadAlarmConfig() {
         auto itemSummary = properties.get_child("SUMMARY");
         int accountCount = itemSummary.get<int>("accountcount");
         int productCount = itemSummary.get<int>("productcount");
-        voiceCallInterval = itemSummary.get<int>("voicecallinterval", 60);
         larkUrl = itemSummary.get<string>("larkurl");
 
         accountLarkUrl = itemSummary.get<string>("accountlarkurl", "");

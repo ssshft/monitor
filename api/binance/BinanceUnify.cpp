@@ -1,4 +1,5 @@
 #include "binance/BinanceUnify.h"
+#include "Net.h"
 
 
 BinanceUnify::BinanceUnify(AccountInfo& info) {
@@ -228,31 +229,31 @@ bool BinanceUnify::QueryUmPosition(vector<binance::UnifyPosition>& vUnifyPositio
                     unifyPosition.symbol = res[i]["symbol"].GetString();
                 }
                 if (res[i].HasMember("entryPrice")) {
-                    unifyPosition.entryPrice = std::stod(res[i]["entryPrice"].GetString(););
+                    unifyPosition.entryPrice = std::stod(res[i]["entryPrice"].GetString());
                 }
                 if (res[i].HasMember("leverage")) {
-                    unifyPosition.leverage = std::stod(res[i]["leverage"].GetString(););
+                    unifyPosition.leverage = std::stod(res[i]["leverage"].GetString());
                 }
                 if (res[i].HasMember("markPrice")) {
-                    unifyPosition.markPrice = std::stod(res[i]["markPrice"].GetString(););
+                    unifyPosition.markPrice = std::stod(res[i]["markPrice"].GetString());
                 }
                 if (res[i].HasMember("maxNotionalValue")) {
-                    unifyPosition.maxNotionalValue = std::stod(res[i]["maxNotionalValue"].GetString(););
+                    unifyPosition.maxNotionalValue = std::stod(res[i]["maxNotionalValue"].GetString());
                 }
                 if (res[i].HasMember("positionAmt")) {
-                    unifyPosition.positionAmt = std::stod(res[i]["positionAmt"].GetString(););
+                    unifyPosition.positionAmt = std::stod(res[i]["positionAmt"].GetString());
                 }
                 if (res[i].HasMember("notional")) {
-                    unifyPosition.notional = std::stod(res[i]["notional"].GetString(););
+                    unifyPosition.notional = std::stod(res[i]["notional"].GetString());
                 }
                 if (res[i].HasMember("unRealizedProfit")) {
-                    unifyPosition.unRealizedProfit = std::stod(res[i]["unRealizedProfit"].GetString(););
+                    unifyPosition.unRealizedProfit = std::stod(res[i]["unRealizedProfit"].GetString());
                 }
                 if (res[i].HasMember("positionSide")) {
-                    unifyPosition.positionSide = res[i]["positionSide"].GetString();;
+                    unifyPosition.positionSide = res[i]["positionSide"].GetString();
                 }
                 if (res[i].HasMember("updateTime")) {
-                    unifyPosition.updateTime = std::stoll(res[i]["updateTime"].GetString(););
+                    unifyPosition.updateTime = std::stoll(res[i]["updateTime"].GetString());
                 }
 
                 if (fabs(unifyPosition.positionAmt) <= 0.0000000001) {
@@ -320,31 +321,31 @@ bool BinanceUnify::QueryCmPosition(vector<binance::UnifyPosition>& vUnifyPositio
                     unifyPosition.symbol = res[i]["symbol"].GetString();
                 }
                 if (res[i].HasMember("entryPrice")) {
-                    unifyPosition.entryPrice = std::stod(res[i]["entryPrice"].GetString(););
+                    unifyPosition.entryPrice = std::stod(res[i]["entryPrice"].GetString());
                 }
                 if (res[i].HasMember("leverage")) {
-                    unifyPosition.leverage = std::stod(res[i]["leverage"].GetString(););
+                    unifyPosition.leverage = std::stod(res[i]["leverage"].GetString());
                 }
                 if (res[i].HasMember("markPrice")) {
-                    unifyPosition.markPrice = std::stod(res[i]["markPrice"].GetString(););
+                    unifyPosition.markPrice = std::stod(res[i]["markPrice"].GetString());
                 }
                 if (res[i].HasMember("maxNotionalValue")) {
-                    unifyPosition.maxNotionalValue = std::stod(res[i]["maxNotionalValue"].GetString(););
+                    unifyPosition.maxNotionalValue = std::stod(res[i]["maxNotionalValue"].GetString());
                 }
                 if (res[i].HasMember("positionAmt")) {
-                    unifyPosition.positionAmt = std::stod(res[i]["positionAmt"].GetString(););
+                    unifyPosition.positionAmt = std::stod(res[i]["positionAmt"].GetString());
                 }
                 if (res[i].HasMember("notional")) {
-                    unifyPosition.notional = std::stod(res[i]["notional"].GetString(););
+                    unifyPosition.notional = std::stod(res[i]["notional"].GetString());
                 }
                 if (res[i].HasMember("unRealizedProfit")) {
-                    unifyPosition.unRealizedProfit = std::stod(res[i]["unRealizedProfit"].GetString(););
+                    unifyPosition.unRealizedProfit = std::stod(res[i]["unRealizedProfit"].GetString());
                 }
                 if (res[i].HasMember("positionSide")) {
-                    unifyPosition.positionSide = res[i]["positionSide"].GetString();;
+                    unifyPosition.positionSide = res[i]["positionSide"].GetString();
                 }
                 if (res[i].HasMember("updateTime")) {
-                    unifyPosition.updateTime = std::stoll(res[i]["updateTime"].GetString(););
+                    unifyPosition.updateTime = std::stoll(res[i]["updateTime"].GetString());
                 }
 
                 if (fabs(unifyPosition.positionAmt) <= 0.0000000001) {
@@ -412,25 +413,25 @@ bool BinanceUnify::QueryUmOpenOrder(vector<binance::UnifyOpenOrder>& vOpenOrder,
                     openOrder.symbol = res[i]["symbol"].GetString();
                 }
                 if (res[i].HasMember("orderId")) {
-                    openOrder.orderId = std::stoll(res[i]["orderId"].GetString();)
+                    openOrder.orderId = std::stoll(res[i]["orderId"].GetString());
                 }
                 if (res[i].HasMember("clientOrderId")) {
                     openOrder.clientOrderId = res[i]["clientOrderId"].GetString();
                 }
                 if (res[i].HasMember("price")) {
-                    openOrder.price = stod(res[i]["price"].GetString(););
+                    openOrder.price = stod(res[i]["price"].GetString());
                 }
                 if (res[i].HasMember("origQty")) {
-                    openOrder.origQty = stod(res[i]["origQty"].GetString(););
+                    openOrder.origQty = stod(res[i]["origQty"].GetString());
                 }
                 if (res[i].HasMember("executedQty")) {
-                    openOrder.executedQty = stod(res[i]["executedQty"].GetString(););
+                    openOrder.executedQty = stod(res[i]["executedQty"].GetString());
                 }
                 if (res[i].HasMember("avgPrice")) {
-                    openOrder.avgPrice = stod(res[i]["avgPrice"].GetString(););
+                    openOrder.avgPrice = stod(res[i]["avgPrice"].GetString());
                 }
                 if (res[i].HasMember("cumQuote")) {
-                    openOrder.cumQuote = stod(res[i]["cumQuote"].GetString(););
+                    openOrder.cumQuote = stod(res[i]["cumQuote"].GetString());
                 }
                 if (res[i].HasMember("side")) {
                     openOrder.side = res[i]["side"].GetString();
@@ -439,7 +440,7 @@ bool BinanceUnify::QueryUmOpenOrder(vector<binance::UnifyOpenOrder>& vOpenOrder,
                     openOrder.positionSide = res[i]["positionSide"].GetString();
                 }
                 if (res[i].HasMember("udpateTime")) {
-                    openOrder.time = std::stoll(res[i]["udpateTime"].GetString(););
+                    openOrder.time = std::stoll(res[i]["udpateTime"].GetString());
                 }
             
                 LOG_INFO("BinanceUnify AccountId: {}  QueryUmOpenOrder: {}", accountInfo.accountId, openOrder.toString());
@@ -503,25 +504,25 @@ bool BinanceUnify::QueryCmOpenOrder(vector<binance::UnifyOpenOrder>& vOpenOrder,
                     openOrder.symbol = res[i]["symbol"].GetString();
                 }
                 if (res[i].HasMember("orderId")) {
-                    openOrder.orderId = std::stoll(res[i]["orderId"].GetString();)
+                    openOrder.orderId = std::stoll(res[i]["orderId"].GetString());
                 }
                 if (res[i].HasMember("clientOrderId")) {
                     openOrder.clientOrderId = res[i]["clientOrderId"].GetString();
                 }
                 if (res[i].HasMember("price")) {
-                    openOrder.price = stod(res[i]["price"].GetString(););
+                    openOrder.price = stod(res[i]["price"].GetString());
                 }
                 if (res[i].HasMember("origQty")) {
-                    openOrder.origQty = stod(res[i]["origQty"].GetString(););
+                    openOrder.origQty = stod(res[i]["origQty"].GetString());
                 }
                 if (res[i].HasMember("executedQty")) {
-                    openOrder.executedQty = stod(res[i]["executedQty"].GetString(););
+                    openOrder.executedQty = stod(res[i]["executedQty"].GetString());
                 }
                 if (res[i].HasMember("avgPrice")) {
-                    openOrder.avgPrice = stod(res[i]["avgPrice"].GetString(););
+                    openOrder.avgPrice = stod(res[i]["avgPrice"].GetString());
                 }
                 if (res[i].HasMember("cumQuote")) {
-                    openOrder.cumQuote = stod(res[i]["cumQuote"].GetString(););
+                    openOrder.cumQuote = stod(res[i]["cumQuote"].GetString());
                 }
                 if (res[i].HasMember("side")) {
                     openOrder.side = res[i]["side"].GetString();
@@ -530,7 +531,7 @@ bool BinanceUnify::QueryCmOpenOrder(vector<binance::UnifyOpenOrder>& vOpenOrder,
                     openOrder.positionSide = res[i]["positionSide"].GetString();
                 }
                 if (res[i].HasMember("udpateTime")) {
-                    openOrder.time = std::stoll(res[i]["udpateTime"].GetString(););
+                    openOrder.time = std::stoll(res[i]["udpateTime"].GetString());
                 }
             
                 LOG_INFO("BinanceUnify AccountId: {}  QueryCmOpenOrder: {}", accountInfo.accountId, openOrder.toString());

@@ -46,11 +46,11 @@ bool BinanceSpot::QueryAccount(std::vector<binance::SpotAsset>& vSpotAsset, std:
                 }
 
                 if (data[i].HasMember("free")) {
-                    spotAsset.free = std::stod(data[i]["free"].GetString(););
+                    spotAsset.free = std::stod(data[i]["free"].GetString());
                 }
 
                 if (data[i].HasMember("locked")) {
-                    spotAsset.locked = std::stod(data[i]["locked"].GetString(););
+                    spotAsset.locked = std::stod(data[i]["locked"].GetString());
                 }
             
                 if (fabs(spotAsset.free + spotAsset.locked) <= 0.0000000001) {

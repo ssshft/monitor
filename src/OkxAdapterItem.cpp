@@ -1,6 +1,5 @@
 #include "OkxAdapterItem.h"
-#include "BasicInfoMgr.h"
-#include "BinanceMdMgr.h"
+#include "MdMgr.h"
 
 
 OkxAdapterItem::OkxAdapterItem(AccountInfo info, sm::SecurityManager* s) {
@@ -49,9 +48,6 @@ void OkxAdapterItem::UpdateAccountInfo() {
         bool queryOpenOrder = okxClient->QueryOpenOrder(vOpenOrder, vOpenOrderErrMsg);
         query = query && queryOpenOrder;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vOpenOrderErrMsg.begin(), vOpenOrderErrMsg.end());
-
-        std::vector<std::string> vErr;
-        okxClient->QueryOrder(vOrder, vErr);
     }
 
     updateTime = GetCurrentTimeUs();

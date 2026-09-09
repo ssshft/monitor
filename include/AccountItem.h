@@ -1,22 +1,18 @@
 #pragma once
 
-#include <cpprest/json.h>
 #include <string>
 #include <map>
 #include <queue>
 #include "Utility.h"
 #include "securitymanager.h"
 
-using namespace std;
-
 
 class AccountItem {
 public:
-	AccountItem(int id, string n, string ty, string ex, int he, sm::SecurityManager* s);
+	AccountItem(int id, std::string n, std::string ty, std::string ex, int he, sm::SecurityManager* s);
 	~AccountItem();
     void UpdateByAdapter();
     void UpdateByBinanceAdapter();
-    void UpdateByCoinbaseAdapter();
     void UpdateByGateioAdapter();
     void UpdateByBybitAdapter();
     void UpdateByOkxAdapter();
@@ -24,100 +20,90 @@ public:
     void Clear();
     void CalculateTotalAsset();
     void UpdateTotalAsset(igmonitor::Asset& asset);
-    void UpdateTotalAsset(igmonitor::MarAsset& asset);
-    void UpdateTotalAsset(igmonitor::SavAsset& asset);
-    void UpdateTotalAsset(igmonitor::LoBo& lb);
     double GetUnderwayOrderValue(string asset, double frozenAmount);
     void CalculateExposure();
-    void UpdateExposure(string positionType, igmonitor::Position& position);
+    void UpdateExposure(const md::InstrumentInfo& info, const igmonitor::Position& position);
     void UpdateExposure(igmonitor::Asset& asset);
-    void UpdatePositionFundingRate(igmonitor::Position& position);
+    //void UpdatePositionFundingRate(igmonitor::Position& position);
     void CalculateRiskInfo();
-    string GetAccountType();
+    std::string GetAccountType();
     int GetAccountId();
-    string GetExchangeStr();
+    std::string GetExchangeStr();
     igmonitor::RiskInfo& GetRiskInfo();
-    unordered_map<string, igmonitor::Exposure>& GetExposure();
-    unordered_map<string, igmonitor::Asset>& GetSpotAsset();
-    unordered_map<string, igmonitor::Asset>& GetUFutureAsset();
-    unordered_map<string, igmonitor::Asset>& GetCFutureAsset();
-    unordered_map<string, igmonitor::Asset>& GetTotalAsset();
-    unordered_map<string, igmonitor::Position>& GetUFuturePosition();
-    unordered_map<string, igmonitor::Position>& GetCFuturePosition();
-    unordered_map<string, igmonitor::PositionFundingRate>& GetPositionFundingRate();
-    set<string> GetInstrumentList();
-    web::json::value GetDetail();
-    web::json::value GetPreview();
-    vector<MsgCard> GetAlarmMsg();
+    std::unordered_map<std::string, igmonitor::Exposure>& GetExposure();
+    std::unordered_map<std::string, igmonitor::Asset>& GetSpotAsset();
+    std::unordered_map<std::string, igmonitor::Asset>& GetUFutureAsset();
+    std::unordered_map<std::string, igmonitor::Asset>& GetCFutureAsset();
+    std::unordered_map<std::string, igmonitor::Asset>& GetTotalAsset();
+    std::unordered_map<std::string, igmonitor::Position>& GetUFuturePosition();
+    std::unordered_map<std::string, igmonitor::Position>& GetCFuturePosition();
+    std::unordered_map<std::string, igmonitor::PositionFundingRate>& GetPositionFundingRate();
+    std::set<std::string> GetInstrumentList();
+    rapidjson::Document GetDetail();
+    rapidjson::Document GetPreview();
+    std::vector<MsgCard> GetAlarmMsg();
     bool GetAdapterQueryStatus();
-    vector<MsgCard> GetFundingRateAlarmMsg();
+    std::vector<MsgCard> GetFundingRateAlarmMsg();
     MsgCard GetLiquidationPriceAlarmMsg(igmonitor::Position& position);
-    vector<MsgCard> GetPositionLiquidationPriceAlarmMsg();
-    vector<MsgCard> GetOrderAlarmMsg();
+    std::vector<MsgCard> GetPositionLiquidationPriceAlarmMsg();
+    std::vector<MsgCard> GetOrderAlarmMsg();
     
 private:
     int accountId;
-    string name;
-    string type;
-    string exchangeStr;
+    std::string name;
+    std::string type;
+    std::string exchangeStr;
     int hedge;
     int unified;
     bool subMsgFlag;
 
-    unordered_map<string, igmonitor::Asset> mSpotAsset;
-    unordered_map<string, igmonitor::Asset> mUFutureAsset;
-    unordered_map<string, igmonitor::Asset> mCFutureAsset;
-    unordered_map<string, igmonitor::Asset> mDeliveryAsset;
-    unordered_map<string, igmonitor::Asset> mPerpetualAsset;
-    unordered_map<string, igmonitor::Position> mUFuturePosition;
-    unordered_map<string, igmonitor::Position> mCFuturePosition;
-    unordered_map<string, igmonitor::Position> mDeliveryPosition;
-    unordered_map<string, igmonitor::Position> mPerpetualPosition;
-    unordered_map<string, igmonitor::Asset> mTotalAsset;
-    unordered_map<string, igmonitor::Exposure> mExposure;
-    unordered_map<string, igmonitor::SavAsset> mSavAsset;
-    unordered_map<string, igmonitor::OpenOrder> mSpotOpenOrder;
-    unordered_map<string, igmonitor::OpenOrder> mUFutureOpenOrder;
-    unordered_map<string, igmonitor::OpenOrder> mCFutureOpenOrder;
-    unordered_map<string, igmonitor::OpenOrder> mDeliveryOpenOrder;
-    unordered_map<string, igmonitor::OpenOrder> mPerpetualOpenOrder;
-    unordered_map<string, igmonitor::MarAsset> mMarAsset;
-    unordered_map<string, igmonitor::Asset> mCrossMarAsset;
-    unordered_map<string, igmonitor::Order> mOrder;
+    std::unordered_map<std::string, igmonitor::Asset> mSpotAsset;
+    std::unordered_map<std::string, igmonitor::Asset> mUFutureAsset;
+    std::unordered_map<std::string, igmonitor::Asset> mCFutureAsset;
+    std::unordered_map<std::string, igmonitor::Asset> mPerpetualAsset;
+    std::unordered_map<std::string, igmonitor::Position> mUFuturePosition;
+    std::unordered_map<std::string, igmonitor::Position> mCFuturePosition;
+    std::unordered_map<std::string, igmonitor::Position> mPerpetualPosition;
+    std::unordered_map<std::string, igmonitor::Asset> mTotalAsset;
+    std::unordered_map<std::string, igmonitor::Exposure> mExposure;
+    std::unordered_map<std::string, igmonitor::OpenOrder> mSpotOpenOrder;
+    std::unordered_map<std::string, igmonitor::OpenOrder> mUFutureOpenOrder;
+    std::unordered_map<std::string, igmonitor::OpenOrder> mCFutureOpenOrder;
+    std::unordered_map<std::string, igmonitor::OpenOrder> mPerpetualOpenOrder;
+
     double totalMarginBalance;
-    unordered_map<string, igmonitor::PositionFundingRate> mPositionFundingRate;
+    std::unordered_map<std::string, igmonitor::PositionFundingRate> mPositionFundingRate;
     igmonitor::RiskInfo riskInfo;
     igmonitor::TotalMarAsset totalMarAsset;
-    vector<igmonitor::LoBo> vLoBo;
 
     double initialMarginRate;
     double unifyMaintenanceMarginRate;
 
-    string baseAsset;
+    std::string baseAsset;
     double MINDOUBLE;
 
     bool adapterQuery;
-    vector<string> adapterQueryErrMsg;
+    std::vector<std::string> adapterQueryErrMsg;
 
     int triggerInterval;
-    unordered_map<int64_t, double> mLeverageAlarm;
-    unordered_map<int64_t, double> mRiskExposureAlarm;
-    unordered_map<int64_t, double> mUnderwayOrderValueAlarm;
+    std::unordered_map<int64_t, double> mLeverageAlarm;
+    std::unordered_map<int64_t, double> mRiskExposureAlarm;
+    std::unordered_map<int64_t, double> mUnderwayOrderValueAlarm;
     AlarmInfo alarmInfo;
 
     bool maxLeverageUD;
     bool maxLeverageUS;
-    string maxLeverageAssetD;
-    string maxLeverageAssetS;
-    string maxLeverageTabD;
-    string maxLeverageTabS;
-    string maxRiskExposureTab;
-    string maxRiskExposureAssetD;
-    string maxRiskExposureAssetS;
+    std::string maxLeverageAssetD;
+    std::string maxLeverageAssetS;
+    std::string maxLeverageTabD;
+    std::string maxLeverageTabS;
+    std::string maxRiskExposureTab;
+    std::string maxRiskExposureAssetD;
+    std::string maxRiskExposureAssetS;
     
     double totalExposure;
 
-    string orderAlarmMsg;
+    std::string orderAlarmMsg;
 
     sm::SecurityManager* smc;
 };

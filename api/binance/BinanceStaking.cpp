@@ -1,4 +1,5 @@
 #include "binance/BinanceStaking.h"
+#include "Net.h"
 
 
 BinanceStaking::BinanceStaking(AccountInfo& info) {

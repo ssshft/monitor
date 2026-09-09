@@ -1,4 +1,5 @@
 #include "binance/BinanceCFuture.h"
+#include "Net.h"
 
 
 BinanceCFuture::BinanceCFuture(AccountInfo& info) {

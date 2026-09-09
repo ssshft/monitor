@@ -163,6 +163,10 @@ namespace binance {
         string symbol{""};
         double liquidationPrice{0.0};
         string positionSide{""};
+
+        std::string toString() {
+            return "";
+        }
     };
 
     struct SpotOpenOrder {
@@ -314,6 +318,10 @@ namespace binance {
         double renewable;
         string type;
         string status;
+
+        std::string toString() {
+            return "";
+        }
     };
 
     struct LoanBorrow {

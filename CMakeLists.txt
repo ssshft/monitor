@@ -49,7 +49,6 @@ link_libraries(
         boost_system 
         crypto 
         ssl 
-        cpprest 
         z 
         rt  
         dl 

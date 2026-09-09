@@ -1,5 +1,6 @@
 #include "ExchangeRestMd.h"
-#include "BasicInfoMgr.h"
+#include "Net.h"
+
 
 ExchangeRestMd::ExchangeRestMd() {
     binanceSpotDepthUrl = "/api/v3/ticker/bookTicker";
@@ -58,7 +59,7 @@ Depth ExchangeRestMd::GetDepth(ExchangeType exchType, InstType instType, std::st
 
     depth.instrumentId = originInstId;
     depth.instrumentType = instType;
-    depth.exchangeType = instType;
+    depth.exchangeType = exchType;
     depth.marketType = md::DEPTH1;
     return depth;
 }
@@ -452,7 +453,7 @@ Depth ExchangeRestMd::GetOkxDepth(InstType instType, string originInstId) {
 
         if (res.HasMember("data")) {
             const rapidjson::Value& data = res["data"];
-            for (rapidjson::SizeType i = 0; i < list.Size(); ++i) {
+            for (rapidjson::SizeType i = 0; i < data.Size(); ++i) {
                 if (data[i].HasMember("bidPx")) {
                     bidPrice = std::stod(data[i]["bidPx"].GetString());
                 }

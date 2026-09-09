@@ -20,7 +20,7 @@ namespace gateio {
 
     struct SpotOrder {
         std::string id{""};
-        std::string text{""}
+        std::string text{""};
         std::string currency_pair{""};
         std::string status{""};
         std::string type{""};

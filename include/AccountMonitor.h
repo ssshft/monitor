@@ -6,15 +6,11 @@ class AccountMonitor {
 public:
     ~AccountMonitor();
     static AccountMonitor& GetInstance();
-    void DealSubData();
-    unordered_map<string, string>& GetCurrentStatus();
-    vector<MsgCard> GetAlarmMsg();
-    vector<MsgCard> GetFundingRateAlarmMsg();
+    std::unordered_map<std::string, std::string>& GetCurrentStatus();
+    std::vector<MsgCard> GetAlarmMsg();
+    std::vector<MsgCard> GetFundingRateAlarmMsg();
     
 private:
     AccountMonitor();
-    vector<AccountMonitorItem*> vAccountMonitorItem;
-    thread* dealSubData;
-    bool dealSubFlag;
-    unordered_map<string, string> mAccountStatus;
+    std::unordered_map<std::string, std::string> mAccountStatus;
 };

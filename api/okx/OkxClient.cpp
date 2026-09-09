@@ -1,4 +1,5 @@
 #include "okx/OkxClient.h"
+#include "Net.h"
 
 
 OkxClient::OkxClient(AccountInfo& info) {

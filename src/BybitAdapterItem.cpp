@@ -1,6 +1,5 @@
 #include "BybitAdapterItem.h"
-#include "BasicInfoMgr.h"
-#include "BinanceMdMgr.h"
+#include "MdMgr.h"
 
 
 BybitAdapterItem::BybitAdapterItem(AccountInfo info, sm::SecurityManager* s) {
