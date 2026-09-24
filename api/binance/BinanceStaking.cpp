@@ -17,7 +17,7 @@ bool BinanceStaking::QueryPosition(std::vector<binance::StakingPosition> vStakin
 
     std::string qs = fmt::format("recvWindow={}&timestamp={}", 5000, crypto::getCurrentTimeMilli());
     std::string sig = crypto::getBinanceSignatureRest(accountInfo.secretKey, qs);
-    std::string fullPath = fmt::format("{}?{}&signature=", positionUrl, qs, sig);
+    std::string fullPath = fmt::format("{}?{}&signature={}", positionUrl, qs, sig);
 
     try {
         if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(accountInfo.restUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {

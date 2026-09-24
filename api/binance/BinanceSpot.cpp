@@ -18,7 +18,7 @@ bool BinanceSpot::QueryAccount(std::vector<binance::SpotAsset>& vSpotAsset, std:
 
     std::string qs = fmt::format("recvWindow={}&timestamp={}", 5000, crypto::getCurrentTimeMilli());
     std::string sig = crypto::getBinanceSignatureRest(accountInfo.secretKey, qs);
-    std::string fullPath = fmt::format("{}?{}&signature=", accountUrl, qs, sig);
+    std::string fullPath = fmt::format("{}?{}&signature={}", accountUrl, qs, sig);
 
     try {
         if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(accountInfo.restUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
@@ -91,7 +91,7 @@ bool BinanceSpot::QueryOpenOrder(std::vector<binance::SpotOpenOrder> vSpotOpenOr
 
     std::string qs = fmt::format("recvWindow={}&timestamp={}", 5000, crypto::getCurrentTimeMilli());
     std::string sig = crypto::getBinanceSignatureRest(accountInfo.secretKey, qs);
-    std::string fullPath = fmt::format("{}?{}&signature=", openOrderUrl, qs, sig);
+    std::string fullPath = fmt::format("{}?{}&signature={}", openOrderUrl, qs, sig);
 
     try {
         if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(accountInfo.restUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {

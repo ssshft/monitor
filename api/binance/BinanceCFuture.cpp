@@ -20,7 +20,7 @@ bool BinanceCFuture::QueryAccount(std::vector<binance::CFutureAsset>& vCFutureAs
 
     std::string qs = fmt::format("recvWindow={}&timestamp={}", 5000, crypto::getCurrentTimeMilli());
     std::string sig = crypto::getBinanceSignatureRest(accountInfo.secretKey, qs);
-    std::string fullPath = fmt::format("{}?{}&signature=", accountUrl, qs, sig);
+    std::string fullPath = fmt::format("{}?{}&signature={}", accountUrl, qs, sig);
 
     try {
         if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
@@ -180,7 +180,7 @@ bool BinanceCFuture::QueryPositionRisk(std::vector<binance::PositionRisk>& vPosi
 
     std::string qs = fmt::format("recvWindow={}&timestamp={}", 5000, crypto::getCurrentTimeMilli());
     std::string sig = crypto::getBinanceSignatureRest(accountInfo.secretKey, qs);
-    std::string fullPath = fmt::format("{}?{}&signature=", positionRiskUrl, qs, sig);
+    std::string fullPath = fmt::format("{}?{}&signature={}", positionRiskUrl, qs, sig);
 
     try {
         if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
@@ -247,7 +247,7 @@ bool BinanceCFuture::QueryOpenOrder(std::vector<binance::FutureOpenOrder>& vOpen
 
     std::string qs = fmt::format("recvWindow={}&timestamp={}", 5000, crypto::getCurrentTimeMilli());
     std::string sig = crypto::getBinanceSignatureRest(accountInfo.secretKey, qs);
-    std::string fullPath = fmt::format("{}?{}&signature=", openOrderUrl, qs, sig);
+    std::string fullPath = fmt::format("{}?{}&signature={}", openOrderUrl, qs, sig);
 
     try {
         if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {

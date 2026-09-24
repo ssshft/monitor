@@ -23,7 +23,7 @@ bool BinanceUnify::QueryBalance(vector<binance::UnifyAsset>& vUnifyAsset, vector
 
     std::string qs = fmt::format("recvWindow={}&timestamp={}", 5000, crypto::getCurrentTimeMilli());
     std::string sig = crypto::getBinanceSignatureRest(accountInfo.secretKey, qs);
-    std::string fullPath = fmt::format("{}?{}&signature=", balanceUrl, qs, sig);
+    std::string fullPath = fmt::format("{}?{}&signature={}", balanceUrl, qs, sig);
 
     try {
         if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(accountInfo.restUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
@@ -123,7 +123,7 @@ bool BinanceUnify::QueryAccount(binance::UnifyAccount& unifyAccount, vector<stri
 
     std::string qs = fmt::format("recvWindow={}&timestamp={}", 5000, crypto::getCurrentTimeMilli());
     std::string sig = crypto::getBinanceSignatureRest(accountInfo.secretKey, qs);
-    std::string fullPath = fmt::format("{}?{}&signature=", accountUrl, qs, sig);
+    std::string fullPath = fmt::format("{}?{}&signature={}", accountUrl, qs, sig);
 
     try {
         if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(accountInfo.restUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
@@ -203,7 +203,7 @@ bool BinanceUnify::QueryUmPosition(vector<binance::UnifyPosition>& vUnifyPositio
 
     std::string qs = fmt::format("recvWindow={}&timestamp={}", 5000, crypto::getCurrentTimeMilli());
     std::string sig = crypto::getBinanceSignatureRest(accountInfo.secretKey, qs);
-    std::string fullPath = fmt::format("{}?{}&signature=", umPositionUrl, qs, sig);
+    std::string fullPath = fmt::format("{}?{}&signature={}", umPositionUrl, qs, sig);
 
     try {
         if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
@@ -295,7 +295,7 @@ bool BinanceUnify::QueryCmPosition(vector<binance::UnifyPosition>& vUnifyPositio
 
     std::string qs = fmt::format("recvWindow={}&timestamp={}", 5000, crypto::getCurrentTimeMilli());
     std::string sig = crypto::getBinanceSignatureRest(accountInfo.secretKey, qs);
-    std::string fullPath = fmt::format("{}?{}&signature=", cmPositionUrl, qs, sig);
+    std::string fullPath = fmt::format("{}?{}&signature={}", cmPositionUrl, qs, sig);
 
     try {
         if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
@@ -387,7 +387,7 @@ bool BinanceUnify::QueryUmOpenOrder(vector<binance::UnifyOpenOrder>& vOpenOrder,
 
     std::string qs = fmt::format("recvWindow={}&timestamp={}", 5000, crypto::getCurrentTimeMilli());
     std::string sig = crypto::getBinanceSignatureRest(accountInfo.secretKey, qs);
-    std::string fullPath = fmt::format("{}?{}&signature=", umOpenOrderUrl, qs, sig);
+    std::string fullPath = fmt::format("{}?{}&signature={}", umOpenOrderUrl, qs, sig);
 
     try {
         if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
@@ -478,7 +478,7 @@ bool BinanceUnify::QueryCmOpenOrder(vector<binance::UnifyOpenOrder>& vOpenOrder,
 
     std::string qs = fmt::format("recvWindow={}&timestamp={}", 5000, crypto::getCurrentTimeMilli());
     std::string sig = crypto::getBinanceSignatureRest(accountInfo.secretKey, qs);
-    std::string fullPath = fmt::format("{}?{}&signature=", cmOpenOrderUrl, qs, sig);
+    std::string fullPath = fmt::format("{}?{}&signature={}", cmOpenOrderUrl, qs, sig);
 
     try {
         if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
