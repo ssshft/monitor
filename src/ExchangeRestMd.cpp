@@ -277,7 +277,7 @@ Depth ExchangeRestMd::GetGateioSwapDepth(string originInstId) {
 
     std::cout << "GetGateioSwapDepth: " << path << std::endl;
     try {
-        if (!Net::Instance().syncGet("GATEIO", crypto::host_of(GATEIO_REST), path, {}, {}, body, status)) {
+        if (!Net::Instance().syncGet("GATEIO_SWAP", crypto::host_of(GATEIO_REST), path, {}, {}, body, status)) {
             LOG_ERROR("GATEIO GetGateioSwapDepth syncGet return false");
             return depth;
         }
