@@ -1052,7 +1052,7 @@ void AccountItem::CalculateRiskInfo() {
             bybit::TotalAccountInfo& totalAccountInfo = item->GetTotalAccountInfo();
             double accountRate = totalAccountInfo.accountMMRate;
             double rate = totalPositionValue / totalMarginBalance;
-            LOG_INFO("BYBIT accountInfo: accountId:%d accountRate:%f  rate:%f", accountId, accountRate, rate);
+            LOG_INFO("BYBIT accountInfo: accountId:{} accountRate:{} rate:{}", accountId, accountRate, rate);
         }
     }
 
@@ -1283,7 +1283,7 @@ void AccountItem::CalculateRiskInfo() {
         if (underwayOrderValue > underwayOrderValueD) {
             underwayOrderValueD = underwayOrderValue;
         }
-        LOG_INFO("underwayOrderValue: accountId: %d  underwayOrderValue: %f", accountId, underwayOrderValue); 
+        LOG_INFO("underwayOrderValue: accountId: {}  underwayOrderValue: {}", accountId, underwayOrderValue); 
     }
 
     for (auto iter = mCFutureOpenOrder.begin(); iter != mCFutureOpenOrder.end(); ++iter) {
@@ -1318,7 +1318,7 @@ void AccountItem::CalculateRiskInfo() {
         if (underwayOrderValue > underwayOrderValueD) {
             underwayOrderValueD = underwayOrderValue;
         }
-        LOG_INFO("underwayOrderValue: accountId: %d  underwayOrderValue: %f", accountId, underwayOrderValue); 
+        LOG_INFO("underwayOrderValue: accountId: {}  underwayOrderValue: {}", accountId, underwayOrderValue); 
     }
 
     for (auto iter = mPerpetualOpenOrder.begin(); iter != mPerpetualOpenOrder.end(); ++iter) {
@@ -1366,13 +1366,13 @@ void AccountItem::CalculateRiskInfo() {
         if (underwayOrderValue > underwayOrderValueD) {
             underwayOrderValueD = underwayOrderValue;
         }
-        LOG_INFO("underwayOrderValue: accountId: %d  underwayOrderValue: %f", accountId, underwayOrderValue); 
+        LOG_INFO("underwayOrderValue: accountId: {}  underwayOrderValue: {}", accountId, underwayOrderValue); 
     }
 
     riskInfo.underwayOrderValueD = underwayOrderValueD;
 
 
-    LOG_INFO("riskInfo: %s", riskInfo.toString().c_str());  
+    LOG_INFO("riskInfo: {}", riskInfo.toString());  
 }
 
 string AccountItem::GetAccountType() {

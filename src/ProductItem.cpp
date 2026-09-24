@@ -101,7 +101,7 @@ void ProductItem::CalculateRiskInfo() {
 
                 stringstream ss;
                 ss << "Exposure: " << riskInfo.name << "accountId:" << accountId << "ass:" << ass << " asset: " << iter->first << " preNum:" << preNum << " amount:" << iter->second.exposureAmountD << " value:" << iter->second.exposureValueD;
-                LOG_INFO("Exposure: %s", ss.str().c_str()); 
+                LOG_INFO("Exposure: {}", ss.str()); 
 
                 auto it = mExposure.find(ass);
                 if (it != mExposure.end()) {
@@ -160,7 +160,7 @@ void ProductItem::CalculateRiskInfo() {
                             n->second.flag &= m->second.flag;
                             n->second.value += m->second.value; 
                         }
-                        LOG_INFO("UpdatePositionFundingRate:  name: %s  ass:%s  flag:%d  value:%f", riskInfo.name.c_str(), ass.c_str(), n->second.flag, n->second.value);
+                        LOG_INFO("UpdatePositionFundingRate:  name: {}  ass: {}  flag: {}  value: {}", riskInfo.name.c_str(), ass.c_str(), n->second.flag, n->second.value);
                     } else {
                         if (exchangeStr == "GATEIO") {
                             igmonitor::PositionFundingRate pfr;
@@ -220,7 +220,7 @@ void ProductItem::CalculateRiskInfo() {
 
         stringstream ss;
         ss << "Exposure: " << riskInfo.name << " asset: " << iter->first << " amount:" << iter->second.exposureAmountD << " price:" << price << " priceBaseAsset:" << priceBaseAsset << " value:" << value;
-        LOG_INFO("Exposure: %s", ss.str().c_str()); 
+        LOG_INFO("Exposure: {}", ss.str()); 
 
         if (fabs(value) > fabs(riskExposureD)) { // exposureAmountD 相加 然后 * price
             maxRiskExposureAssetD = iter->first;
@@ -261,7 +261,7 @@ void ProductItem::CalculateRiskInfo() {
     riskInfo.underwayOrderValueD = underwayOrderValueD;
     riskInfo.netValueD = netValue;
 
-    LOG_INFO("riskInfo: %s", riskInfo.toString().c_str()); 
+    LOG_INFO("riskInfo: {}", riskInfo.toString()); 
 }
 
 vector<MsgCard> ProductItem::GetAlarmMsg() {

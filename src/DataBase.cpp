@@ -40,7 +40,7 @@ bool DataBase::ConnectDatabase() {
 			connected = false;
 			stringstream ss;
 			ss << "mysql_real_connect error! host: " << dbHost << " user: " << dbUser << " password: " << dbPassword << " dbName: " << dbName << " port: " << dbPort;
-			LOG_INFO("Fail when run sql: %s", ss.str().c_str());
+			LOG_INFO("Fail when run sql: {}", ss.str());
 		}
 	}
 	else {
@@ -65,7 +65,7 @@ bool DataBase::ConnectDatabase(string dbName) {
 			connected = false;
 			stringstream ss;
 			ss << "mysql_real_connect error! host: " << dbHost << " user: " << dbUser << " password: " << dbPassword << " dbName: " << dbName << " port: " << dbPort;
-			LOG_INFO("Fail when run sql: %s", ss.str().c_str());
+			LOG_INFO("Fail when run sql: {}", ss.str());
 		}
 	}
 	else {
@@ -89,7 +89,7 @@ bool DataBase::ConnectDatabase(string host, string user, string password, string
 			connected = false;
 			stringstream ss;
 			ss << "mysql_real_connect error! host: " << host << " user: " << user << " password: " << password << " dbName: " << dbName << " port: " << port;
-			LOG_INFO("Fail when run sql: %s", ss.str().c_str());
+			LOG_INFO("Fail when run sql: {}", ss.str());
 		}
 	} else {
 		LOG_INFO("mysql_init error");
@@ -111,7 +111,7 @@ void DataBase::CreateRiskInfoTable() {
 void DataBase::RunSql(string sql) {
 	if (pSql) {
 		if (mysql_query(pSql, sql.c_str()) != 0) {
-			LOG_INFO("Fail when run sql: %s", sql.c_str());
+			LOG_INFO("Fail when run sql: {}", sql);
 		}
 	} else {
 		LOG_INFO("Have not connected database!");
@@ -134,7 +134,7 @@ void DataBase::InsertRiskInfo(vector<igmonitor::RiskInfo>& vRiskInfo) {
 			stringstream sqlInsert;
 		    sqlInsert << "insert into " << dbRiskInfoTable << "(account_id,account_name,base_asset,net_value,risk_exposure,leverage) values(" << riskInfo.accountId << ",'" << riskInfo.name << "','" << riskInfo.baseAsset << "'," << riskInfo.netValueD << "," << riskInfo.riskExposureD << "," << riskInfo.maxRealLeverageD << ")"; 
 		    if (mysql_query(pSql, sqlInsert.str().c_str()) != 0) {
-			    LOG_INFO("Fail when run sql: %s", sqlInsert.str().c_str());
+			    LOG_INFO("Fail when run sql: {}", sqlInsert.str());
 		    }
 		}
 	}
