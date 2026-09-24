@@ -25,6 +25,9 @@ unordered_map<string, string>& AccountMonitor::GetCurrentStatus() {
     mAccountStatus["overview"] = AccountMgr::GetInstance().GetPhysicalOverView();
     mAccountStatus["physical"] = AccountMgr::GetInstance().GetPhysicalAccountStatus();
 
+    std::cout << "overview: " << mAccountStatus["overview"] << std::endl;
+    std::cout << "physical: " << mAccountStatus["physical"] << std::endl;
+
     return mAccountStatus;
 }
 
