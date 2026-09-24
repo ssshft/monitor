@@ -4,7 +4,7 @@
 
 BinanceUFuture::BinanceUFuture(AccountInfo& info) {
     // baseUrl = "https://fapi.binance.com";
-    baseUrl = "https://demo-fapi.binance.com"
+    baseUrl = "https://demo-fapi.binance.com";
     accountUrl = "/fapi/v3/account";
     positionRiskUrl = "/fapi/v3/positionRisk";
     openOrderUrl = "/fapi/v1/openOrders";
