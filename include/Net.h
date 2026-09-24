@@ -20,11 +20,12 @@ public:
             cfg.port = 443;
             cfg.use_tls = true;
             cfg.verify_peer = false;
-            cfg.max_connections = 1;
-            cfg.parallel_establish_threads = 1;
+            cfg.max_connections = 3;
+            cfg.parallel_establish_threads = 3;
             cfg.request_queue_capacity = 16;
             cfg.request_pool_size = 8;
             cfg.request_timeout_ms = 30'000;
+            cfg.idle_close_after_ms = 15000;
 
             try {
                 auto client = std::make_shared<net::RestClient>(cfg);
@@ -97,11 +98,13 @@ public:
             cfg.port = 443;
             cfg.use_tls = true;
             cfg.verify_peer = false;
-            cfg.max_connections = 1;
-            cfg.parallel_establish_threads = 1;
+            cfg.max_connections = 3;
+            cfg.parallel_establish_threads = 3;
             cfg.request_queue_capacity = 16;
             cfg.request_pool_size = 8;
             cfg.request_timeout_ms = 30'000;
+            cfg.idle_close_after_ms = 15000;
+
 
             try {
                 auto client = std::make_shared<net::RestClient>(cfg);

@@ -24,6 +24,9 @@ bool BinanceUFuture::QueryAccount(vector<binance::UFutureAsset>& vUFutureAsset, 
     std::string sig = crypto::getBinanceSignatureRest(accountInfo.secretKey, qs);
     std::string fullPath = fmt::format("{}?{}&signature=", accountUrl, qs, sig);
 
+    std::cout << "apiKey: " << accountInfo.apiKey << " secretKey: " << accountInfo.secretKey << std::endl;
+    std::cout << "baseUrl: " << baseUrl << "  fullPath: " << fullPath << std::endl;
+
     try {
         if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
             std::string errMsg = "BinanceUFuture QueryAccount syncGet return false";
