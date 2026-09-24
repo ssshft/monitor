@@ -278,10 +278,10 @@ bool BinanceUFuture::QueryPositionRisk(vector<binance::UFuturePosition>& vUFutur
 
         if (data.HasMember("code")) {
             query = false;
-            int code = std::stoi(res["code"].GetString());
+            int code = std::stoi(data["code"].GetString());
             std::string msg = "";
-            if (res.HasMember("msg")) {
-                msg = res["msg"].GetString();
+            if (data.HasMember("msg")) {
+                msg = data["msg"].GetString();
             }
 
             std::string errMsg = fmt::format("BinanceUFuture QueryPositionRisk code: {}, msg: {}", code, msg);
