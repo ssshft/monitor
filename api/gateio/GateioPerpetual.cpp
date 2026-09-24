@@ -245,12 +245,14 @@ bool GateioPerpetual::QueryOpenOrder(vector<gateio::FutureOrder>& vFutureOrder, 
     int status = 0;
     std::string body;
 
+    std::string queryStr = "status=open";
+    std::string fullPath = orderUrl + "?" + queryStr;
     std::string time_str = std::to_string(crypto::getCurrentTimeSeconds());    
-    std::string sign = crypto::getGateioSignatureRest("GET", orderUrl, time_str, "status=open", "", accountInfo.secretKey);
+    std::string sign = crypto::getGateioSignatureRest("GET", orderUrl, time_str, queryStr, "", accountInfo.secretKey);
     std::vector<std::pair<std::string, std::string>> headers = {{"KEY", accountInfo.apiKey}, {"Timestamp", time_str}, {"SIGN", sign}};
 
     try {
-        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(accountInfo.restUrl), orderUrl, {}, headers, body, status)) {
+        if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(accountInfo.restUrl), fullPath, {}, headers, body, status)) {
             std::string errMsg = "GateioPerpetual QueryOpenOrder syncGet return false";
             LOG_INFO("QueryOpenOrder AccountId: {} Error: {}", accountInfo.accountId, errMsg);
             vErrorMsg.emplace_back(errMsg);
