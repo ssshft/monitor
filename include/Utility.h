@@ -697,7 +697,7 @@ inline string GetDeliveryContractSymbol(string symbol, string contractType, tm c
 #define BINANCE_UFUTURE_REST "https://fapi.binance.com"
 #define BINANCE_CFUTURE_REST "https://dapi.binance.com"
 
-#define GATEIO_REST "https://api.gateio.ws/api/v4"
+#define GATEIO_REST "https://api.gateio.ws"
 
 #define BYBIT_REST "https://api.bybit.com"
 

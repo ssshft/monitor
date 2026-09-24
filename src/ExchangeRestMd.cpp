@@ -7,9 +7,9 @@ ExchangeRestMd::ExchangeRestMd() {
     binanceUFutureDepthUrl = "/fapi/v1/ticker/bookTicker";
     binanceCFutureDepthUrl = "/dapi/v1/ticker/bookTicker";
 
-    gateioSpotDepthUrl = "/spot/tickers";
-    gateioSwapDepthUrl = "/futures/usdt/tickers";
-    gateioDeliveryDepthUrl = "/delivery/usdt/tickers";
+    gateioSpotDepthUrl = "/api/v4/spot/tickers";
+    gateioSwapDepthUrl = "/api/v4/futures/usdt/tickers";
+    gateioDeliveryDepthUrl = "/api/v4/delivery/usdt/tickers";
 
     bybitDepthUrl = "/v5/market/tickers";
 
@@ -277,7 +277,7 @@ Depth ExchangeRestMd::GetGateioSwapDepth(string originInstId) {
 
     std::cout << "GetGateioSwapDepth: " << path << std::endl;
     try {
-        if (!Net::Instance().syncGet("GATEIO_SWAP", crypto::host_of(GATEIO_REST), path, {}, {}, body, status)) {
+        if (!Net::Instance().syncGet("GATEIO", crypto::host_of(GATEIO_REST), path, {}, {}, body, status)) {
             LOG_ERROR("GATEIO GetGateioSwapDepth syncGet return false");
             return depth;
         }
