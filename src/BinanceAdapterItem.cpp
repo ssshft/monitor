@@ -104,12 +104,12 @@ void BinanceAdapterItem::UpdateAccountInfo() {
         vUPositionRisk.clear();
         vUOpenOrder.clear();
         std::vector<std::string> vUFutureAccountErrMsg;
-        bool uFutureQueryAccount = binanceUFuture->QueryAccount(vUFutureAsset, vUFuturePosition, vUFutureAccountErrMsg);
+        bool uFutureQueryAccount = binanceUFuture->QueryAccount(vUFutureAsset, vUFutureAccountErrMsg);
         query = query && uFutureQueryAccount;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vUFutureAccountErrMsg.begin(), vUFutureAccountErrMsg.end());
 
         std::vector<std::string> vUFuturePositionRiskErrMsg;
-        bool uFutureQueryPositionRisk = binanceUFuture->QueryPositionRisk(vUPositionRisk, vUFuturePositionRiskErrMsg);
+        bool uFutureQueryPositionRisk = binanceUFuture->QueryPositionRisk(vUFuturePosition, vUFuturePositionRiskErrMsg);
         query = query && uFutureQueryPositionRisk;
         vQueryErrMsg.insert(vQueryErrMsg.end(), vUFuturePositionRiskErrMsg.begin(), vUFuturePositionRiskErrMsg.end());
 

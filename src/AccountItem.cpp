@@ -130,7 +130,6 @@ void AccountItem::UpdateByBinanceAdapter() {
         for (size_t i = 0; i < vUFuturePosition.size(); ++i) {
             std::string symbol = vUFuturePosition[i].symbol;
             std::string positionSide = vUFuturePosition[i].positionSide;
-            double liquidationPrice = item->GetUPositionLiquidationPrice(symbol, positionSide);
             double longFrozenPosition = 0.0;
             double shortFrozenPosition = 0.0;
             item->GetULongShortFrozenPosition(symbol, longFrozenPosition, shortFrozenPosition);
@@ -140,7 +139,7 @@ void AccountItem::UpdateByBinanceAdapter() {
             position.netPositionD = vUFuturePosition[i].positionAmt;
             position.netAvgPriceD = vUFuturePosition[i].entryPrice;
             position.floatAmountD = vUFuturePosition[i].unrealizedProfit;
-            position.liquidationPrice = liquidationPrice;
+            position.liquidationPrice = vUFuturePosition[i].liquidationPrice;
             std::string key = exchangeStr + "|" + position.symbol;
             position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
             position.underwayAbsPositioD = fabs(position.underwayNetPositionD);

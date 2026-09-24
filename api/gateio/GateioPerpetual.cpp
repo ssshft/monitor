@@ -109,7 +109,7 @@ bool GateioPerpetual::QueryPosition(vector<gateio::FuturePosition>& vFuturePosit
     std::string body;
 
     std::string time_str = std::to_string(crypto::getCurrentTimeSeconds());    
-    std::string sign = crypto::getGateioSignatureRest("GET", positionUrl, time_str, "", "", accountInfo.secretKey);
+    std::string sign = crypto::getGateioSignatureRest("GET", positionUrl, time_str, "status=open", "", accountInfo.secretKey);
     std::vector<std::pair<std::string, std::string>> headers = {{"KEY", accountInfo.apiKey}, {"Timestamp", time_str}, {"SIGN", sign}};
 
     try {

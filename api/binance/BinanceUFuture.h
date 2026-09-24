@@ -11,8 +11,8 @@ public:
 	BinanceUFuture(AccountInfo& info);
 	virtual ~BinanceUFuture();
 
-    bool QueryAccount(std::vector<binance::UFutureAsset>& vUFutureAsset, std::vector<binance::UFuturePosition>& vUFuturePosition, std::vector<std::string>& vErrorMsg);
-	bool QueryPositionRisk(std::vector<binance::PositionRisk>& vPositionRisk, std::vector<std::string>& vErrorMsg);
+    bool QueryAccount(std::vector<binance::UFutureAsset>& vUFutureAsset, std::vector<std::string>& vErrorMsg);
+	bool QueryPositionRisk(vector<binance::UFuturePosition>& vUFuturePosition, std::vector<std::string>& vErrorMsg);
 	bool QueryOpenOrder(std::vector<binance::FutureOpenOrder>& vOpenOrder, std::vector<std::string>& vErrorMsg);
 
 private:

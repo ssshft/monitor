@@ -65,6 +65,7 @@ namespace binance {
         double leverage{0.0};
         bool isolated{false};
         double entryPrice{0.0};
+        double liquidationPrice{0.0};
         double maxNotional{0.0};
         double bidNotional{0.0};
         double askNotional{0.0};
@@ -74,7 +75,7 @@ namespace binance {
 
         string toString() {
             stringstream ss;
-            ss << "symbol:" << symbol << " initialMargin:" << initialMargin << " maintMargin:" << maintMargin << " unrealizedProfit:" << unrealizedProfit << " positionInitialMargin:" << positionInitialMargin << " openOrderInitialMargin:" << openOrderInitialMargin << " leverage:" << leverage << " isolated:" << isolated << " entryPrice:" << entryPrice << " maxNotional:" << maxNotional << " bidNotional:" << bidNotional << " askNotional:" << askNotional << " positionAmt:" << positionAmt << " positionSide:" << positionSide << " updateTime:" << updateTime;
+            ss << "symbol:" << symbol << " initialMargin:" << initialMargin << " maintMargin:" << maintMargin << " unrealizedProfit:" << unrealizedProfit << " positionInitialMargin:" << positionInitialMargin << " openOrderInitialMargin:" << openOrderInitialMargin << " leverage:" << leverage << " isolated:" << isolated << " entryPrice:" << entryPrice << " liquidationPrice:" << liquidationPrice " maxNotional:" << maxNotional << " bidNotional:" << bidNotional << " askNotional:" << askNotional << " positionAmt:" << positionAmt << " positionSide:" << positionSide << " updateTime:" << updateTime;
             return ss.str();
         }
 

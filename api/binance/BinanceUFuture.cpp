@@ -15,7 +15,7 @@ BinanceUFuture::BinanceUFuture(AccountInfo& info) {
 BinanceUFuture::~BinanceUFuture() {
 }
 
-bool BinanceUFuture::QueryAccount(vector<binance::UFutureAsset>& vUFutureAsset, vector<binance::UFuturePosition>& vUFuturePosition, vector<string>& vErrorMsg) {
+bool BinanceUFuture::QueryAccount(vector<binance::UFutureAsset>& vUFutureAsset, vector<string>& vErrorMsg) {
     bool query = true;
     int status = 0;
     std::string body;
@@ -24,8 +24,6 @@ bool BinanceUFuture::QueryAccount(vector<binance::UFutureAsset>& vUFutureAsset, 
     std::string sig = crypto::getBinanceSignatureRest(accountInfo.secretKey, qs);
     std::string fullPath = fmt::format("{}?{}&signature={}", accountUrl, qs, sig);
 
-    std::cout << "apiKey: " << accountInfo.apiKey << " secretKey: " << accountInfo.secretKey << std::endl;
-    std::cout << "baseUrl: " << baseUrl << "  fullPath: " << fullPath << std::endl;
 
     try {
         if (!Net::Instance().syncGet(accountInfo.accountName, crypto::host_of(baseUrl), fullPath, {{"X-MBX-APIKEY", accountInfo.apiKey}}, {}, body, status)) {
@@ -100,6 +98,7 @@ bool BinanceUFuture::QueryAccount(vector<binance::UFutureAsset>& vUFutureAsset, 
             }
         }
 
+        /*
         if (res.HasMember("positions") && res["positions"].IsArray()) {
             const rapidjson::Value& data = res["positions"];
             for (rapidjson::SizeType i = 0; i < data.Size(); ++i) {
@@ -144,13 +143,6 @@ bool BinanceUFuture::QueryAccount(vector<binance::UFutureAsset>& vUFutureAsset, 
                     uFuturePosition.positionSide = data[i]["positionSide"].GetString();
                 }
                 if (data[i].HasMember("positionAmt")) {
-                    /*
-                    if (cFuturePosition.positionSide == "SHORT") {
-                        cFuturePosition.positionAmt = -stod(position.at("positionAmt").as_string());
-                    } else {
-                        cFuturePosition.positionAmt = stod(position.at("positionAmt").as_string());
-                    }
-                    */
                     uFuturePosition.positionAmt = std::stod(data[i]["positionAmt"].GetString());
                 }
                 if (data[i].HasMember("updateTime")) {
@@ -166,6 +158,7 @@ bool BinanceUFuture::QueryAccount(vector<binance::UFutureAsset>& vUFutureAsset, 
 
             }
         }
+        */
 
         if (res.HasMember("code")) {
             query = false;
@@ -190,7 +183,7 @@ bool BinanceUFuture::QueryAccount(vector<binance::UFutureAsset>& vUFutureAsset, 
     return query;
 }
 
-bool BinanceUFuture::QueryPositionRisk(std::vector<binance::PositionRisk>& vPositionRisk, std::vector<std::string>& vErrorMsg) {
+bool BinanceUFuture::QueryPositionRisk(vector<binance::UFuturePosition>& vUFuturePosition, std::vector<std::string>& vErrorMsg) {
     bool query = true;
     int status = 0;
     std::string body;
@@ -214,23 +207,72 @@ bool BinanceUFuture::QueryPositionRisk(std::vector<binance::PositionRisk>& vPosi
         }
 
         rapidjson::Document d;
-        rapidjson::Value& res = d.Parse<rapidjson::kParseNumbersAsStringsFlag>(body.c_str());
+        rapidjson::Value& data = d.Parse<rapidjson::kParseNumbersAsStringsFlag>(body.c_str());
+         if (data.IsArray()) {
+            for (rapidjson::SizeType i = 0; i < data.Size(); ++i) {
+                binance::UFuturePosition uFuturePosition;
+                if (data[i].HasMember("symbol")) {
+                    uFuturePosition.symbol = data[i]["symbol"].GetString();
+                }
+                if (data[i].HasMember("initialMargin")) {
+                    uFuturePosition.initialMargin = std::stod(data[i]["initialMargin"].GetString());
+                }
+                if (data[i].HasMember("maintMargin")) {
+                    uFuturePosition.maintMargin = std::stod(data[i]["maintMargin"].GetString());
+                }
+                if (data[i].HasMember("unrealizedProfit")) {
+                    uFuturePosition.unrealizedProfit = std::stod(data[i]["unrealizedProfit"].GetString());
+                }
+                if (data[i].HasMember("positionInitialMargin")) {
+                    uFuturePosition.positionInitialMargin = std::stod(data[i]["positionInitialMargin"].GetString());
+                }
+                if (data[i].HasMember("openOrderInitialMargin")) {
+                    uFuturePosition.openOrderInitialMargin = std::stod(data[i]["openOrderInitialMargin"].GetString());
+                }
+                if (data[i].HasMember("leverage")) {
+                    uFuturePosition.leverage = std::stod(data[i]["leverage"].GetString());
+                }
+                if (data[i].HasMember("isolated")) {
+                    uFuturePosition.isolated = data[i]["isolated"].GetBool();
+                }
+                if (data[i].HasMember("entryPrice")) {
+                    uFuturePosition.entryPrice = std::stod(data[i]["entryPrice"].GetString());
+                }
+                if (data[i].HasMember("liquidationPrice")) {
+                    uFuturePosition.liquidationPrice = std::stod(data[i]["liquidationPrice"].GetString());
+                }
+                if (data[i].HasMember("maxNotional")) {
+                    uFuturePosition.maxNotional = std::stod(data[i]["maxNotional"].GetString());
+                }
+                if (data[i].HasMember("bidNotional")) {
+                    uFuturePosition.bidNotional = std::stod(data[i]["bidNotional"].GetString());
+                }
+                if (data[i].HasMember("askNotional")) {
+                    uFuturePosition.askNotional = std::stod(data[i]["askNotional"].GetString());
+                }
+                if (data[i].HasMember("positionSide")) {
+                    uFuturePosition.positionSide = data[i]["positionSide"].GetString();
+                }
+                if (data[i].HasMember("positionAmt")) {
+                    /*
+                    if (cFuturePosition.positionSide == "SHORT") {
+                        cFuturePosition.positionAmt = -stod(position.at("positionAmt").as_string());
+                    } else {
+                        cFuturePosition.positionAmt = stod(position.at("positionAmt").as_string());
+                    }
+                    */
+                    uFuturePosition.positionAmt = std::stod(data[i]["positionAmt"].GetString());
+                }
+                if (data[i].HasMember("updateTime")) {
+                    uFuturePosition.updateTime = std::stoll(data[i]["updateTime"].GetString());
+                }
+        
+                if (fabs(uFuturePosition.positionAmt) <= 0.0000000001) {
+                    continue;
+                }
 
-         if (res.IsArray()) {
-            for (rapidjson::SizeType i = 0; i < res.Size(); ++i) {
-                binance::PositionRisk positionRisk;
-                if (res[i].HasMember("symbol")) {
-                    positionRisk.symbol = res[i]["symbol"].GetString();
-                }
-                if (res[i].HasMember("liquidationPrice")) {
-                    positionRisk.liquidationPrice = std::stod(res[i]["liquidationPrice"].GetString());
-                }
-                if (res[i].HasMember("positionSide")) {
-                    positionRisk.positionSide = res[i]["positionSide"].GetString();
-                }
-
-                LOG_INFO("QueryPositionRisk AccountId: {}   uFuturePosition: {}", accountInfo.accountId, positionRisk.toString());
-                vPositionRisk.emplace_back(positionRisk);
+                LOG_INFO("QueryAccount AccountId: {}   uFuturePosition: {}", accountInfo.accountId, uFuturePosition.toString());
+                vUFuturePosition.emplace_back(uFuturePosition);
             }
         }
 
