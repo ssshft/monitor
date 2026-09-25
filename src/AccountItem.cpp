@@ -142,7 +142,7 @@ void AccountItem::UpdateByBinanceAdapter() {
             position.liquidationPrice = vUFuturePosition[i].liquidationPrice;
             std::string key = exchangeStr + "|" + position.symbol;
             position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
-            position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
+            position.underwayAbsPositionD = fabs(position.underwayNetPositionD);
 
             mUFuturePosition[position.symbol] = position;
         }
@@ -205,7 +205,7 @@ void AccountItem::UpdateByBinanceAdapter() {
 
             std::string key = exchangeStr + "|" + position.symbol;
             position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
-            position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
+            position.underwayAbsPositionD = fabs(position.underwayNetPositionD);
 
             mCFuturePosition[position.symbol] = position;
         }
@@ -261,7 +261,7 @@ void AccountItem::UpdateByBinanceAdapter() {
  
                 std::string key = exchangeStr + "|" + position.symbol;                
                 position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
-                position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
+                position.underwayAbsPositionD = fabs(position.underwayNetPositionD);
                 mUFuturePosition[position.symbol] = position;
             }
 
@@ -280,7 +280,7 @@ void AccountItem::UpdateByBinanceAdapter() {
 
                 std::string key = exchangeStr + "|" + position.symbol;   
                 position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
-                position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
+                position.underwayAbsPositionD = fabs(position.underwayNetPositionD);
                 mCFuturePosition[position.symbol] = position;
             }
 
@@ -380,7 +380,7 @@ void AccountItem::UpdateByGateioAdapter() {
 
             std::string key = exchangeStr + "|" + position.symbol;   
             position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
-            position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
+            position.underwayAbsPositionD = fabs(position.underwayNetPositionD);
 
             mPerpetualPosition[position.symbol] = position;
         }
@@ -453,7 +453,7 @@ void AccountItem::UpdateByBybitAdapter() {
 
             std::string key = exchangeStr + "|" + position.symbol; 
             position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
-            position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
+            position.underwayAbsPositionD = fabs(position.underwayNetPositionD);
 
             mUFuturePosition[position.symbol] = position;
         }
@@ -525,7 +525,7 @@ void AccountItem::UpdateByOkxAdapter() {
 
             std::string key = exchangeStr + "|" + position.symbol; 
             position.underwayNetPositionD = fabs(longFrozenPosition) + fabs(shortFrozenPosition);
-            position.underwayAbsPositioD = fabs(position.underwayNetPositionD);
+            position.underwayAbsPositionD = fabs(position.underwayNetPositionD);
 
             mUFuturePosition[position.symbol] = position;
         }
@@ -1144,12 +1144,12 @@ void AccountItem::CalculateRiskInfo() {
 
         if (baseAsset == "USDT") {
             underwayOrderValue = iter->second.underwayAbsPositionS * price *  info.value;
-            underwayOrderValued = iter->second.underwayAbsPositioD * price * info.value;
+            underwayOrderValued = iter->second.underwayAbsPositionD * price * info.value;
         } else {
             double priceBaseAsset = MdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
             if (priceBaseAsset > MINDOUBLE) {
                 underwayOrderValue = iter->second.underwayAbsPositionS * price * info.value / priceBaseAsset;
-                underwayOrderValued = iter->second.underwayAbsPositioD * price * info.value / priceBaseAsset;
+                underwayOrderValued = iter->second.underwayAbsPositionD * price * info.value / priceBaseAsset;
             }
         }
         
@@ -1179,18 +1179,18 @@ void AccountItem::CalculateRiskInfo() {
 
         if (baseAsset == "USDT") {
             underwayOrderValue = iter->second.underwayAbsPositionS * info.value;
-            underwayOrderValued = iter->second.underwayAbsPositioD * info.value;
+            underwayOrderValued = iter->second.underwayAbsPositionD * info.value;
         } else {
             if (baseAsset == info.margin) {
                 if (price > MINDOUBLE) {
                     underwayOrderValue = iter->second.underwayAbsPositionS * info.value / price;
-                    underwayOrderValued = iter->second.underwayAbsPositioD * info.value / price;
+                    underwayOrderValued = iter->second.underwayAbsPositionD * info.value / price;
                 }
             } else {
                 double priceBaseAsset = MdMgr::GetInstance().GetAssetPrice(baseAsset, exchangeStr);
                 if (priceBaseAsset > MINDOUBLE) {
                     underwayOrderValue = iter->second.underwayAbsPositionS * info.value / priceBaseAsset;
-                    underwayOrderValued = iter->second.underwayAbsPositioD * info.value / priceBaseAsset;
+                    underwayOrderValued = iter->second.underwayAbsPositionD * info.value / priceBaseAsset;
                 }
             }
         }

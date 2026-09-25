@@ -253,7 +253,7 @@ namespace igmonitor {
 			underwayNetPositionS = 0.0;
 			underwayNetPositionD = 0.0;
 			underwayAbsPositionS = 0.0;
-			underwayAbsPositioD = 0.0;
+			underwayAbsPositionD = 0.0;
     		multiple = 0.0;
     		price = 0.0;
 			liquidationPrice = 0.0;
