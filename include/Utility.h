@@ -236,7 +236,7 @@ namespace igmonitor {
 		double underwayNetPositionS;
 		double underwayNetPositionD;
 		double underwayAbsPositionS;
-		double underwayAbsPositioD;
+		double underwayAbsPositionD;
     	double multiple;
     	double price;
 		double liquidationPrice;

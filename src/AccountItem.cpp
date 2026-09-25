@@ -1579,102 +1579,25 @@ rapidjson::Document AccountItem::GetDetail() {
         
         sprintf(data, "%f|0", iter->second.availableAmountD);
         assetV.AddMember("availableAmount", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        sprintf(data, "%f|0", iter->second.totalAmountS);
-        assetV.AddMember("totalAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
-        
+                
         sprintf(data, "%f|0", iter->second.totalAmountD);
         assetV.AddMember("totalAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        sprintf(data, "%f|0", iter->second.frozenAmountS);
-        assetV.AddMember("frozenAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.frozenAmountD);
         assetV.AddMember("frozenAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%f|0", iter->second.floatAmountS);
-        assetV.AddMember("floatAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
-        
         sprintf(data, "%f|0", iter->second.floatAmountD);
         assetV.AddMember("floatAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%f|0", iter->second.marginAmountS);
-        assetV.AddMember("marginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
-        
         sprintf(data, "%f|0", iter->second.marginAmountD);
         assetV.AddMember("marginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        sprintf(data, "%f|0", iter->second.frozenMarginAmountS);
-        assetV.AddMember("frozenMarginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.frozenMarginAmountD);
         assetV.AddMember("frozenMarginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.initialAmount);
         assetV.AddMember("initialAmount", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        if (fabs(iter->second.positionValueS) >= MINDOUBLE) {
-            if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) / fabs(iter->second.positionValueS) > 0.01) {
-                sprintf(data, "%f|1", iter->second.floatAmountS);
-                assetV["floatAmount_s"].SetString(data, allocator);
-                sprintf(data, "%f|1", iter->second.floatAmountD);
-                assetV["floatAmount_d"].SetString(data, allocator);
-            }
-        } else {
-            if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
-                sprintf(data, "%f|1", iter->second.floatAmountS);
-                assetV["floatAmount_s"].SetString(data, allocator);
-                sprintf(data, "%f|1", iter->second.floatAmountD);
-                assetV["floatAmount_d"].SetString(data, allocator);
-            }
-        }
-        
-        if (fabs(iter->second.totalAmountD) >= MINDOUBLE) {
-            if (fabs(iter->second.totalAmountS / iter->second.totalAmountD - 1) >= 0.05) {
-                sprintf(data, "%f|1", iter->second.totalAmountS);
-                assetV["totalAmount_s"].SetString(data, allocator);
-                sprintf(data, "%f|1", iter->second.totalAmountD);
-                assetV["totalAmount_d"].SetString(data, allocator);
-            }
-        } else {
-            if (fabs(iter->second.totalAmountS - iter->second.totalAmountD) >= MINDOUBLE) {
-                sprintf(data, "%f|1", iter->second.totalAmountS);
-                assetV["totalAmount_s"].SetString(data, allocator);
-                sprintf(data, "%f|1", iter->second.totalAmountD);
-                assetV["totalAmount_d"].SetString(data, allocator);
-            }
-        }
-        
-        if (fabs(iter->second.frozenAmountD) >= MINDOUBLE) {
-            if (fabs(iter->second.frozenAmountS / iter->second.frozenAmountD - 1) >= 0.05) {
-                sprintf(data, "%f|1", iter->second.frozenAmountS);
-                assetV["frozenAmount_s"].SetString(data, allocator);
-                sprintf(data, "%f|1", iter->second.frozenAmountD);
-                assetV["frozenAmount_d"].SetString(data, allocator);
-            }
-        } else {
-            if (fabs(iter->second.frozenAmountS - iter->second.frozenAmountD) >= MINDOUBLE) {
-                sprintf(data, "%f|1", iter->second.frozenAmountS);
-                assetV["frozenAmount_s"].SetString(data, allocator);
-                sprintf(data, "%f|1", iter->second.frozenAmountD);
-                assetV["frozenAmount_d"].SetString(data, allocator);
-            }
-        }
-        
-        if (iter->second.marginAmountS < iter->second.marginAmountD) {
-            sprintf(data, "%f|1", iter->second.marginAmountS);
-            assetV["marginAmount_s"].SetString(data, allocator);
-            sprintf(data, "%f|1", iter->second.marginAmountD);
-            assetV["marginAmount_d"].SetString(data, allocator);
-        }
-        
-        if (iter->second.frozenMarginAmountS < iter->second.frozenMarginAmountD) {
-            sprintf(data, "%f|1", iter->second.frozenMarginAmountS);
-            assetV["frozenMarginAmount_s"].SetString(data, allocator);
-            sprintf(data, "%f|1", iter->second.frozenMarginAmountD);
-            assetV["frozenMarginAmount_d"].SetString(data, allocator);
-        }
-        
+                
         totalAssetChecked.AddMember(rapidjson::Value(iter->second.asset.c_str(), allocator).Move(), assetV, allocator);
     }
     detailV.AddMember("TotalAssetChecked", totalAssetChecked, allocator);
@@ -1706,100 +1629,23 @@ rapidjson::Document AccountItem::GetDetail() {
         sprintf(data, "%f|0", iter->second.availableAmountD);
         assetV.AddMember("availableAmount", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%f|0", iter->second.floatAmountS);
-        assetV.AddMember("floatAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
-        
         sprintf(data, "%f|0", iter->second.floatAmountD);
         assetV.AddMember("floatAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.initialAmount);
         assetV.AddMember("initialAmount", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%f|0", iter->second.totalAmountS);
-        assetV.AddMember("totalAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
-        
         sprintf(data, "%f|0", iter->second.totalAmountD);
         assetV.AddMember("totalAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        sprintf(data, "%f|0", iter->second.frozenAmountS);
-        assetV.AddMember("frozenAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.frozenAmountD);
         assetV.AddMember("frozenAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%f|0", iter->second.marginAmountS);
-        assetV.AddMember("marginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
-        
         sprintf(data, "%f|0", iter->second.marginAmountD);
         assetV.AddMember("marginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%f|0", iter->second.frozenMarginAmountS);
-        assetV.AddMember("frozenMarginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
-        
         sprintf(data, "%f|0", iter->second.frozenMarginAmountD);
         assetV.AddMember("frozenMarginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        if (fabs(iter->second.positionValueS) >= MINDOUBLE) {
-            if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) / fabs(iter->second.positionValueS) > 0.01) {
-                sprintf(data, "%f|1", iter->second.floatAmountS);
-                assetV["floatAmount_s"].SetString(data, allocator);
-                sprintf(data, "%f|1", iter->second.floatAmountD);
-                assetV["floatAmount_d"].SetString(data, allocator);
-            }
-        } else {
-            if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
-                sprintf(data, "%f|1", iter->second.floatAmountS);
-                assetV["floatAmount_s"].SetString(data, allocator);
-                sprintf(data, "%f|1", iter->second.floatAmountD);
-                assetV["floatAmount_d"].SetString(data, allocator);
-            }
-        }
-        
-        if (fabs(iter->second.totalAmountD) >= MINDOUBLE) {
-            if (fabs(iter->second.totalAmountS / iter->second.totalAmountD - 1) >= 0.05) {
-                sprintf(data, "%f|1", iter->second.totalAmountS);
-                assetV["totalAmount_s"].SetString(data, allocator);
-                sprintf(data, "%f|1", iter->second.totalAmountD);
-                assetV["totalAmount_d"].SetString(data, allocator);
-            }
-        } else {
-            if (fabs(iter->second.totalAmountS - iter->second.totalAmountD) >= MINDOUBLE) {
-                sprintf(data, "%f|1", iter->second.totalAmountS);
-                assetV["totalAmount_s"].SetString(data, allocator);
-                sprintf(data, "%f|1", iter->second.totalAmountD);
-                assetV["totalAmount_d"].SetString(data, allocator);
-            }
-        }
-        
-        if (fabs(iter->second.frozenAmountD) >= MINDOUBLE) {
-            if (fabs(iter->second.frozenAmountS / iter->second.frozenAmountD - 1) >= 0.05) {
-                sprintf(data, "%f|1", iter->second.frozenAmountS);
-                assetV["frozenAmount_s"].SetString(data, allocator);
-                sprintf(data, "%f|1", iter->second.frozenAmountD);
-                assetV["frozenAmount_d"].SetString(data, allocator);
-            }
-        } else {
-            if (fabs(iter->second.frozenAmountS - iter->second.frozenAmountD) >= MINDOUBLE) {
-                sprintf(data, "%f|1", iter->second.frozenAmountS);
-                assetV["frozenAmount_s"].SetString(data, allocator);
-                sprintf(data, "%f|1", iter->second.frozenAmountD);
-                assetV["frozenAmount_d"].SetString(data, allocator);
-            }
-        }
-        
-        if (iter->second.marginAmountS < iter->second.marginAmountD) {
-            sprintf(data, "%f|1", iter->second.marginAmountS);
-            assetV["marginAmount_s"].SetString(data, allocator);
-            sprintf(data, "%f|1", iter->second.marginAmountD);
-            assetV["marginAmount_d"].SetString(data, allocator);
-        }
-        
-        if (iter->second.frozenMarginAmountS < iter->second.frozenMarginAmountD) {
-            sprintf(data, "%f|1", iter->second.frozenMarginAmountS);
-            assetV["frozenMarginAmount_s"].SetString(data, allocator);
-            sprintf(data, "%f|1", iter->second.frozenMarginAmountD);
-            assetV["frozenMarginAmount_d"].SetString(data, allocator);
-        }
         
         spotAssetChecked.AddMember(rapidjson::Value(iter->second.asset.c_str(), allocator).Move(), assetV, allocator);
     }
@@ -1814,26 +1660,15 @@ rapidjson::Document AccountItem::GetDetail() {
         sprintf(data, "%s|0", iter->second.asset.c_str());
         assetV.AddMember("asset", rapidjson::Value(data, allocator).Move(), allocator);
         
-        if (type == "physical") {
-            if (maxLeverageUD == true && maxLeverageAssetD == iter->first) {
-                sprintf(data, "%f|0|MaxRealLeverage", iter->second.realLeverageRatioD);
-            } else {
-                sprintf(data, "%f|0", iter->second.realLeverageRatioD);
-            }
+        if (maxLeverageUD == true && maxLeverageAssetD == iter->first) {
+            sprintf(data, "%f|0|MaxRealLeverage", iter->second.realLeverageRatioD);
         } else {
-            if (maxLeverageUS == true && maxLeverageAssetS == iter->first) {
-                sprintf(data, "%f|0|MaxRealLeverage", iter->second.realLeverageRatioS);
-            } else {
-                sprintf(data, "%f|0", iter->second.realLeverageRatioS);
-            }
+            sprintf(data, "%f|0", iter->second.realLeverageRatioD);
         }
         assetV.AddMember("realLeverageRatio", rapidjson::Value(data, allocator).Move(), allocator);
         
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.positionValueD);
-        } else {
-            sprintf(data, "%f|0", iter->second.positionValueS);
-        }
+       
+        sprintf(data, "%f|0", iter->second.positionValueD);
         assetV.AddMember("positionValue", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.transferAmount);
@@ -1842,117 +1677,30 @@ rapidjson::Document AccountItem::GetDetail() {
         sprintf(data, "%f|0", iter->second.transferFrozenAmount);
         assetV.AddMember("transferFrozenAmount", rapidjson::Value(data, allocator).Move(), allocator);
         
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.netAmountD);
-        } else {
-            sprintf(data, "%f|0", iter->second.netAmountS);
-        }
+        sprintf(data, "%f|0", iter->second.netAmountD);
         assetV.AddMember("netAmount", rapidjson::Value(data, allocator).Move(), allocator);
         
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.availableAmountD);
-        } else {
-            sprintf(data, "%f|0", iter->second.availableAmountS);
-        }
+        sprintf(data, "%f|0", iter->second.availableAmountD);
         assetV.AddMember("availableAmount", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        sprintf(data, "%f|0", iter->second.totalAmountS);
-        assetV.AddMember("totalAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.totalAmountD);
         assetV.AddMember("totalAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%f|0", iter->second.frozenAmountS);
-        assetV.AddMember("frozenAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
-        
         sprintf(data, "%f|0", iter->second.frozenAmountD);
         assetV.AddMember("frozenAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        sprintf(data, "%f|0", iter->second.floatAmountS);
-        assetV.AddMember("floatAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.floatAmountD);
         assetV.AddMember("floatAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%f|0", iter->second.marginAmountS);
-        assetV.AddMember("marginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
-        
         sprintf(data, "%f|0", iter->second.marginAmountD);
         assetV.AddMember("marginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        sprintf(data, "%f|0", iter->second.frozenMarginAmountS);
-        assetV.AddMember("frozenMarginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.frozenMarginAmountD);
         assetV.AddMember("frozenMarginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.initialAmount);
         assetV.AddMember("initialAmount", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        if (type == "physical") {
-            if (fabs(iter->second.positionValueS) >= MINDOUBLE) {
-                if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) / fabs(iter->second.positionValueS) > 0.01) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    assetV["floatAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    assetV["floatAmount_d"].SetString(data, allocator);
-                }
-            } else {
-                if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    assetV["floatAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    assetV["floatAmount_d"].SetString(data, allocator);
-                }
-            }
-            
-            if (fabs(iter->second.totalAmountD) >= MINDOUBLE) {
-                if (fabs(iter->second.totalAmountS / iter->second.totalAmountD - 1) >= 0.05) {
-                    sprintf(data, "%f|1", iter->second.totalAmountS);
-                    assetV["totalAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.totalAmountD);
-                    assetV["totalAmount_d"].SetString(data, allocator);
-                }
-            } else {
-                if (fabs(iter->second.totalAmountS - iter->second.totalAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.totalAmountS);
-                    assetV["totalAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.totalAmountD);
-                    assetV["totalAmount_d"].SetString(data, allocator);
-                }
-            }
-            
-            if (fabs(iter->second.frozenAmountD) >= MINDOUBLE) {
-                if (fabs(iter->second.frozenAmountS / iter->second.frozenAmountD - 1) >= 0.05) {
-                    sprintf(data, "%f|1", iter->second.frozenAmountS);
-                    assetV["frozenAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.frozenAmountD);
-                    assetV["frozenAmount_d"].SetString(data, allocator);
-                }
-            } else {
-                if (fabs(iter->second.frozenAmountS - iter->second.frozenAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.frozenAmountS);
-                    assetV["frozenAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.frozenAmountD);
-                    assetV["frozenAmount_d"].SetString(data, allocator);
-                }
-            }
-            
-            if (iter->second.marginAmountS < iter->second.marginAmountD) {
-                sprintf(data, "%f|1", iter->second.marginAmountS);
-                assetV["marginAmount_s"].SetString(data, allocator);
-                sprintf(data, "%f|1", iter->second.marginAmountD);
-                assetV["marginAmount_d"].SetString(data, allocator);
-            }
-            
-            if (iter->second.frozenMarginAmountS < iter->second.frozenMarginAmountD) {
-                sprintf(data, "%f|1", iter->second.frozenMarginAmountS);
-                assetV["frozenMarginAmount_s"].SetString(data, allocator);
-                sprintf(data, "%f|1", iter->second.frozenMarginAmountD);
-                assetV["frozenMarginAmount_d"].SetString(data, allocator);
-            }
-        }
-        
+                
         uFutureAssetChecked.AddMember(rapidjson::Value(iter->second.asset.c_str(), allocator).Move(), assetV, allocator);
     }
     detailV.AddMember("UFutureAssetChecked", uFutureAssetChecked, allocator);
@@ -1966,26 +1714,14 @@ rapidjson::Document AccountItem::GetDetail() {
         sprintf(data, "%s|0", iter->second.asset.c_str());
         assetV.AddMember("asset", rapidjson::Value(data, allocator).Move(), allocator);
         
-        if (type == "physical") {
-            if (maxLeverageUD == false && maxLeverageAssetD == iter->first) {
-                sprintf(data, "%f|0|MaxRealLeverage", iter->second.realLeverageRatioD);
-            } else {
-                sprintf(data, "%f|0", iter->second.realLeverageRatioD);
-            }
+        if (maxLeverageUD == false && maxLeverageAssetD == iter->first) {
+            sprintf(data, "%f|0|MaxRealLeverage", iter->second.realLeverageRatioD);
         } else {
-            if (maxLeverageUS == false && maxLeverageAssetS == iter->first) {
-                sprintf(data, "%f|0|MaxRealLeverage", iter->second.realLeverageRatioS);
-            } else {
-                sprintf(data, "%f|0", iter->second.realLeverageRatioS);
-            }
+            sprintf(data, "%f|0", iter->second.realLeverageRatioD);
         }
         assetV.AddMember("realLeverageRatio", rapidjson::Value(data, allocator).Move(), allocator);
         
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.positionValueD);
-        } else {
-            sprintf(data, "%f|0", iter->second.positionValueS);
-        }
+        sprintf(data, "%f|0", iter->second.positionValueD);
         assetV.AddMember("positionValue", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.transferAmount);
@@ -1994,117 +1730,30 @@ rapidjson::Document AccountItem::GetDetail() {
         sprintf(data, "%f|0", iter->second.transferFrozenAmount);
         assetV.AddMember("transferFrozenAmount", rapidjson::Value(data, allocator).Move(), allocator);
         
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.netAmountD);
-        } else {
-            sprintf(data, "%f|0", iter->second.netAmountS);
-        }
+        sprintf(data, "%f|0", iter->second.netAmountD);
         assetV.AddMember("netAmount", rapidjson::Value(data, allocator).Move(), allocator);
         
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.availableAmountD);
-        } else {
-            sprintf(data, "%f|0", iter->second.availableAmountS);
-        }
+        sprintf(data, "%f|0", iter->second.availableAmountD);
         assetV.AddMember("availableAmount", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        sprintf(data, "%f|0", iter->second.totalAmountS);
-        assetV.AddMember("totalAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.totalAmountD);
         assetV.AddMember("totalAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%f|0", iter->second.frozenAmountS);
-        assetV.AddMember("frozenAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
-        
         sprintf(data, "%f|0", iter->second.frozenAmountD);
         assetV.AddMember("frozenAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        sprintf(data, "%f|0", iter->second.floatAmountS);
-        assetV.AddMember("floatAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.floatAmountD);
         assetV.AddMember("floatAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%f|0", iter->second.marginAmountS);
-        assetV.AddMember("marginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
-        
         sprintf(data, "%f|0", iter->second.marginAmountD);
         assetV.AddMember("marginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        sprintf(data, "%f|0", iter->second.frozenMarginAmountS);
-        assetV.AddMember("frozenMarginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.frozenMarginAmountD);
         assetV.AddMember("frozenMarginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.initialAmount);
         assetV.AddMember("initialAmount", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        if (type == "physical") {
-            if (fabs(iter->second.positionValueS) >= MINDOUBLE) {
-                if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) / fabs(iter->second.positionValueS) > 0.01) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    assetV["floatAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    assetV["floatAmount_d"].SetString(data, allocator);
-                }
-            } else {
-                if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    assetV["floatAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    assetV["floatAmount_d"].SetString(data, allocator);
-                }
-            }
-            
-            if (fabs(iter->second.totalAmountD) >= MINDOUBLE) {
-                if (fabs(iter->second.totalAmountS / iter->second.totalAmountD - 1) >= 0.05) {
-                    sprintf(data, "%f|1", iter->second.totalAmountS);
-                    assetV["totalAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.totalAmountD);
-                    assetV["totalAmount_d"].SetString(data, allocator);
-                }
-            } else {
-                if (fabs(iter->second.totalAmountS - iter->second.totalAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.totalAmountS);
-                    assetV["totalAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.totalAmountD);
-                    assetV["totalAmount_d"].SetString(data, allocator);
-                }
-            }
-            
-            if (fabs(iter->second.frozenAmountD) >= MINDOUBLE) {
-                if (fabs(iter->second.frozenAmountS / iter->second.frozenAmountD - 1) >= 0.05) {
-                    sprintf(data, "%f|1", iter->second.frozenAmountS);
-                    assetV["frozenAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.frozenAmountD);
-                    assetV["frozenAmount_d"].SetString(data, allocator);
-                }
-            } else {
-                if (fabs(iter->second.frozenAmountS - iter->second.frozenAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.frozenAmountS);
-                    assetV["frozenAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.frozenAmountD);
-                    assetV["frozenAmount_d"].SetString(data, allocator);
-                }
-            }
-            
-            if (iter->second.marginAmountS < iter->second.marginAmountD) {
-                sprintf(data, "%f|1", iter->second.marginAmountS);
-                assetV["marginAmount_s"].SetString(data, allocator);
-                sprintf(data, "%f|1", iter->second.marginAmountD);
-                assetV["marginAmount_d"].SetString(data, allocator);
-            }
-            
-            if (iter->second.frozenMarginAmountS < iter->second.frozenMarginAmountD) {
-                sprintf(data, "%f|1", iter->second.frozenMarginAmountS);
-                assetV["frozenMarginAmount_s"].SetString(data, allocator);
-                sprintf(data, "%f|1", iter->second.frozenMarginAmountD);
-                assetV["frozenMarginAmount_d"].SetString(data, allocator);
-            }
-        }
-        
+                
         cFutureAssetChecked.AddMember(rapidjson::Value(iter->second.asset.c_str(), allocator).Move(), assetV, allocator);
     }
     detailV.AddMember("CFutureAssetChecked", cFutureAssetChecked, allocator);
@@ -2119,26 +1768,15 @@ rapidjson::Document AccountItem::GetDetail() {
         sprintf(data, "%s|0", iter->second.asset.c_str());
         assetV.AddMember("asset", rapidjson::Value(data, allocator).Move(), allocator);
         
-        if (type == "physical") {
-            if (maxLeverageUD == false && maxLeverageAssetD == iter->first) {
-                sprintf(data, "%f|0|MaxRealLeverage", iter->second.realLeverageRatioD);
-            } else {
-                sprintf(data, "%f|0", iter->second.realLeverageRatioD);
-            }
+  
+        if (maxLeverageUD == false && maxLeverageAssetD == iter->first) {
+            sprintf(data, "%f|0|MaxRealLeverage", iter->second.realLeverageRatioD);
         } else {
-            if (maxLeverageUS == false && maxLeverageAssetS == iter->first) {
-                sprintf(data, "%f|0|MaxRealLeverage", iter->second.realLeverageRatioS);
-            } else {
-                sprintf(data, "%f|0", iter->second.realLeverageRatioS);
-            }
+            sprintf(data, "%f|0", iter->second.realLeverageRatioD);
         }
         assetV.AddMember("realLeverageRatio", rapidjson::Value(data, allocator).Move(), allocator);
         
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.positionValueD);
-        } else {
-            sprintf(data, "%f|0", iter->second.positionValueS);
-        }
+        sprintf(data, "%f|0", iter->second.positionValueD);
         assetV.AddMember("positionValue", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.transferAmount);
@@ -2147,117 +1785,30 @@ rapidjson::Document AccountItem::GetDetail() {
         sprintf(data, "%f|0", iter->second.transferFrozenAmount);
         assetV.AddMember("transferFrozenAmount", rapidjson::Value(data, allocator).Move(), allocator);
         
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.netAmountD);
-        } else {
-            sprintf(data, "%f|0", iter->second.netAmountS);
-        }
+        sprintf(data, "%f|0", iter->second.netAmountD);
         assetV.AddMember("netAmount", rapidjson::Value(data, allocator).Move(), allocator);
         
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.availableAmountD);
-        } else {
-            sprintf(data, "%f|0", iter->second.availableAmountS);
-        }
+        sprintf(data, "%f|0", iter->second.availableAmountD);
         assetV.AddMember("availableAmount", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        sprintf(data, "%f|0", iter->second.totalAmountS);
-        assetV.AddMember("totalAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.totalAmountD);
         assetV.AddMember("totalAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%f|0", iter->second.frozenAmountS);
-        assetV.AddMember("frozenAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
-        
         sprintf(data, "%f|0", iter->second.frozenAmountD);
         assetV.AddMember("frozenAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        sprintf(data, "%f|0", iter->second.floatAmountS);
-        assetV.AddMember("floatAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.floatAmountD);
         assetV.AddMember("floatAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%f|0", iter->second.marginAmountS);
-        assetV.AddMember("marginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
-        
         sprintf(data, "%f|0", iter->second.marginAmountD);
         assetV.AddMember("marginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        sprintf(data, "%f|0", iter->second.frozenMarginAmountS);
-        assetV.AddMember("frozenMarginAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
-        
+
         sprintf(data, "%f|0", iter->second.frozenMarginAmountD);
         assetV.AddMember("frozenMarginAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.initialAmount);
         assetV.AddMember("initialAmount", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        if (type == "physical") {
-            if (fabs(iter->second.positionValueS) >= MINDOUBLE) {
-                if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) / fabs(iter->second.positionValueS) > 0.01) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    assetV["floatAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    assetV["floatAmount_d"].SetString(data, allocator);
-                }
-            } else {
-                if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    assetV["floatAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    assetV["floatAmount_d"].SetString(data, allocator);
-                }
-            }
-            
-            if (fabs(iter->second.totalAmountD) >= MINDOUBLE) {
-                if (fabs(iter->second.totalAmountS / iter->second.totalAmountD - 1) >= 0.05) {
-                    sprintf(data, "%f|1", iter->second.totalAmountS);
-                    assetV["totalAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.totalAmountD);
-                    assetV["totalAmount_d"].SetString(data, allocator);
-                }
-            } else {
-                if (fabs(iter->second.totalAmountS - iter->second.totalAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.totalAmountS);
-                    assetV["totalAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.totalAmountD);
-                    assetV["totalAmount_d"].SetString(data, allocator);
-                }
-            }
-            
-            if (fabs(iter->second.frozenAmountD) >= MINDOUBLE) {
-                if (fabs(iter->second.frozenAmountS / iter->second.frozenAmountD - 1) >= 0.05) {
-                    sprintf(data, "%f|1", iter->second.frozenAmountS);
-                    assetV["frozenAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.frozenAmountD);
-                    assetV["frozenAmount_d"].SetString(data, allocator);
-                }
-            } else {
-                if (fabs(iter->second.frozenAmountS - iter->second.frozenAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.frozenAmountS);
-                    assetV["frozenAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.frozenAmountD);
-                    assetV["frozenAmount_d"].SetString(data, allocator);
-                }
-            }
-            
-            if (iter->second.marginAmountS < iter->second.marginAmountD) {
-                sprintf(data, "%f|1", iter->second.marginAmountS);
-                assetV["marginAmount_s"].SetString(data, allocator);
-                sprintf(data, "%f|1", iter->second.marginAmountD);
-                assetV["marginAmount_d"].SetString(data, allocator);
-            }
-            
-            if (iter->second.frozenMarginAmountS < iter->second.frozenMarginAmountD) {
-                sprintf(data, "%f|1", iter->second.frozenMarginAmountS);
-                assetV["frozenMarginAmount_s"].SetString(data, allocator);
-                sprintf(data, "%f|1", iter->second.frozenMarginAmountD);
-                assetV["frozenMarginAmount_d"].SetString(data, allocator);
-            }
-        }
-        
+                
         perpetualAssetChecked.AddMember(rapidjson::Value(iter->second.asset.c_str(), allocator).Move(), assetV, allocator);
     }
     detailV.AddMember("PerpetualAssetChecked", perpetualAssetChecked, allocator);
@@ -2268,85 +1819,26 @@ rapidjson::Document AccountItem::GetDetail() {
         rapidjson::Value positionV(rapidjson::kObjectType);
         char data[24];
         
-        sprintf(data, "%s", iter->second.key.c_str());
+        sprintf(data, "%s", iter->second.symbol.c_str());
         positionV.AddMember("instrumentKey", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        sprintf(data, "%f|0", iter->second.netPositionS);
-        positionV.AddMember("netPosition_s", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.netPositionD);
         positionV.AddMember("netPosition_d", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%.11f|0", iter->second.netAvgPriceS);
-        positionV.AddMember("netAvgPrice_s", rapidjson::Value(data, allocator).Move(), allocator);
-        
         sprintf(data, "%.11f|0", iter->second.netAvgPriceD);
         positionV.AddMember("netAvgPrice_d", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        sprintf(data, "%f|0", iter->second.floatAmountS);
-        positionV.AddMember("floatAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.floatAmountD);
         positionV.AddMember("floatAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%f|0", iter->second.underwayNetPositionS);
+        sprintf(data, "%f|0", iter->second.underwayNetPositionD);
         positionV.AddMember("underwayNetPosition", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%f|0", iter->second.underwayAbsPositionS);
+        sprintf(data, "%f|0", iter->second.underwayAbsPositionD);
         positionV.AddMember("underwayAbPosition", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%.11f|0", iter->second.liquidationPrice);
         positionV.AddMember("liquidationPrice_d", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        if (type == "physical") {
-            if (fabs(iter->second.netPositionD) >= MINDOUBLE) {
-                if (fabs(iter->second.netPositionS / iter->second.netPositionD - 1) >= 0.05) {
-                    sprintf(data, "%f|1", iter->second.netPositionS);
-                    positionV["netPosition_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.netPositionD);
-                    positionV["netPosition_d"].SetString(data, allocator);
-                }
-            } else {
-                if (fabs(iter->second.netPositionS - iter->second.netPositionD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.netPositionS);
-                    positionV["netPosition_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.netPositionD);
-                    positionV["netPosition_d"].SetString(data, allocator);
-                }
-            }
-            
-            if (fabs(iter->second.netAvgPriceD) >= MINDOUBLE) {
-                if (fabs(iter->second.netAvgPriceS / iter->second.netAvgPriceD - 1) >= 0.05) {
-                    sprintf(data, "%.11f|1", iter->second.netAvgPriceS);
-                    positionV["netAvgPrice_s"].SetString(data, allocator);
-                    sprintf(data, "%.11f|1", iter->second.netAvgPriceD);
-                    positionV["netAvgPrice_d"].SetString(data, allocator);
-                }
-            } else {
-                if (fabs(iter->second.netAvgPriceS - iter->second.netAvgPriceD) >= MINDOUBLE) {
-                    sprintf(data, "%.11f|1", iter->second.netAvgPriceS);
-                    positionV["netAvgPrice_s"].SetString(data, allocator);
-                    sprintf(data, "%.11f|1", iter->second.netAvgPriceD);
-                    positionV["netAvgPrice_d"].SetString(data, allocator);
-                }
-            }
-            
-            if (fabs(iter->second.floatAmountD) >= MINDOUBLE) {
-                if (fabs(iter->second.floatAmountS / iter->second.floatAmountD - 1) > 0.01) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    positionV["floatAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    positionV["floatAmount_d"].SetString(data, allocator);
-                }
-            } else {
-                if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    positionV["floatAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    positionV["floatAmount_d"].SetString(data, allocator);
-                }
-            }
-        }
         
         uFuturePositionChecked.AddMember(rapidjson::Value(iter->second.symbol.c_str(), allocator).Move(), positionV, allocator);
     }
@@ -2358,85 +1850,26 @@ rapidjson::Document AccountItem::GetDetail() {
         rapidjson::Value positionV(rapidjson::kObjectType);
         char data[24];
         
-        sprintf(data, "%s", iter->second.key.c_str());
+        sprintf(data, "%s", iter->second.symbol.c_str());
         positionV.AddMember("instrumentKey", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        sprintf(data, "%f|0", iter->second.netPositionS);
-        positionV.AddMember("netPosition_s", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.netPositionD);
         positionV.AddMember("netPosition_d", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%.11f|0", iter->second.netAvgPriceS);
-        positionV.AddMember("netAvgPrice_s", rapidjson::Value(data, allocator).Move(), allocator);
-        
         sprintf(data, "%.11f|0", iter->second.netAvgPriceD);
         positionV.AddMember("netAvgPrice_d", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        sprintf(data, "%f|0", iter->second.floatAmountS);
-        positionV.AddMember("floatAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.floatAmountD);
         positionV.AddMember("floatAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%f|0", iter->second.underwayNetPositionS);
+        sprintf(data, "%f|0", iter->second.underwayNetPositionD);
         positionV.AddMember("underwayNetPosition", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%f|0", iter->second.underwayAbsPositionS);
+        sprintf(data, "%f|0", iter->second.underwayAbsPositionD);
         positionV.AddMember("underwayAbPosition", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%.11f|0", iter->second.liquidationPrice);
         positionV.AddMember("liquidationPrice_d", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        if (type == "physical") {
-            if (fabs(iter->second.netPositionD) >= MINDOUBLE) {
-                if (fabs(iter->second.netPositionS / iter->second.netPositionD - 1) >= 0.05) {
-                    sprintf(data, "%f|1", iter->second.netPositionS);
-                    positionV["netPosition_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.netPositionD);
-                    positionV["netPosition_d"].SetString(data, allocator);
-                }
-            } else {
-                if (fabs(iter->second.netPositionS - iter->second.netPositionD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.netPositionS);
-                    positionV["netPosition_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.netPositionD);
-                    positionV["netPosition_d"].SetString(data, allocator);
-                }
-            }
-            
-            if (fabs(iter->second.netAvgPriceD) >= MINDOUBLE) {
-                if (fabs(iter->second.netAvgPriceS / iter->second.netAvgPriceD - 1) >= 0.05) {
-                    sprintf(data, "%.11f|1", iter->second.netAvgPriceS);
-                    positionV["netAvgPrice_s"].SetString(data, allocator);
-                    sprintf(data, "%.11f|1", iter->second.netAvgPriceD);
-                    positionV["netAvgPrice_d"].SetString(data, allocator);
-                }
-            } else {
-                if (fabs(iter->second.netAvgPriceS - iter->second.netAvgPriceD) >= MINDOUBLE) {
-                    sprintf(data, "%.11f|1", iter->second.netAvgPriceS);
-                    positionV["netAvgPrice_s"].SetString(data, allocator);
-                    sprintf(data, "%.11f|1", iter->second.netAvgPriceD);
-                    positionV["netAvgPrice_d"].SetString(data, allocator);
-                }
-            }
-            
-            if (fabs(iter->second.floatAmountD) >= MINDOUBLE) {
-                if (fabs(iter->second.floatAmountS / iter->second.floatAmountD - 1) > 0.01) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    positionV["floatAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    positionV["floatAmount_d"].SetString(data, allocator);
-                }
-            } else {
-                if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    positionV["floatAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    positionV["floatAmount_d"].SetString(data, allocator);
-                }
-            }
-        }
         
         cFuturePositionChecked.AddMember(rapidjson::Value(iter->second.symbol.c_str(), allocator).Move(), positionV, allocator);
     }
@@ -2449,85 +1882,26 @@ rapidjson::Document AccountItem::GetDetail() {
         rapidjson::Value positionV(rapidjson::kObjectType);
         char data[24];
         
-        sprintf(data, "%s", iter->second.key.c_str());
+        sprintf(data, "%s", iter->second.symbol.c_str());
         positionV.AddMember("instrumentKey", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        sprintf(data, "%f|0", iter->second.netPositionS);
-        positionV.AddMember("netPosition_s", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.netPositionD);
         positionV.AddMember("netPosition_d", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%.11f|0", iter->second.netAvgPriceS);
-        positionV.AddMember("netAvgPrice_s", rapidjson::Value(data, allocator).Move(), allocator);
-        
         sprintf(data, "%.11f|0", iter->second.netAvgPriceD);
         positionV.AddMember("netAvgPrice_d", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        sprintf(data, "%f|0", iter->second.floatAmountS);
-        positionV.AddMember("floatAmount_s", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%f|0", iter->second.floatAmountD);
         positionV.AddMember("floatAmount_d", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%f|0", iter->second.underwayNetPositionS);
+        sprintf(data, "%f|0", iter->second.underwayNetPositionD);
         positionV.AddMember("underwayNetPosition", rapidjson::Value(data, allocator).Move(), allocator);
         
-        sprintf(data, "%f|0", iter->second.underwayAbsPositionS);
+        sprintf(data, "%f|0", iter->second.underwayAbsPositionD);
         positionV.AddMember("underwayAbPosition", rapidjson::Value(data, allocator).Move(), allocator);
         
         sprintf(data, "%.11f|0", iter->second.liquidationPrice);
         positionV.AddMember("liquidationPrice_d", rapidjson::Value(data, allocator).Move(), allocator);
-        
-        if (type == "physical") {
-            if (fabs(iter->second.netPositionD) >= MINDOUBLE) {
-                if (fabs(iter->second.netPositionS / iter->second.netPositionD - 1) >= 0.05) {
-                    sprintf(data, "%f|1", iter->second.netPositionS);
-                    positionV["netPosition_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.netPositionD);
-                    positionV["netPosition_d"].SetString(data, allocator);
-                }
-            } else {
-                if (fabs(iter->second.netPositionS - iter->second.netPositionD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.netPositionS);
-                    positionV["netPosition_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.netPositionD);
-                    positionV["netPosition_d"].SetString(data, allocator);
-                }
-            }
-            
-            if (fabs(iter->second.netAvgPriceD) >= MINDOUBLE) {
-                if (fabs(iter->second.netAvgPriceS / iter->second.netAvgPriceD - 1) >= 0.05) {
-                    sprintf(data, "%.11f|1", iter->second.netAvgPriceS);
-                    positionV["netAvgPrice_s"].SetString(data, allocator);
-                    sprintf(data, "%.11f|1", iter->second.netAvgPriceD);
-                    positionV["netAvgPrice_d"].SetString(data, allocator);
-                }
-            } else {
-                if (fabs(iter->second.netAvgPriceS - iter->second.netAvgPriceD) >= MINDOUBLE) {
-                    sprintf(data, "%.11f|1", iter->second.netAvgPriceS);
-                    positionV["netAvgPrice_s"].SetString(data, allocator);
-                    sprintf(data, "%.11f|1", iter->second.netAvgPriceD);
-                    positionV["netAvgPrice_d"].SetString(data, allocator);
-                }
-            }
-            
-            if (fabs(iter->second.floatAmountD) >= MINDOUBLE) {
-                if (fabs(iter->second.floatAmountS / iter->second.floatAmountD - 1) > 0.01) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    positionV["floatAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    positionV["floatAmount_d"].SetString(data, allocator);
-                }
-            } else {
-                if (fabs(iter->second.floatAmountS - iter->second.floatAmountD) >= MINDOUBLE) {
-                    sprintf(data, "%f|1", iter->second.floatAmountS);
-                    positionV["floatAmount_s"].SetString(data, allocator);
-                    sprintf(data, "%f|1", iter->second.floatAmountD);
-                    positionV["floatAmount_d"].SetString(data, allocator);
-                }
-            }
-        }
         
         perpetualPositionChecked.AddMember(rapidjson::Value(iter->second.symbol.c_str(), allocator).Move(), positionV, allocator);
     }
@@ -2545,40 +1919,22 @@ rapidjson::Document AccountItem::GetDetail() {
         sprintf(data, "%f|0", iter->second.initialValue);
         exposureV.AddMember("InitialValue", rapidjson::Value(data, allocator).Move(), allocator);
         
-        if (type == "physical") {
-            sprintf(data, "%f|0", iter->second.exposureAmountD);
-            exposureV.AddMember("ExposureAmount", rapidjson::Value(data, allocator).Move(), allocator);
-            
-            if (iter->first == maxRiskExposureAssetD) {
-                sprintf(data, "%f|0|MaxExposureValue", iter->second.exposureValueD);
-            } else {
-                sprintf(data, "%f|0", iter->second.exposureValueD);
-            }
-            exposureV.AddMember("ExposureValue", rapidjson::Value(data, allocator).Move(), allocator);
-            
-            sprintf(data, "%f|0", iter->second.deltaAmountD);
-            exposureV.AddMember("DeltaAmount", rapidjson::Value(data, allocator).Move(), allocator);
-            
-            sprintf(data, "%f|0", iter->second.deltaValueD);
-            exposureV.AddMember("DeltaValue", rapidjson::Value(data, allocator).Move(), allocator);
-        } else {
-            sprintf(data, "%f|0", iter->second.exposureAmountS);
-            exposureV.AddMember("ExposureAmount", rapidjson::Value(data, allocator).Move(), allocator);
-            
-            if (iter->first == maxRiskExposureAssetS) {
-                sprintf(data, "%f|0|MaxExposureValue", iter->second.exposureValueS);
-            } else {
-                sprintf(data, "%f|0", iter->second.exposureValueS);
-            }
-            exposureV.AddMember("ExposureValue", rapidjson::Value(data, allocator).Move(), allocator);
-            
-            sprintf(data, "%f|0", iter->second.deltaAmountS);
-            exposureV.AddMember("DeltaAmount", rapidjson::Value(data, allocator).Move(), allocator);
-            
-            sprintf(data, "%f|0", iter->second.deltaValueS);
-            exposureV.AddMember("DeltaValue", rapidjson::Value(data, allocator).Move(), allocator);
-        }
+        sprintf(data, "%f|0", iter->second.exposureAmountD);
+        exposureV.AddMember("ExposureAmount", rapidjson::Value(data, allocator).Move(), allocator);
         
+        if (iter->first == maxRiskExposureAssetD) {
+            sprintf(data, "%f|0|MaxExposureValue", iter->second.exposureValueD);
+        } else {
+            sprintf(data, "%f|0", iter->second.exposureValueD);
+        }
+        exposureV.AddMember("ExposureValue", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.deltaAmountD);
+        exposureV.AddMember("DeltaAmount", rapidjson::Value(data, allocator).Move(), allocator);
+        
+        sprintf(data, "%f|0", iter->second.deltaValueD);
+        exposureV.AddMember("DeltaValue", rapidjson::Value(data, allocator).Move(), allocator);
+
         exposureFormChecked.AddMember(rapidjson::Value(iter->first.c_str(), allocator).Move(), exposureV, allocator);
     }
     detailV.AddMember("ExposureFormChecked", exposureFormChecked, allocator);
@@ -2604,30 +1960,6 @@ rapidjson::Document AccountItem::GetDetail() {
     accountIdV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
     mainFormChecked.PushBack(accountIdV, allocator);
     
-    // StrategyID
-    rapidjson::Value strategyIdV(rapidjson::kObjectType);
-    strategyIdV.AddMember("key", "StrategyID", allocator);
-    strategyIdV.AddMember("alert", false, allocator);
-    strategyIdV.AddMember("enable", false, allocator);
-    rapidjson::Value vStrategyIdV(rapidjson::kArrayType);
-    for (size_t i = 0; i < riskInfo.vStrategyId.size(); ++i) {
-        vStrategyIdV.PushBack(riskInfo.vStrategyId[i], allocator);
-    }
-    strategyIdV.AddMember("value", vStrategyIdV, allocator);
-    mainFormChecked.PushBack(strategyIdV, allocator);
-    
-    // TraderID
-    rapidjson::Value traderIdV(rapidjson::kObjectType);
-    traderIdV.AddMember("key", "TraderID", allocator);
-    traderIdV.AddMember("alert", false, allocator);
-    traderIdV.AddMember("enable", false, allocator);
-    rapidjson::Value vTraderIdV(rapidjson::kArrayType);
-    for (size_t i = 0; i < riskInfo.vTraderId.size(); ++i) {
-        vTraderIdV.PushBack(riskInfo.vTraderId[i], allocator);
-    }
-    traderIdV.AddMember("value", vTraderIdV, allocator);
-    mainFormChecked.PushBack(traderIdV, allocator);
-    
     // BaseAsset
     rapidjson::Value baseAssetV(rapidjson::kObjectType);
     baseAssetV.AddMember("key", "BaseAsset", allocator);
@@ -2651,15 +1983,7 @@ rapidjson::Document AccountItem::GetDetail() {
     updateTimeDV.AddMember("enable", true, allocator);
     updateTimeDV.AddMember("value", rapidjson::Value(CovertToUtcStr(riskInfo.dUpdateTime).c_str(), allocator).Move(), allocator);
     mainFormChecked.PushBack(updateTimeDV, allocator);
-    
-    // UpdateTime_S
-    rapidjson::Value updateTimeSV(rapidjson::kObjectType);
-    updateTimeSV.AddMember("key", "UpdateTime_S", allocator);
-    updateTimeSV.AddMember("alert", false, allocator);
-    updateTimeSV.AddMember("enable", true, allocator);
-    updateTimeSV.AddMember("value", rapidjson::Value(CovertToUtcStr(riskInfo.sUpdateTime).c_str(), allocator).Move(), allocator);
-    mainFormChecked.PushBack(updateTimeSV, allocator);
-    
+        
     // NetValue_D
     rapidjson::Value netValueDV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.netValueD);
@@ -2668,16 +1992,7 @@ rapidjson::Document AccountItem::GetDetail() {
     netValueDV.AddMember("enable", type == "physical", allocator);
     netValueDV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
     mainFormChecked.PushBack(netValueDV, allocator);
-    
-    // NetValue_S
-    rapidjson::Value netValueSV(rapidjson::kObjectType);
-    sprintf(data, "%f", riskInfo.netValueS);
-    netValueSV.AddMember("key", "NetValue_S", allocator);
-    netValueSV.AddMember("alert", false, allocator);
-    netValueSV.AddMember("enable", type == "strategy", allocator);
-    netValueSV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
-    mainFormChecked.PushBack(netValueSV, allocator);
-    
+        
     // NetValueGrowthRate_D
     rapidjson::Value netValueGrowthRateDV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.netValueGrowthRateD);
@@ -2686,16 +2001,7 @@ rapidjson::Document AccountItem::GetDetail() {
     netValueGrowthRateDV.AddMember("enable", false, allocator);
     netValueGrowthRateDV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
     mainFormChecked.PushBack(netValueGrowthRateDV, allocator);
-    
-    // NetValueGrowthRate_S
-    rapidjson::Value netValueGrowthRateSV(rapidjson::kObjectType);
-    sprintf(data, "%f", riskInfo.netValueGrowthRateS);
-    netValueGrowthRateSV.AddMember("key", "NetValueGrowthRate_S", allocator);
-    netValueGrowthRateSV.AddMember("alert", false, allocator);
-    netValueGrowthRateSV.AddMember("enable", false, allocator);
-    netValueGrowthRateSV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
-    mainFormChecked.PushBack(netValueGrowthRateSV, allocator);
-    
+        
     // MaxValueToLoanRatio_D
     rapidjson::Value maxValueToLoanRatioDV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.maxValueToLoanRatioD);
@@ -2704,76 +2010,37 @@ rapidjson::Document AccountItem::GetDetail() {
     maxValueToLoanRatioDV.AddMember("enable", false, allocator);
     maxValueToLoanRatioDV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
     mainFormChecked.PushBack(maxValueToLoanRatioDV, allocator);
-    
-    // MaxValueToLoanRatio_S
-    rapidjson::Value maxValueToLoanRatioSV(rapidjson::kObjectType);
-    sprintf(data, "%f", riskInfo.maxValueToLoanRatioS);
-    maxValueToLoanRatioSV.AddMember("key", "MaxValueToLoanRatio_S", allocator);
-    maxValueToLoanRatioSV.AddMember("alert", false, allocator);
-    maxValueToLoanRatioSV.AddMember("enable", false, allocator);
-    maxValueToLoanRatioSV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
-    mainFormChecked.PushBack(maxValueToLoanRatioSV, allocator);
-    
+        
     // MaxRealLeverage_D
     rapidjson::Value maxRealLeverageDV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.maxRealLeverageD);
     maxRealLeverageDV.AddMember("key", "MaxRealLeverage_D", allocator);
     maxRealLeverageDV.AddMember("alert", false, allocator);
     maxRealLeverageDV.AddMember("enable", type == "physical", allocator);
-    if (type == "physical") {
-        rapidjson::Value leveragePositionDV(rapidjson::kArrayType);
-        leveragePositionDV.PushBack(rapidjson::Value(maxLeverageTabD.c_str(), allocator).Move(), allocator);
-        leveragePositionDV.PushBack("MaxRealLeverage", allocator);
-        maxRealLeverageDV.AddMember("position", leveragePositionDV, allocator);
-    }
+    
+    rapidjson::Value leveragePositionDV(rapidjson::kArrayType);
+    leveragePositionDV.PushBack(rapidjson::Value(maxLeverageTabD.c_str(), allocator).Move(), allocator);
+    leveragePositionDV.PushBack("MaxRealLeverage", allocator);
+    maxRealLeverageDV.AddMember("position", leveragePositionDV, allocator);
+    
     maxRealLeverageDV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
     mainFormChecked.PushBack(maxRealLeverageDV, allocator);
-    
-    // MaxRealLeverage_S
-    rapidjson::Value maxRealLeverageSV(rapidjson::kObjectType);
-    sprintf(data, "%f", riskInfo.maxRealLeverageS);
-    maxRealLeverageSV.AddMember("key", "MaxRealLeverage_S", allocator);
-    maxRealLeverageSV.AddMember("alert", false, allocator);
-    maxRealLeverageSV.AddMember("enable", type == "strategy", allocator);
-    if (type == "strategy") {
-        rapidjson::Value leveragePositionSV(rapidjson::kArrayType);
-        leveragePositionSV.PushBack(rapidjson::Value(maxLeverageTabS.c_str(), allocator).Move(), allocator);
-        leveragePositionSV.PushBack("MaxRealLeverage", allocator);
-        maxRealLeverageSV.AddMember("position", leveragePositionSV, allocator);
-    }
-    maxRealLeverageSV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
-    mainFormChecked.PushBack(maxRealLeverageSV, allocator);
-    
+        
     // RiskExposure_D
     rapidjson::Value riskExposureDV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.riskExposureD);
     riskExposureDV.AddMember("key", "RiskExposure_D", allocator);
     riskExposureDV.AddMember("alert", false, allocator);
     riskExposureDV.AddMember("enable", type == "physical", allocator);
-    if (type == "physical") {
-        rapidjson::Value riskPositionDV(rapidjson::kArrayType);
-        riskPositionDV.PushBack(rapidjson::Value(maxRiskExposureTab.c_str(), allocator).Move(), allocator);
-        riskPositionDV.PushBack("MaxExposureValue", allocator);
-        riskExposureDV.AddMember("position", riskPositionDV, allocator);
-    }
+    
+    rapidjson::Value riskPositionDV(rapidjson::kArrayType);
+    riskPositionDV.PushBack(rapidjson::Value(maxRiskExposureTab.c_str(), allocator).Move(), allocator);
+    riskPositionDV.PushBack("MaxExposureValue", allocator);
+    riskExposureDV.AddMember("position", riskPositionDV, allocator);
+    
     riskExposureDV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
     mainFormChecked.PushBack(riskExposureDV, allocator);
-    
-    // RiskExposure_S
-    rapidjson::Value riskExposureSV(rapidjson::kObjectType);
-    sprintf(data, "%f", riskInfo.riskExposureS);
-    riskExposureSV.AddMember("key", "RiskExposure_S", allocator);
-    riskExposureSV.AddMember("alert", false, allocator);
-    riskExposureSV.AddMember("enable", type == "strategy", allocator);
-    if (type == "strategy") {
-        rapidjson::Value riskPositionSV(rapidjson::kArrayType);
-        riskPositionSV.PushBack(rapidjson::Value(maxRiskExposureTab.c_str(), allocator).Move(), allocator);
-        riskPositionSV.PushBack("MaxExposureValue", allocator);
-        riskExposureSV.AddMember("position", riskPositionSV, allocator);
-    }
-    riskExposureSV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
-    mainFormChecked.PushBack(riskExposureSV, allocator);
-    
+        
     // UnderwayOrderValue_D
     rapidjson::Value underwayOrderValueDV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.underwayOrderValueD);
@@ -2782,16 +2049,7 @@ rapidjson::Document AccountItem::GetDetail() {
     underwayOrderValueDV.AddMember("enable", type == "physical", allocator);
     underwayOrderValueDV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
     mainFormChecked.PushBack(underwayOrderValueDV, allocator);
-    
-    // UnderwayOrderValue_S
-    rapidjson::Value underwayOrderValueSV(rapidjson::kObjectType);
-    sprintf(data, "%f", riskInfo.underwayOrderValueS);
-    underwayOrderValueSV.AddMember("key", "UnderwayOrderValue_S", allocator);
-    underwayOrderValueSV.AddMember("alert", false, allocator);
-    underwayOrderValueSV.AddMember("enable", type == "strategy", allocator);
-    underwayOrderValueSV.AddMember("value", rapidjson::Value(data, allocator).Move(), allocator);
-    mainFormChecked.PushBack(underwayOrderValueSV, allocator);
-    
+        
     // VerifyRisk
     rapidjson::Value verifyRiskV(rapidjson::kObjectType);
     sprintf(data, "%f", riskInfo.verifyRiskD);
@@ -3206,7 +2464,7 @@ MsgCard AccountItem::GetLiquidationPriceAlarmMsg(igmonitor::Position& position) 
         bool reachWarning = true;
         bool reachAlarm = true;
 
-        string key = position.key;
+        string key = position.symbol;
         double price = MdMgr::GetInstance().GetMidPrice(key);
         double liquidationPrice = position.liquidationPrice;
         double netAvgPriceD = position.netAvgPriceD;
