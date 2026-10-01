@@ -3,12 +3,18 @@
 #include "crypto_exception.h"
 #include "MonitorOperation.h"
 
+#include "LarkRebot.h"
+
 std::mutex mut;
 
 
 // to do
 // 1. 账户持仓付出的资金费用需要报警
 int main(int argc, char* argv[]) {
+    LarkRebot::GetInstance().SendLarkMsg("test!", "https://open.feishu.cn/open-apis/bot/v2/hook/6fb9a793-8a4b-44ff-8247-5633a182cc93");
+    return 0;
+
+
     std::string currentTimeStr = CovertToUtcStr(crypto::getCurrentTime(), false);
     std::cout << currentTimeStr << " monitor server executed..." << std::endl;
 
