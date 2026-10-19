@@ -275,7 +275,6 @@ Depth ExchangeRestMd::GetGateioSwapDepth(string originInstId) {
     std::string body;
     std::string path = gateioSwapDepthUrl + "?contract=" + originInstId;
 
-    std::cout << "GetGateioSwapDepth: " << path << std::endl;
     try {
         if (!Net::Instance().syncGet("GATEIO", crypto::host_of(GATEIO_REST), path, {}, {}, body, status)) {
             LOG_ERROR("GATEIO GetGateioSwapDepth syncGet return false");
