@@ -27,7 +27,7 @@ void LarkRebot::SendLarkMsg(const MsgCard& msgCard, const std::string& url, bool
 	string msg = msgCard.object + "\\n" + msgCard.datetime + "\\n" + msgCard.content;
 
     if (atAll) {
-        msg += "\\n<at user_id=\"all\">所有人</at>";
+        msg = "<at user_id=\"all\">所有人</at>" + msg;
     }
 
 	std::string body_in = fmt::format("{{\"msg_type\":\"text\",\"content\":{{\"text\":\"{}\"}}}}", msg);
@@ -75,7 +75,7 @@ void LarkRebot::SendLarkMsg(const std::string& msg, const std::string& url, bool
     }
 
     if (atAll) {
-        escaped += "\\n<at user_id=\"all\">所有人</at>";
+        escaped = "<at user_id=\"all\">所有人</at>" + escaped;
     }
 
 	std::string body_in = fmt::format("{{\"msg_type\":\"text\",\"content\":{{\"text\":\"{}\"}}}}", escaped);
