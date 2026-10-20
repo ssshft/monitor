@@ -123,7 +123,7 @@ void MonitorOperation::RunAccountMonitor() {
                 msgCard.content = "风控系统运行中···";
 
                 
-                LarkRebot::GetInstance().SendLarkMsg(msgCard, systemUrl, true);
+                LarkRebot::GetInstance().SendLarkMsg(msgCard, systemUrl);
             } catch(exception e) {
                 std::cerr << "Systemtime Error: " << e.what() << std::endl;
             }

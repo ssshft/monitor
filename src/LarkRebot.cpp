@@ -47,10 +47,7 @@ void LarkRebot::SendLarkMsg(const MsgCard& msgCard, const std::string& url, bool
     }
 
     std::string text = JsoneEcaped(msg);
-
 	std::string body_in = fmt::format("{{\"msg_type\":\"text\",\"content\":{{\"text\":\"{}\"}}}}", text);
-
-    LOG_INFO("SendLarkMsg body_in: {}", body_in);
 
    	int status = 0;
     std::string body;
@@ -87,7 +84,6 @@ void LarkRebot::SendLarkMsg(const std::string& msg, const std::string& url, bool
     }
 
     std::string text = JsoneEcaped(s);
-
 	std::string body_in = fmt::format("{{\"msg_type\":\"text\",\"content\":{{\"text\":\"{}\"}}}}", text);
 
    	int status = 0;
