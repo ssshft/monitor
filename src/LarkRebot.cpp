@@ -13,6 +13,22 @@ LarkRebot& LarkRebot::GetInstance() {
 	return larkRebot;
 }
 
+std::string LarkRebot::JsoneEcaped(const std::string& msg) {     // 需要先对 msg 做 JSON 字符串转义
+    std::string escaped = "";
+    for (char c : msg) {
+        switch (c) {
+            case '\\': escaped += "\\\\"; break;
+            case '"':  escaped += "\\\""; break;
+            case '\n': escaped += "\\n";  break;
+            case '\r': escaped += "\\r";  break;
+            case '\t': escaped += "\\t";  break;
+            default:   escaped += c;      break;
+        }
+    }
+
+    return escaped;
+}
+
 void LarkRebot::SendLarkMsg(const MsgCard& msgCard, const std::string& url, bool atAll) {
     std::string targetUrl = url;
 	size_t scheme_pos = url.find("://");
@@ -24,13 +40,15 @@ void LarkRebot::SendLarkMsg(const MsgCard& msgCard, const std::string& url, bool
 	size_t slash_pos = targetUrl.find('/');
 	std::string host = targetUrl.substr(0, slash_pos);
 	std::string target = targetUrl.substr(slash_pos);
-	string msg = msgCard.object + "\\n" + msgCard.datetime + "\\n" + msgCard.content;
+	string msg = msgCard.object + "\n" + msgCard.datetime + "\n" + msgCard.content;
 
     if (atAll) {
         msg = "<at user_id=\"all\">所有人</at>" + msg;
     }
 
-	std::string body_in = fmt::format("{{\"msg_type\":\"text\",\"content\":{{\"text\":\"{}\"}}}}", msg);
+    std::string text = JsoneEcaped(msg);
+
+	std::string body_in = fmt::format("{{\"msg_type\":\"text\",\"content\":{{\"text\":\"{}\"}}}}", text);
 
     LOG_INFO("SendLarkMsg body_in: {}", body_in);
 
@@ -63,24 +81,14 @@ void LarkRebot::SendLarkMsg(const std::string& msg, const std::string& url, bool
 	std::string host = targetUrl.substr(0, slash_pos);
 	std::string target = targetUrl.substr(slash_pos);
 
-    // 需要先对 msg 做 JSON 字符串转义
-    std::string escaped = "";
-    for (char c : msg) {
-        switch (c) {
-            case '\\': escaped += "\\\\"; break;
-            case '"':  escaped += "\\\""; break;
-            case '\n': escaped += "\\n";  break;
-            case '\r': escaped += "\\r";  break;
-            case '\t': escaped += "\\t";  break;
-            default:   escaped += c;      break;
-        }
-    }
-
+    std::string s = msg;
     if (atAll) {
-        escaped = "<at user_id=\"all\">所有人</at>" + escaped;
+        s = "<at user_id=\"all\">所有人</at>" + msg;
     }
 
-	std::string body_in = fmt::format("{{\"msg_type\":\"text\",\"content\":{{\"text\":\"{}\"}}}}", escaped);
+    std::string text = JsoneEcaped(s);
+
+	std::string body_in = fmt::format("{{\"msg_type\":\"text\",\"content\":{{\"text\":\"{}\"}}}}", text);
 
    	int status = 0;
     std::string body;
