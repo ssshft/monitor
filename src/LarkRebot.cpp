@@ -56,8 +56,21 @@ void LarkRebot::SendLarkMsg(const std::string& msg, const std::string& url) {
 	size_t slash_pos = targetUrl.find('/');
 	std::string host = targetUrl.substr(0, slash_pos);
 	std::string target = targetUrl.substr(slash_pos);
+
+    // 需要先对 msg 做 JSON 字符串转义
+    std::string escaped;
+    for (char c : msg) {
+        switch (c) {
+            case '\\': escaped += "\\\\"; break;
+            case '"':  escaped += "\\\""; break;
+            case '\n': escaped += "\\n";  break;
+            case '\r': escaped += "\\r";  break;
+            case '\t': escaped += "\\t";  break;
+            default:   escaped += c;      break;
+        }
+    }
 	
-	std::string body_in = fmt::format("{{\"msg_type\":\"text\",\"content\":{{\"text\":\"{}\"}}}}", msg);
+	std::string body_in = fmt::format("{{\"msg_type\":\"text\",\"content\":{{\"text\":\"{}\"}}}}", escaped);
 
    	int status = 0;
     std::string body;
