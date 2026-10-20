@@ -55,7 +55,7 @@ void MonitorOperation::RunAccountMonitor() {
                         MsgCard msg = vAlarmMsg[j];
                         if (msg.title != "QueryAccount") {
                             if (msg.title == "TWAP-ADL") {
-                                LarkRebot::GetInstance().SendLarkMsg(msg, accountUrl);
+                                LarkRebot::GetInstance().SendLarkMsg(msg, accountUrl, true);
                             } 
                             else { // need alarm twice will send alarm msg
                                 std::string key = "";
@@ -78,10 +78,10 @@ void MonitorOperation::RunAccountMonitor() {
                                     continue;
                                 }
                     
-                                LarkRebot::GetInstance().SendLarkMsg(msg, accountUrl);
+                                LarkRebot::GetInstance().SendLarkMsg(msg, accountUrl, true);
                             }
                         } else {
-                            LarkRebot::GetInstance().SendLarkMsg(msg, exchangeUrl);
+                            LarkRebot::GetInstance().SendLarkMsg(msg, exchangeUrl, true);
                         }
                     }
                 } catch(exception e) {
