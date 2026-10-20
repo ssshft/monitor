@@ -25,7 +25,7 @@ void LarkRebot::SendLarkMsg(MsgCard& msgCard, std::string url) {
 	size_t slash_pos = url.find('/');
 	std::string host = url.substr(0, slash_pos);
 	std::string target = url.substr(slash_pos);
-	string msg = msgCard.object + " " + msgCard.datetime + " " + msgCard.content;
+	string msg = msgCard.object + "\n" + msgCard.datetime + "\n" + msgCard.content;
 	
 	std::string body_in = fmt::format("{{\"msg_type\":\"text\",\"content\":{{\"text\":\"{}\"}}}}", msg);
 

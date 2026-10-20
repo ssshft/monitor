@@ -99,7 +99,6 @@ void MonitorConfig::LoadAlarmConfig() {
         auto itemSummary = properties.get_child("SUMMARY");
         int accountCount = itemSummary.get<int>("accountcount");
         int productCount = itemSummary.get<int>("productcount");
-        larkUrl = itemSummary.get<string>("larkurl");
 
         accountLarkUrl = itemSummary.get<string>("accountlarkurl", "");
         systemLarkUrl = itemSummary.get<string>("systemlarkurl", "");
@@ -336,10 +335,6 @@ int MonitorConfig::GetProductId(string name) {
         productId = iter->second.productId;
     }
     return productId;
-}
-
-string MonitorConfig::GetLarkUrl() {
-    return larkUrl;
 }
 
 double MonitorConfig::GetSystemAlarmTime() {

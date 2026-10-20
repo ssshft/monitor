@@ -30,7 +30,6 @@ public:
     std::string GetBaseAssetById(int customerId);
     std::string GetProductBaseAsset(std::string name);
     int GetProductId(std::string name);
-    std::string GetLarkUrl();
     double GetSystemAlarmTime();
     AlarmInfo& GetAlarmInfoById(int customerId);
     AlarmInfo& GetProductAlarmInfo(std::string name);
@@ -74,7 +73,6 @@ private:
    
     // alarm
     std::string alarmPath;
-    std::string larkUrl;
     double systemAlarmTime;
     
     std::vector<int> vAccountId;
