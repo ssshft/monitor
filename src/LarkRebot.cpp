@@ -40,7 +40,7 @@ void LarkRebot::SendLarkMsg(const MsgCard& msgCard, const std::string& url, bool
             return;
         }
         if (status != 200) {
-            LOG_INFO("SendLarkMsg status: {}", status);
+            LOG_INFO("SendLarkMsg status: {} body: {}", status, body);
             return;
         }
     }
@@ -88,7 +88,7 @@ void LarkRebot::SendLarkMsg(const std::string& msg, const std::string& url, bool
             return;
         }
         if (status != 200) {
-            LOG_INFO("SendLarkMsg status: {}", status);
+            LOG_INFO("SendLarkMsg status: {} body: {}", status, body);
             return;
         }
     }
