@@ -13,6 +13,14 @@
 #include "DataBase.h"
 
 void MonitorOperation::RunAccountMonitor() {
+    std::string systemUrl = MonitorConfig::GetInstance().GetSystemLarkUrl();
+    std::string accountUrl = MonitorConfig::GetInstance().GetAccountLarkUrl();
+    std::string exchangeUrl = MonitorConfig::GetInstance().GetExchangeLarkUrl();
+
+    // publish 账户信息
+    std::string physicalPubChannel = MonitorConfig::GetInstance().GetPhysicalPubChannel();
+    std::string overviewPubChannel = MonitorConfig::GetInstance().GetOverviewPubChannel();
+
     while (1) {
         int64_t currentTime = crypto::getCurrentTime();
   
@@ -20,9 +28,6 @@ void MonitorOperation::RunAccountMonitor() {
             try {
                 std::unordered_map<std::string, std::string>& m = AccountMonitor::GetInstance().GetCurrentStatus(); // 使用从交易所查询的数据进行计算，权益，敞口，净值等
 
-                // publish 账户信息
-                std::string physicalPubChannel = MonitorConfig::GetInstance().GetPhysicalPubChannel();
-                std::string overviewPubChannel = MonitorConfig::GetInstance().GetOverviewPubChannel();
                 auto iter = m.find("physical");
                 if (iter != m.end() && iter->second.length() > 0) {    
                     MsgPub::GetInstance().Publish(physicalPubChannel, iter->second);
@@ -30,7 +35,8 @@ void MonitorOperation::RunAccountMonitor() {
 
                 iter = m.find("overview");
                 if (iter != m.end() && iter->second.length() > 0) {
-                    MsgPub::GetInstance().Publish(overviewPubChannel, iter->second);            
+                    MsgPub::GetInstance().Publish(overviewPubChannel, iter->second);    
+                    LarkRebot::GetInstance().SendLarkMsg(iter->second, accountUrl);        
                 }
             } catch(exception e) {
                 std::cerr << "GetAccountStatus Error: " << e.what() << std::endl;
@@ -44,8 +50,6 @@ void MonitorOperation::RunAccountMonitor() {
         if (sendAccountAlarm) {
             if (currentTime - lastAccountAlarmTime > accountAlarmInterval * 1000000LL) {
                 try {
-                    std::string accountUrl = MonitorConfig::GetInstance().GetAccountLarkUrl();
-                    std::string exchangeUrl = MonitorConfig::GetInstance().GetExchangeLarkUrl();
                     std::vector<MsgCard> vAlarmMsg = AccountMonitor::GetInstance().GetAlarmMsg();  // 使用计算好的指标，判断是否需要报警
                     for (size_t j = 0; j < vAlarmMsg.size(); ++j) {
                         MsgCard msg = vAlarmMsg[j];
@@ -118,7 +122,7 @@ void MonitorOperation::RunAccountMonitor() {
                 msgCard.datetime = currentTimeStr;
                 msgCard.content = "风控系统运行中···";
 
-                std::string systemUrl = MonitorConfig::GetInstance().GetSystemLarkUrl();
+                
                 LarkRebot::GetInstance().SendLarkMsg(msgCard, systemUrl);
             } catch(exception e) {
                 std::cerr << "Systemtime Error: " << e.what() << std::endl;
