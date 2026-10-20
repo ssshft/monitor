@@ -32,6 +32,8 @@ void LarkRebot::SendLarkMsg(const MsgCard& msgCard, const std::string& url, bool
 
 	std::string body_in = fmt::format("{{\"msg_type\":\"text\",\"content\":{{\"text\":\"{}\"}}}}", msg);
 
+    LOG_INFO("SendLarkMsg body_in: {}", body_in);
+
    	int status = 0;
     std::string body;
     try {
